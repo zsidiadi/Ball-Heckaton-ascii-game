@@ -3,9 +3,11 @@ This is an Ascii game made by Ádám Zsidákovits and Cristian-Mihai Radu for th
 
 ## ASCII KEEP — a roguelike tower defense
 
-Enemies march down a randomly generated path toward your castle. Build structures,
-mount weapons on them, and survive as many waves as you can. When the castle falls
+Enemies march down randomly generated paths toward your castle. Build structures,
+mount weapons on them, and survive as many levels as you can. When the castle falls
 you **keep your gems** and spend them on permanent upgrades for the next run.
+
+The map fills your whole terminal, so make the window big (or full screen) before starting.
 
 ```
 +--------------------------------------------------+  WAVE 1  WAVE ACTIVE
@@ -25,7 +27,7 @@ you **keep your gems** and spend them on permanent upgrades for the next run.
 python3 keep.py
 ```
 
-Needs Python 3 and a terminal of at least 70x22. Works out of the box on macOS and Linux.
+Needs Python 3 and a terminal of at least 70x22 (bigger = bigger map). Works out of the box on macOS and Linux.
 On Windows run `pip install windows-curses` first.
 
 ### How to play
@@ -42,7 +44,22 @@ On Windows run `pip install windows-curses` first.
 
 3. Press **N** to send the next wave. Kills give gold; clearing waves gives gold and gems.
 4. After every wave pick **1 of 3 random blessings** (more gold, castle repair, faster guns...).
-5. Every 5th wave a boss `M` appears.
+
+### Levels
+
+Each **level is 5 waves**, and wave 5 is a boss `M`. Beat all 5 and you get a level reward
+(gold, gems, castle repair), then you can start the next level, which **opens one more path**
+to your castle:
+
+| Level | Paths | Enemies come from |
+| --- | --- | --- |
+| 1 | 1 | west `>>` |
+| 2 | 2 | west + north `vv` |
+| 3 | 3 | west + north + south `^^` |
+| 4+ | +1 each level | ... |
+
+The new path blinks red for a few seconds. If it runs over one of your towers, that tower
+is removed and you get its full cost back.
 
 **Losing is part of the game.** When the castle is destroyed you keep the gems from that run.
 You can also **blow up your own castle (K)** to cash out early; every 25 leftover gold becomes
@@ -55,13 +72,13 @@ and unlocking the Cannon and Frost tower. Progress is saved in `keep_save.json`.
 
 | Key | Action |
 | --- | --- |
-| Arrows / WASD | move cursor |
+| Arrows / wasd | move cursor (Shift+WASD jumps 5 tiles, or click with the mouse) |
 | B | build structure |
 | 1-4 | mount weapon |
 | U | upgrade weapon (max level 5) |
 | X | sell (50% refund) |
 | N | start next wave |
-| F | toggle 2x speed |
+| F | game speed x1 / x2 / x3 |
 | P | pause |
 | K | destroy your own castle (cash out) |
 | Q | quit run |

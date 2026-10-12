@@ -2,10 +2,12 @@
 """
 ASCII KEEP - a roguelike tower defense for the terminal.
 
-Protect your castle from waves of enemies walking down a random path.
+Protect your castle from waves of enemies walking down random paths.
   1. Build a STRUCTURE on a grass tile           (B)
   2. Mount a WEAPON on that structure            (1-4)
   3. Upgrade or sell it                          (U / X)
+The game is split into LEVELS of 5 waves (wave 5 has a boss). Beat a level
+and the next one opens ONE MORE enemy path to your castle.
 After every wave you pick one of three random blessings.
 When the castle falls you KEEP the gems you earned. You can also blow up
 your own castle (K) to cash out early: leftover gold turns into bonus gems.
@@ -24,12 +26,18 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 MIN_W, MIN_H = 70, 22
+MAP_X, MAP_Y = 1, 2          # screen position of the top-left map cell
+PANEL_W = 28                 # width of the info panel on the right
 
 # colour pair ids
 GRASS, PATH, STRUCT, C_BOW, C_GUN, C_CANNON, C_FROST, RED, CASTLE, GOLD, GEM, CURSOR, MAG = range(1, 14)
 
 STRUCT_COST = 10
 MAX_LEVEL = 5
+WAVES_PER_LEVEL = 5
+
+EDGES = ["left", "top", "bottom"]          # where new paths start, in this order
+EDGE_NAMES = {"left": "WEST", "top": "NORTH", "bottom": "SOUTH"}
 
 WEAPONS = {
     "bow":    dict(key="1", name="Bow",    ch="A", cost=25, dmg=3.0, rng=3.5, cd=0.70, color=C_BOW,
@@ -49,6 +57,7 @@ ENEMIES = {
     "brute":  dict(ch="B", hp=32,  spd=0.85, dmg=3,  gold=8,  color=RED),
     "boss":   dict(ch="M", hp=160, spd=0.6,  dmg=10, gold=40, color=MAG),
 }
+HP_GROWTH = 1.25             # enemy HP multiplier per wave
 
 # permanent upgrades bought with gems: id, name, description, base cost, max level
 META_UPGRADES = [
@@ -70,7 +79,7 @@ TITLE = [
 
 # ------------------------------------------------------------------ save data
 def load_meta():
-    data = {"gems": 0, "best": 0, "runs": 0, "up": {}}
+    data = {"gems": 0, "best": 0, "best_level": 0, "runs": 0, "up": {}}
     try:
         with open(SAVE_FILE) as f:
             data.update(json.load(f))
@@ -126,9 +135,9 @@ PERKS = [
 
 # ------------------------------------------------------------------ entities
 class Enemy:
-    def __init__(self, kind, wave, speed_mult):
+    def __init__(self, kind, wave, speed_mult, path):
         t = ENEMIES[kind]
-        scale = 1.25 ** (wave - 1)
+        scale = HP_GROWTH ** (wave - 1)
         self.kind = kind
         self.ch = t["ch"]
         self.color = t["color"]
@@ -136,9 +145,16 @@ class Enemy:
         self.spd = t["spd"] * speed_mult
         self.dmg = t["dmg"]
         self.gold = t["gold"]
+        self.path = path
         self.pos = 0.0
         self.slow_t = 0.0
         self.leaked = False
+
+    def cell(self):
+        return self.path[int(self.pos)]
+
+    def left(self):
+        return len(self.path) - 1 - self.pos
 
 
 class Tower:
@@ -163,6 +179,9 @@ class Run:
         self.mods = dict(enemy_speed=1.0, range=0.0, struct_cost=STRUCT_COST, bounty=0,
                          splash=0.0, slow=0.0,
                          wdmg={k: 1.0 for k in WEAPONS}, wcd={k: 1.0 for k in WEAPONS})
+        # bigger maps have longer paths, so enemies walk a bit faster there
+        self.map_speed = min(1.6, max(1.0, ((W + H) / 44.0) ** 0.5))
+        self.level = 1
         self.wave = 0
         self.cleared = 0
         self.kills = 0
@@ -172,48 +191,146 @@ class Run:
         self.spawn_queue = []
         self.spawn_t = 0.0
         self.spawn_gap = 1.0
+        self.spawn_i = 0
         self.effects = []
         self.speed = 1
-        self.state = "build"   # build, wave, perk, paused, confirm, over
+        self.state = "build"   # build, wave, perk, levelup, paused, confirm, over
         self.prev_state = "build"
         self.confirm = None
         self.offer = []
         self.wave_msg = ""
+        self.level_info = []
         self.done = False
         self.final = None
-        self.make_path()
-        self.cursor = [W // 3, max(1, self.castle_y - 2)]
+        self.paths = []
+        self.path_set = set()
+        self.newest = set()
+        self.new_path_t = 0.0
+        self.place_castle()
+        self.add_path()
+        self.cursor = list(self.near_free(self.paths[0][len(self.paths[0]) // 2]))
         self.msg = "Build a structure (B), mount a weapon (1-4), then press N to start."
 
     # -------------------------------------------------------------- map
-    def make_path(self):
+    def place_castle(self):
         W, H = self.W, self.H
-        end_x = W - 3
-        x, y = 0, random.randint(2, H - 3)
-        path = [(x, y)]
-        while x < end_x:
-            for _ in range(random.randint(2, 5)):
-                if x >= end_x:
-                    break
-                x += 1
-                path.append((x, y))
-            if x >= end_x:
-                break
-            ny = random.randint(1, H - 2)
-            while abs(ny - y) < 2:
-                ny = random.randint(1, H - 2)
-            step = 1 if ny > y else -1
-            while y != ny:
-                y += step
-                path.append((x, y))
-        target = min(max(y, 2), H - 3)
-        while y != target:
-            y += 1 if target > y else -1
-            path.append((x, y))
-        self.path = path
-        self.path_set = set(path)
-        self.castle_y = y
-        self.castle_cells = {(cx, cy) for cx in (W - 2, W - 1) for cy in (y - 1, y, y + 1)}
+        cy = random.randint(max(3, H // 4), min(H - 4, 3 * H // 4))
+        self.castle_y = cy
+        self.castle_cells = {(cx, y) for cx in (W - 2, W - 1) for y in (cy - 1, cy, cy + 1)}
+        # grass cells touching the castle where a path can end, in order of use
+        self.entries = [(W - 3, cy), (W - 2, cy - 2), (W - 2, cy + 2),
+                        (W - 3, cy - 1), (W - 3, cy + 1), (W - 1, cy - 2), (W - 1, cy + 2)]
+
+    def gen_path(self, start, end):
+        """Random wiggly path made of straight segments between waypoints."""
+        W, H = self.W, self.H
+        (sx, sy), (ex, ey) = start, end
+        k = random.randint(2, 3) + (W + H) // 40
+        pts = []
+        for i in range(1, k + 1):
+            t = i / (k + 1)
+            px = sx + (ex - sx) * t + random.uniform(-0.3, 0.3) * W
+            py = sy + (ey - sy) * t + random.uniform(-0.45, 0.45) * H
+            pts.append((int(min(max(px, 1), W - 5)), int(min(max(py, 1), H - 2))))
+        pts.append(end)
+        cells = [start]
+        for bx, by in pts:
+            x, y = cells[-1]
+            if random.random() < 0.5:
+                while x != bx:
+                    x += 1 if bx > x else -1
+                    cells.append((x, y))
+                while y != by:
+                    y += 1 if by > y else -1
+                    cells.append((x, y))
+            else:
+                while y != by:
+                    y += 1 if by > y else -1
+                    cells.append((x, y))
+                while x != bx:
+                    x += 1 if bx > x else -1
+                    cells.append((x, y))
+        # cut out loops so the path never visits a cell twice
+        out, index = [], {}
+        for c in cells:
+            if c in index:
+                cut = index[c]
+                for d in out[cut + 1:]:
+                    del index[d]
+                del out[cut + 1:]
+            else:
+                index[c] = len(out)
+                out.append(c)
+        if any(c in self.castle_cells for c in out):
+            return None
+        return out
+
+    def score_path(self, cells):
+        idx = {c: i for i, c in enumerate(cells)}
+        towers = overlap = touch = beside = 0
+        for i, (x, y) in enumerate(cells):
+            if (x, y) in self.towers:
+                towers += 1
+            if (x, y) in self.path_set:
+                overlap += 1
+            for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                j = idx.get(n)
+                if j is not None and abs(j - i) > 1:
+                    touch += 1
+                if n in self.path_set and (x, y) not in self.path_set:
+                    beside += 1
+        target = 1.3 * (self.W + self.H)
+        return towers * 1000 + overlap * 4 + touch * 3 + beside + abs(len(cells) - target) * 0.5
+
+    def add_path(self):
+        """Open one more enemy path to the castle. Returns (edge, towers crushed, refund)."""
+        W, H = self.W, self.H
+        edge = EDGES[len(self.paths) % len(EDGES)]
+        used = {p[-1] for p in self.paths}
+        free_entries = [e for e in self.entries if e not in used]
+        end = free_entries[0] if free_entries else random.choice(self.entries)
+        starts = [p[0] for p in self.paths]
+        best = None
+        for attempt in range(250):
+            if edge == "left":
+                start = (0, random.randint(1, H - 2))
+            elif edge == "top":
+                start = (random.randint(0, max(1, W - 8)), 0)
+            else:
+                start = (random.randint(0, max(1, W - 8)), H - 1)
+            if start in self.path_set or start in self.towers:
+                continue
+            if attempt < 200 and any(abs(start[0] - s[0]) + abs(start[1] - s[1]) < 6 for s in starts):
+                continue
+            cells = self.gen_path(start, end)
+            if not cells:
+                continue
+            sc = self.score_path(cells)
+            if best is None or sc < best[0]:
+                best = (sc, cells)
+        if best is None:   # practically impossible, but never leave the map without a path
+            cy = self.castle_y
+            best = (0, [(x, cy) for x in range(0, W - 2)])
+        cells = best[1]
+        crushed = [c for c in cells if c in self.towers]
+        refund = sum(self.towers[c].invested for c in crushed)
+        for c in crushed:
+            del self.towers[c]
+        self.gold += refund
+        self.paths.append(cells)
+        self.path_set |= set(cells)
+        self.newest = set(cells)
+        self.new_path_t = 6.0
+        return edge, len(crushed), refund
+
+    def near_free(self, c):
+        for r in range(1, 4):
+            for dx in range(-r, r + 1):
+                for dy in range(-r, r + 1):
+                    n = (c[0] + dx, c[1] + dy)
+                    if 0 <= n[0] < self.W and 0 <= n[1] < self.H and self.free(n):
+                        return n
+        return c
 
     def free(self, c):
         return c not in self.path_set and c not in self.castle_cells and c not in self.towers
@@ -236,10 +353,14 @@ class Run:
     def upgrade_cost(self, t):
         return int(WEAPONS[t.kind]["cost"] * 0.75 * t.level)
 
-    # -------------------------------------------------------------- waves
+    def wave_in_level(self):
+        return (self.wave - 1) % WAVES_PER_LEVEL + 1 if self.wave else 0
+
+    # -------------------------------------------------------------- waves & levels
     def start_wave(self):
         self.wave += 1
         n = self.wave
+        boss = self.wave_in_level() == WAVES_PER_LEVEL
         q = []
         for _ in range(5 + 2 * n):
             r = random.random()
@@ -249,13 +370,14 @@ class Run:
                 q.append("runner")
             else:
                 q.append("grunt")
-        if n % 5 == 0:
+        if boss:
             q.append("boss")
         self.spawn_queue = q
-        self.spawn_gap = max(0.35, 0.9 - 0.04 * n)
+        self.spawn_gap = max(0.3, 0.9 - 0.04 * n) / (1 + 0.1 * (len(self.paths) - 1))
         self.spawn_t = 0.0
         self.state = "wave"
-        self.msg = f"Wave {n} incoming! ({len(q)} enemies{', BOSS!' if n % 5 == 0 else ''})"
+        self.msg = (f"Level {self.level}, wave {self.wave_in_level()}/{WAVES_PER_LEVEL} incoming! "
+                    f"({len(q)} enemies{', BOSS!' if boss else ''})")
 
     def wave_cleared(self):
         bonus = 8 + 2 * self.wave
@@ -265,15 +387,48 @@ class Run:
         self.cleared = self.wave
         pool = [p for p in PERKS if p[3] is None or p[3] in self.unlocked]
         self.offer = random.sample(pool, 3)
-        self.wave_msg = f"WAVE {self.wave} CLEARED!   +{bonus} gold   +{g:.1f} gems"
+        self.wave_msg = (f"LEVEL {self.level} - WAVE {self.wave_in_level()}/{WAVES_PER_LEVEL} CLEARED!"
+                         f"   +{bonus} gold   +{g:.1f} gems")
         self.state = "perk"
+
+    def level_complete(self):
+        lv = self.level
+        gold = 40 + 20 * lv
+        gems = 2 * lv * self.gem_mult
+        heal = min(self.max_hp - self.hp, self.max_hp // 4)
+        self.gold += gold
+        self.gems_raw += gems
+        self.hp += heal
+        nxt = EDGES[len(self.paths) % len(EDGES)]
+        self.level_info = [
+            f"*** LEVEL {lv} COMPLETE! ***", "",
+            (f"castle repaired +{heal}" if heal else "castle at full health") +
+            f"    +{gold} gold    +{gems:.1f} gems", "",
+            f"LEVEL {lv + 1}: a new path opens from the {EDGE_NAMES[nxt]}!",
+            f"Enemies will attack from {len(self.paths) + 1} directions.", "",
+            "ENTER  start next level",
+            "K      blow up the castle and cash out",
+        ]
+        self.meta["best_level"] = max(self.meta.get("best_level", 0), lv)
+        save_meta(self.meta)
+        self.state = "levelup"
+
+    def next_level(self):
+        self.level += 1
+        edge, crushed, refund = self.add_path()
+        self.msg = f"LEVEL {self.level}! A new path opened from the {EDGE_NAMES[edge]} (blinking red)."
+        if crushed:
+            self.msg += f" It crushed {crushed} tower(s): +{refund} gold refunded."
+        self.state = "build"
 
     def end(self, manual):
         bonus = self.gold // 25 if manual else 0
         gems = int(self.gems_raw) + bonus
-        self.final = dict(manual=manual, gems=gems, bonus=bonus, waves=self.cleared, kills=self.kills)
+        self.final = dict(manual=manual, gems=gems, bonus=bonus, waves=self.cleared,
+                          kills=self.kills, level=self.level)
         self.meta["gems"] += gems
         self.meta["best"] = max(self.meta.get("best", 0), self.cleared)
+        self.meta["best_level"] = max(self.meta.get("best_level", 0), self.level)
         self.meta["runs"] = self.meta.get("runs", 0) + 1
         save_meta(self.meta)
         self.state = "over"
@@ -281,18 +436,22 @@ class Run:
     # -------------------------------------------------------------- simulation
     def update(self, dt):
         self.effects = [[x, y, ch, col, t - dt] for x, y, ch, col, t in self.effects if t - dt > 0]
+        self.new_path_t = max(0.0, self.new_path_t - dt)
         if self.state != "wave":
             return
         self.spawn_t -= dt
         if self.spawn_queue and self.spawn_t <= 0:
-            self.enemies.append(Enemy(self.spawn_queue.pop(0), self.wave, self.mods["enemy_speed"]))
+            path = self.paths[self.spawn_i % len(self.paths)]
+            self.spawn_i += 1
+            speed = self.mods["enemy_speed"] * self.map_speed
+            self.enemies.append(Enemy(self.spawn_queue.pop(0), self.wave, speed, path))
             self.spawn_t = self.spawn_gap
 
-        last = len(self.path) - 1
         for e in self.enemies:
             spd = e.spd * (0.5 if e.slow_t > 0 else 1.0)
             e.slow_t = max(0.0, e.slow_t - dt)
             e.pos += spd * dt
+            last = len(e.path) - 1
             if e.pos >= last:
                 e.pos = last
                 e.hp = 0
@@ -314,8 +473,8 @@ class Run:
             for e in self.enemies:
                 if e.hp <= 0:
                     continue
-                ex, ey = self.path[int(e.pos)]
-                if (ex - x) ** 2 + (ey - y) ** 2 <= r2 and (target is None or e.pos > target.pos):
+                ex, ey = e.cell()
+                if (ex - x) ** 2 + (ey - y) ** 2 <= r2 and (target is None or e.left() < target.left()):
                     target = e
             if target:
                 t.cd = s["cd"]
@@ -343,12 +502,12 @@ class Run:
             self.wave_cleared()
 
     def fire(self, x, y, t, s, target):
-        tx, ty = self.path[int(target.pos)]
+        tx, ty = target.cell()
         if t.kind == "cannon":
             for e in self.enemies:
                 if e.hp <= 0:
                     continue
-                ex, ey = self.path[int(e.pos)]
+                ex, ey = e.cell()
                 if (ex - tx) ** 2 + (ey - ty) ** 2 <= s["splash"] ** 2:
                     e.hp -= s["dmg"]
             for dx, dy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)):
@@ -364,6 +523,10 @@ class Run:
             self.effects.append([tx, ty, "x", WEAPONS[t.kind]["color"], 0.1])
 
     # -------------------------------------------------------------- input
+    def click(self, x, y):
+        if self.state in ("build", "wave") and 0 <= x < self.W and 0 <= y < self.H:
+            self.cursor = [x, y]
+
     def key(self, k):
         st = self.state
         if st == "over":
@@ -387,6 +550,17 @@ class Run:
                 fn(self)
                 self.msg = f"Blessing: {name} - {desc}. Press N for the next wave."
                 self.state = "build"
+                if self.wave % WAVES_PER_LEVEL == 0:
+                    self.level_complete()
+            return
+        if k in (ord("q"), ord("Q"), ord("k"), ord("K")) and st != "paused":
+            self.prev_state = st
+            self.confirm = "destroy" if k in (ord("k"), ord("K")) else "quit"
+            self.state = "confirm"
+            return
+        if st == "levelup":
+            if k in (10, 13, curses.KEY_ENTER, ord(" ")):
+                self.next_level()
             return
         if k in (ord("p"), ord("P")):
             if st == "paused":
@@ -396,23 +570,17 @@ class Run:
             return
         if st == "paused":
             return
-        if k in (ord("q"), ord("Q"), ord("k"), ord("K")):
-            self.prev_state = st
-            self.confirm = "destroy" if k in (ord("k"), ord("K")) else "quit"
-            self.state = "confirm"
-            return
 
         cx, cy = self.cursor
-        if k in (curses.KEY_LEFT, ord("a"), ord("A")):
-            self.cursor[0] = max(0, cx - 1)
-        elif k in (curses.KEY_RIGHT, ord("d"), ord("D")):
-            self.cursor[0] = min(self.W - 1, cx + 1)
-        elif k in (curses.KEY_UP, ord("w"), ord("W")):
-            self.cursor[1] = max(0, cy - 1)
-        elif k in (curses.KEY_DOWN, ord("s"), ord("S")):
-            self.cursor[1] = min(self.H - 1, cy + 1)
+        moves = {curses.KEY_LEFT: (-1, 0), ord("a"): (-1, 0), ord("A"): (-5, 0),
+                 curses.KEY_RIGHT: (1, 0), ord("d"): (1, 0), ord("D"): (5, 0),
+                 curses.KEY_UP: (0, -1), ord("w"): (0, -1), ord("W"): (0, -5),
+                 curses.KEY_DOWN: (0, 1), ord("s"): (0, 1), ord("S"): (0, 5)}
+        if k in moves:
+            dx, dy = moves[k]
+            self.cursor = [min(self.W - 1, max(0, cx + dx)), min(self.H - 1, max(0, cy + dy))]
         elif k in (ord("f"), ord("F")):
-            self.speed = 2 if self.speed == 1 else 1
+            self.speed = self.speed % 3 + 1
             self.msg = f"Game speed x{self.speed}"
         elif k in (ord("n"), ord("N")):
             if st == "build":
@@ -532,6 +700,14 @@ class App:
 
     # -------------------------------------------------------------- input
     def key(self, k):
+        if k == curses.KEY_MOUSE:
+            try:
+                _, mx, my, _, _ = curses.getmouse()
+            except curses.error:
+                return
+            if self.state == "run" and mx >= MAP_X:
+                self.run.click((mx - MAP_X) // 2, my - MAP_Y)
+            return
         if self.state == "menu":
             if k in (ord("q"), ord("Q")):
                 self.running = False
@@ -561,9 +737,10 @@ class App:
         self.menu_msg = f"Bought {name}!"
 
     def new_run(self):
+        # the map fills the whole terminal, minus the info panel on the right
         h, w = self.scr.getmaxyx()
-        W = max(18, min(36, (w - 30) // 2))
-        H = max(12, min(20, h - 5))
+        W = max(19, min(120, (w - MAP_X - 3 - PANEL_W) // 2))
+        H = max(14, min(70, h - MAP_Y - 2))
         self.run = Run(W, H, self.meta)
         self.state = "run"
 
@@ -584,15 +761,16 @@ class App:
 
     def draw_menu(self):
         m = self.meta
-        y = 1
+        h = self.scr.getmaxyx()[0]
+        y = max(1, (h - 24) // 2)
         for line in TITLE:
             self.center(y, line, self.color(CASTLE) | curses.A_BOLD)
             y += 1
         y += 1
         self.center(y, "a roguelike tower defense  -  protect the keep, keep the gems", curses.A_DIM)
         y += 2
-        self.center(y, f"GEMS: {m['gems']}    best wave: {m.get('best', 0)}    runs: {m.get('runs', 0)}",
-                    self.color(GEM) | curses.A_BOLD)
+        self.center(y, f"GEMS: {m['gems']}    best: level {m.get('best_level', 0)}, wave {m.get('best', 0)}"
+                       f"    runs: {m.get('runs', 0)}", self.color(GEM) | curses.A_BOLD)
         y += 2
         self.center(y, "-- GEM SHOP (permanent) --", curses.A_BOLD)
         y += 1
@@ -613,16 +791,19 @@ class App:
         if self.menu_msg:
             self.center(y, self.menu_msg, self.color(GOLD))
         y += 2
+        self.center(y, f"each level = {WAVES_PER_LEVEL} waves, every new level opens one more path to your castle",
+                    curses.A_DIM)
+        y += 2
         blink = curses.A_BOLD if int(self.anim * 2) % 2 else 0
         self.center(y, "ENTER  start a new run        1-6  buy upgrade        Q  quit", blink)
 
     def draw_run(self):
         r = self.run
-        mx, my = 1, 2
+        mx, my = MAP_X, MAP_Y
         W, H = r.W, r.H
 
         # header
-        hdr = f" ASCII KEEP   wave {r.wave}   kills {r.kills}"
+        hdr = f" ASCII KEEP   level {r.level}   wave {r.wave_in_level()}/{WAVES_PER_LEVEL}   kills {r.kills}"
         self.put(0, 0, hdr, curses.A_BOLD)
         self.put(0, len(hdr) + 3, f"gem bank {self.meta['gems']}", self.color(GEM))
 
@@ -638,6 +819,12 @@ class App:
         ct = r.towers.get(cur)
         rng2 = r.stats(ct)["rng"] ** 2 if ct and ct.kind else -1
 
+        starts = {}
+        for p in r.paths:
+            sx, sy = p[0]
+            starts[p[0]] = ">>" if sx == 0 else ("vv" if sy == 0 else "^^")
+        blink_new = r.new_path_t > 0 and int(self.anim * 4) % 2 == 0
+
         grass = ["  ", " .", "  ", " '", "  ", "  ", ". ", "  "]
         for y in range(H):
             for x in range(W):
@@ -646,8 +833,10 @@ class App:
                     continue
                 if c in r.path_set:
                     s, a = ("::", self.color(PATH))
-                    if x == 0:
-                        s, a = (">>", self.color(RED) | curses.A_BOLD)
+                    if c in starts:
+                        s, a = (starts[c], self.color(RED) | curses.A_BOLD)
+                    elif blink_new and c in r.newest:
+                        a = self.color(RED) | curses.A_BOLD | curses.A_REVERSE
                 elif c in r.towers:
                     t = r.towers[c]
                     if t.kind:
@@ -672,7 +861,7 @@ class App:
 
         # enemies
         for e in r.enemies:
-            x, y = r.path[int(e.pos)]
+            x, y = e.cell()
             a = self.color(e.color) | curses.A_BOLD
             if e.slow_t > 0:
                 a = self.color(C_FROST) | curses.A_BOLD
@@ -688,8 +877,9 @@ class App:
         # cursor
         x, y = r.cursor
         if int(self.anim * 4) % 2 == 0 or r.state != "wave":
-            self.put(my + y, mx + 2 * x, "<>" if r.free(cur) else "", self.color(CURSOR) | curses.A_REVERSE)
-            if not r.free(cur):
+            if r.free(cur):
+                self.put(my + y, mx + 2 * x, "<>", self.color(CURSOR) | curses.A_REVERSE)
+            else:
                 self.put(my + y, mx + 2 * x - 1, "{", self.color(CURSOR) | curses.A_BOLD)
                 self.put(my + y, mx + 2 * x + 2, "}", self.color(CURSOR) | curses.A_BOLD)
 
@@ -703,6 +893,8 @@ class App:
                 lines.append(f" {i + 1}) {name:<13} {desc}")
             lines += ["", "press 1, 2 or 3"]
             self.box(lines, self.color(GOLD) | curses.A_BOLD)
+        elif r.state == "levelup":
+            self.box(r.level_info, self.color(C_BOW) | curses.A_BOLD)
         elif r.state == "paused":
             self.box(["      PAUSED      ", "", "  P to continue  "], curses.A_BOLD)
         elif r.state == "confirm":
@@ -718,7 +910,8 @@ class App:
         elif r.state == "over":
             f = r.final
             title = "*** KABOOM! You destroyed your own keep ***" if f["manual"] else "*** THE KEEP HAS FALLEN ***"
-            lines = [title, "", f"waves survived: {f['waves']}", f"enemies slain:  {f['kills']}",
+            lines = [title, "", f"reached level:  {f['level']}", f"waves survived: {f['waves']}",
+                     f"enemies slain:  {f['kills']}",
                      f"gems kept:      {f['gems']}" + (f"  (incl. {f['bonus']} from gold)" if f["bonus"] else ""),
                      f"gem bank now:   {self.meta['gems']}", "", "ENTER - back to the gem shop"]
             self.box(lines, self.color(RED if not f["manual"] else GOLD) | curses.A_BOLD)
@@ -729,11 +922,14 @@ class App:
         bar_w = 10
         filled = int(bar_w * r.hp / max(1, r.max_hp))
         phase = {"build": "BUILD PHASE", "wave": "WAVE ACTIVE", "perk": "WAVE CLEARED",
-                 "paused": "PAUSED", "confirm": "...", "over": "GAME OVER"}[r.state]
-        self.put(y, px, f"WAVE {r.wave}  {phase}", curses.A_BOLD); y += 1
+                 "levelup": "LEVEL CLEARED", "paused": "PAUSED", "confirm": "...", "over": "GAME OVER"}[r.state]
+        self.put(y, px, f"LEVEL {r.level}", self.color(CASTLE) | curses.A_BOLD)
+        self.put(y, px + 9, f"wave {r.wave_in_level()}/{WAVES_PER_LEVEL}", curses.A_BOLD); y += 1
+        self.put(y, px, phase, curses.A_BOLD); y += 1
+        info = f"paths {len(r.paths)}   speed x{r.speed}"
         if r.state == "wave":
-            self.put(y, px, f"left: {len(r.spawn_queue) + len(r.enemies)}   speed x{r.speed}", curses.A_DIM)
-        y += 1
+            info += f"   left {len(r.spawn_queue) + len(r.enemies)}"
+        self.put(y, px, info, curses.A_DIM); y += 1
         self.put(y, px, "CASTLE ", curses.A_BOLD)
         self.put(y, px + 7, "#" * filled, self.color(RED if filled < 4 else C_BOW) | curses.A_BOLD)
         self.put(y, px + 7 + filled, "-" * (bar_w - filled), curses.A_DIM)
@@ -778,9 +974,11 @@ class App:
             row("U", "upgrade", "-", False)
         row("X", "sell", f"+{t.invested // 2}g" if t else "-", bool(t))
         y += 1
-        for line in ("N  next wave", "F  fast  P pause", "K  destroy castle", "Q  quit run",
-                     "arrows/WASD move"):
-            self.put(y, px, line, curses.A_DIM)
+        bottom = py + r.H + 1          # don't run into the message line
+        for line in ("N next wave   F speed x1-3", "P pause  K boom  Q quit",
+                     "move: arrows/wasd/mouse", "shift+WASD jumps 5 tiles"):
+            if y <= bottom:
+                self.put(y, px, line, curses.A_DIM)
             y += 1
 
 
@@ -788,6 +986,11 @@ def main(scr):
     curses.curs_set(0)
     scr.nodelay(True)
     scr.keypad(True)
+    try:
+        curses.mousemask(curses.BUTTON1_PRESSED | curses.BUTTON1_CLICKED)
+        curses.mouseinterval(0)
+    except (curses.error, AttributeError):
+        pass
     if curses.has_colors():
         curses.start_color()
         try:
