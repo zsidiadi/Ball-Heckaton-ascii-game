@@ -26,7 +26,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 
 MIN_W, MIN_H = 70, 22
 MAP_X, MAP_Y = 1, 2          # screen position of the top-left map cell
@@ -59,10 +59,23 @@ WEAPONS = {
                    poison=(2.0, 3.0), info="poison cloud, ignores armor"),
     "sniper": dict(key="7", name="Sniper", ch="S", cost=70, dmg=22.0, rng=7.0, cd=2.60, color=STRUCT,   unlock=12,
                    strong=True, info="huge range, hits the toughest"),
-    "tesla":  dict(key="8", name="Tesla",  ch="T", cost=65, dmg=4.0,  rng=3.5, cd=1.00, color=C_GUN,    unlock=15,
-                   chain=4, info="lightning jumps between enemies"),
+    "lightning": dict(key="8", name="Lightning", short="Lightn", ch="Z", cost=65, dmg=4.0, rng=3.5, cd=1.00,
+                      color=C_GUN, unlock=15, chain=4, falloff=0.75,
+                      info="chains to 4 enemies, 75% dmg per jump"),
 }
-WEAPON_ORDER = ["bow", "gun", "cannon", "frost", "flame", "poison", "sniper", "tesla"]
+WEAPON_ORDER = ["bow", "gun", "cannon", "frost", "flame", "poison", "sniper", "lightning"]
+
+# things you place without a structure. "where" = grass or path. Keys are letters.
+BUILDINGS = {
+    "goldmine": dict(key="g", name="Gold Mine", short="GoldMn", ch="$", cost=60, color=GOLD, unlock=8,
+                     where="grass", income=12, income_lv=8, info="+gold after every wave, no damage"),
+    "mine":     dict(key="m", name="Mine", short="Mine", ch="*", cost=25, color=RED, unlock=6,
+                     where="path", dmg=24, radius=1.5, info="on the path, explodes once"),
+    "tar":      dict(key="t", name="Tar", short="Tar", ch="~", cost=30, color=C_FROST, unlock=5,
+                     where="path", info="on the path, slows enemies 50%"),
+}
+BUILDING_ORDER = ["goldmine", "mine", "tar"]
+ITEMS = {**WEAPONS, **BUILDINGS}
 
 ENEMIES = {
     "grunt":  dict(ch="o", hp=8,   spd=1.5,  dmg=1,  gold=3,  color=RED),
@@ -92,7 +105,7 @@ META_UPGRADES = [
     ("chest",  "War Chest",       "+20 starting gold",        3, 10),
     ("sharp",  "Sharpened Steel", "+10% weapon damage",       4, 10),
     ("magnet", "Gem Magnet",      "+25% gems earned",         5, 5),
-] + sorted([(k, f"Unlock {w['name']}", w["info"], w["unlock"], 1) for k, w in WEAPONS.items() if w["unlock"]],
+] + sorted([(k, f"Unlock {w['name']}", w["info"], w["unlock"], 1) for k, w in ITEMS.items() if w["unlock"]],
            key=lambda u: u[3])
 QUICK_KEYS = "1234567890"
 
@@ -134,6 +147,9 @@ def load_meta():
             data.update(json.load(f))
     except (OSError, ValueError):
         pass
+    up = data["up"]
+    if "tesla" in up:                      # 0.4/0.5 saves: Tesla was renamed to Lightning
+        up["lightning"] = max(up.get("lightning", 0), up.pop("tesla"))
     return data
 
 
@@ -159,7 +175,7 @@ def p_frost(r): r.mods["wdmg"]["frost"] *= 1.5; r.mods["slow"] += 0.6
 def p_flame(r): r.mods["wdmg"]["flame"] *= 1.4
 def p_poison(r): r.mods["wdmg"]["poison"] *= 1.5
 def p_sniper(r): r.mods["wdmg"]["sniper"] *= 1.35
-def p_tesla(r): r.mods["chain"] += 2
+def p_lightning(r): r.mods["chain"] += 2
 def p_range(r): r.mods["range"] += 0.5
 def p_tar(r): r.mods["enemy_speed"] *= 0.9
 def p_bounty(r): r.mods["bounty"] += 1
@@ -173,11 +189,11 @@ def p_steel(r):
 
 
 def p_armory(r):
-    locked = [k for k in WEAPON_ORDER if k not in r.unlocked]
+    locked = [k for k in WEAPON_ORDER + BUILDING_ORDER if k not in r.unlocked]
     k = random.choice(locked)
     r.unlocked.add(k)
-    w = WEAPONS[k]
-    return f"Blessing: Armory - the {w['name']} ({w['key']}) is unlocked for this run!"
+    w = ITEMS[k]
+    return f"Blessing: Armory - the {w['name']} ({w['key'].upper()}) is unlocked for this run!"
 
 
 # name, description, function, requirement (None = always, weapon id = must be unlocked,
@@ -192,10 +208,10 @@ PERKS = [
     ("Pyromaniac",   "Flamers +40% damage",             p_flame,  "flame"),
     ("Toxicology",   "Poison +50% damage",              p_poison, "poison"),
     ("Deadeye",      "Snipers +35% damage",             p_sniper, "sniper"),
-    ("Overcharge",   "Tesla lightning +2 jumps",        p_tesla,  "tesla"),
-    ("Armory",       "unlock a random weapon this run", p_armory, "locked"),
+    ("Overcharge",   "Lightning +2 jumps",              p_lightning, "lightning"),
+    ("Armory",       "unlock a random item this run",   p_armory, "locked"),
     ("Eagle Eye",    "all weapons +0.5 range",          p_range,  None),
-    ("Tar Pits",     "new enemies move 10% slower",     p_tar,    None),
+    ("Heavy Mud",    "new enemies move 10% slower",     p_tar,    None),
     ("Bounty",       "+1 gold per kill",                p_bounty, None),
     ("Cheap Bricks", "structures cost half",            p_bricks, None),
     ("Gem Shard",    "+2 gems right now",               p_gems,   None),
@@ -216,7 +232,7 @@ def special_text(kind, s):
     if w.get("strong"):
         return "toughest"
     if "chain" in w:
-        return f"chain x{s['chain']}"
+        return f"{s['chain']}x {int(w['falloff'] * 100)}%"
     return ""
 
 
@@ -271,7 +287,7 @@ class Run:
         self.gold = 60 + 20 * up.get("chest", 0)
         self.dmg_mult = 1 + 0.10 * up.get("sharp", 0)
         self.gem_mult = 1 + 0.25 * up.get("magnet", 0)
-        self.unlocked = {k for k, w in WEAPONS.items() if not w["unlock"] or up.get(k)}
+        self.unlocked = {k for k, w in ITEMS.items() if not w["unlock"] or up.get(k)}
         self.mods = dict(enemy_speed=1.0, range=0.0, struct_cost=STRUCT_COST, bounty=0,
                          splash=0.0, slow=0.0, chain=0,
                          wdmg={k: 1.0 for k in WEAPONS}, wcd={k: 1.0 for k in WEAPONS})
@@ -282,7 +298,8 @@ class Run:
         self.cleared = 0
         self.kills = 0
         self.gems_raw = 0.0
-        self.towers = {}
+        self.towers = {}          # grass tiles: structures, weapons and gold mines
+        self.traps = {}           # path tiles: "mine" or "tar"
         self.enemies = []
         self.spawn_queue = []
         self.spawn_t = 0.0
@@ -455,7 +472,15 @@ class Run:
         return self.stats_for(t.kind, t.level)
 
     def upgrade_cost(self, t):
-        return int(WEAPONS[t.kind]["cost"] * 0.75 * t.level)
+        return int(ITEMS[t.kind]["cost"] * 0.75 * t.level)
+
+    def income(self, t):
+        b = BUILDINGS["goldmine"]
+        return b["income"] + b["income_lv"] * (t.level - 1)
+
+    def mine_damage(self, wave=None):
+        wave = wave or max(1, self.wave + (1 if self.state != "wave" else 0))
+        return BUILDINGS["mine"]["dmg"] * HP_GROWTH ** (wave - 1) * self.dmg_mult
 
     def wave_in_level(self):
         return (self.wave - 1) % WAVES_PER_LEVEL + 1 if self.wave else 0
@@ -506,16 +531,18 @@ class Run:
         self.enemies.append(e)
 
     def wave_cleared(self):
-        bonus = 8 + 2 * self.wave
+        mines = sum(self.income(t) for t in self.towers.values() if t.kind == "goldmine")
+        bonus = 8 + 2 * self.wave + mines
         self.gold += bonus
         g = (1 + self.wave // 10) * self.gem_mult
         self.gems_raw += g
         self.cleared = self.wave
-        has_locked = any(k not in self.unlocked for k in WEAPONS)
+        has_locked = any(k not in self.unlocked for k in ITEMS)
         pool = [p for p in PERKS if p[3] is None or p[3] in self.unlocked or (p[3] == "locked" and has_locked)]
         self.offer = random.sample(pool, 3)
         self.wave_msg = (f"LEVEL {self.level} - WAVE {self.wave_in_level()}/{WAVES_PER_LEVEL} CLEARED!"
-                         f"   +{bonus} gold   +{g:.1f} gems")
+                         f"   +{bonus} gold" + (f" ({mines} from gold mines)" if mines else "") +
+                         f"   +{g:.1f} gems")
         self.state = "perk"
 
     def level_complete(self):
@@ -575,6 +602,8 @@ class Run:
 
         summoned = []
         for e in self.enemies:
+            if self.traps.get(e.cell()) == "tar" and not e.no_slow:
+                e.slow_t = max(e.slow_t, 0.5)
             slowed = e.slow_t > 0 and not e.no_slow
             e.slow_t = max(0.0, e.slow_t - dt)
             if e.poison_t > 0:
@@ -594,8 +623,13 @@ class Run:
                     self.effects.append([c[0], c[1], "!", RED, 0.3])
         self.enemies += summoned
 
+        if "mine" in self.traps.values():
+            stepped = {e.cell() for e in self.enemies if e.hp > 0}
+            for c in [c for c, kind in self.traps.items() if kind == "mine" and c in stepped]:
+                self.explode(c)
+
         for (x, y), t in self.towers.items():
-            if not t.kind:
+            if t.kind not in WEAPONS:
                 continue
             t.cd -= dt
             if t.cd > 0:
@@ -661,6 +695,18 @@ class Run:
             self.msg = f"{e.name} IS ENRAGED!"
         return new
 
+    def explode(self, c):
+        """A mine goes off: damage everything within its blast radius, then it's gone."""
+        b = BUILDINGS["mine"]
+        dmg = self.mine_damage(self.wave)
+        for e in self.enemies:
+            if e.hp > 0 and dist2(e.cell(), c) <= b["radius"] ** 2:
+                self.hit(e, dmg)
+        del self.traps[c]
+        for dx, dy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)):
+            self.effects.append([c[0] + dx, c[1] + dy, "*", RED, 0.35])
+        self.msg = f"BOOM! A mine exploded for {dmg:.0f} damage."
+
     def hit(self, e, dmg):
         if e.armor:
             dmg = max(dmg * 0.2, dmg - e.armor)
@@ -694,7 +740,7 @@ class Run:
                 if not nxt:
                     break
                 cur = min(nxt, key=lambda e: dist2(e.cell(), (cx, cy)))
-                dmg *= 0.8
+                dmg *= w["falloff"]
         else:
             self.hit(target, s["dmg"])
             mark = "x"
@@ -784,6 +830,8 @@ class Run:
             self.upgrade()
         elif k in (ord("x"), ord("X")):
             self.sell()
+        elif 0 <= k < 256 and chr(k).lower() in [BUILDINGS[b]["key"] for b in BUILDING_ORDER]:
+            self.place_building(next(b for b in BUILDING_ORDER if BUILDINGS[b]["key"] == chr(k).lower()))
         else:
             for kind in WEAPON_ORDER:
                 if k == ord(WEAPONS[kind]["key"]):
@@ -795,7 +843,7 @@ class Run:
         if c in self.path_set or c in self.castle_cells:
             self.msg = "You can't build on the path or the castle."
         elif c in self.towers:
-            self.msg = "There's already a structure here. Add a weapon with 1-8."
+            self.msg = "This tile is taken. Add a weapon with 1-8, or U / X."
         elif self.gold < cost:
             self.msg = f"Not enough gold (need {cost})."
         else:
@@ -812,7 +860,7 @@ class Run:
         elif t is None:
             self.msg = f"Build a structure first (B, {self.mods['struct_cost']}g), then add the {w['name']}."
         elif t.kind:
-            self.msg = "This structure already has a weapon. U to upgrade, X to sell."
+            self.msg = "This tile already has something on it. U to upgrade, X to sell."
         elif self.gold < w["cost"]:
             self.msg = f"Not enough gold for a {w['name']} (need {w['cost']})."
         else:
@@ -821,8 +869,34 @@ class Run:
             t.invested += w["cost"]
             self.msg = f"{w['name']} mounted - {w['info']}."
 
+    def place_building(self, kind):
+        c = tuple(self.cursor)
+        b = BUILDINGS[kind]
+        if kind not in self.unlocked:
+            self.msg = f"{b['name']} is locked. Unlock it with gems in the UPGRADES menu."
+        elif b["where"] == "path" and c not in self.path_set:
+            self.msg = f"The {b['name']} goes on the enemy path (::)."
+        elif b["where"] == "path" and c in self.traps:
+            self.msg = "There's already something on this path tile. X to sell it."
+        elif b["where"] == "grass" and not self.free(c):
+            self.msg = f"The {b['name']} needs an empty grass tile."
+        elif self.gold < b["cost"]:
+            self.msg = f"Not enough gold for a {b['name']} (need {b['cost']})."
+        else:
+            self.gold -= b["cost"]
+            if b["where"] == "path":
+                self.traps[c] = kind
+            else:
+                t = Tower(b["cost"])
+                t.kind, t.level = kind, 1
+                self.towers[c] = t
+            self.msg = f"{b['name']} placed - {b['info']}."
+
     def upgrade(self):
         t = self.towers.get(tuple(self.cursor))
+        if tuple(self.cursor) in self.traps:
+            self.msg = "Mines and tar can't be upgraded."
+            return
         if not t or not t.kind:
             self.msg = "Nothing to upgrade here."
             return
@@ -836,11 +910,16 @@ class Run:
         self.gold -= cost
         t.level += 1
         t.invested += cost
-        self.msg = f"{WEAPONS[t.kind]['name']} upgraded to level {t.level}!"
+        self.msg = f"{ITEMS[t.kind]['name']} upgraded to level {t.level}!"
 
     def sell(self):
         c = tuple(self.cursor)
         t = self.towers.get(c)
+        if c in self.traps:
+            refund = BUILDINGS[self.traps.pop(c)]["cost"] // 2
+            self.gold += refund
+            self.msg = f"Removed it for {refund} gold."
+            return
         if not t:
             self.msg = "Nothing to sell here."
             return
@@ -1064,12 +1143,13 @@ class App:
         self.window("Upgrades")
         n = len(META_UPGRADES)
         gap = 2 if h >= n + 15 else 1
-        total = 3 + n + 1 + 3 * gap + 1
+        head_gap = 2 if h >= n + 12 else 1
+        total = 1 + head_gap + n + 1 + 1 + 3 * gap
         y = max(1, 1 + (h - 2 - total) // 2)
         self.center(y, "-=  U P G R A D E S  =-", self.color(CASTLE) | curses.A_BOLD)
         y += 1
         self.center(y, f"GEMS {m['gems']}", self.color(GEM) | curses.A_BOLD)
-        y += 2
+        y += head_gap
         row_w = 52
         left = max(2, (w - row_w) // 2)
         for i, (uid, name, desc, base, mx) in enumerate(META_UPGRADES):
@@ -1081,7 +1161,8 @@ class App:
             sel = i == self.shop_sel
             can = not maxed and m["gems"] >= cost
             attr = curses.A_REVERSE | curses.A_BOLD if sel else (curses.A_DIM if maxed else 0)
-            text = f" {QUICK_KEYS[i]}) {name:<16} {lvl:<8} {price:<10} "
+            qk = f"{QUICK_KEYS[i]})" if i < len(QUICK_KEYS) else "  "
+            text = f" {qk} {name:<16} {lvl:<8} {price:<10} "
             self.put(y, left, ">" if sel else " ", self.color(CASTLE) | curses.A_BOLD)
             self.put(y, left + 2, text, attr)
             self.zones.append((y, left, left + 2 + len(text), ("sel", i)))
@@ -1097,6 +1178,8 @@ class App:
         if uid in WEAPONS:
             wd = WEAPONS[uid]
             detail += f" ({wd['cost']}g  dmg {wd['dmg']:g}  rng {wd['rng']:g}  {1 / wd['cd']:.1f}/s)"
+        elif uid in BUILDINGS:
+            detail += f" ({BUILDINGS[uid]['cost']}g, key {BUILDINGS[uid]['key'].upper()})"
         elif lv < mx:
             detail += f"  -  next costs {meta_cost(base, lv)} gems"
         self.center(y, detail)
@@ -1105,7 +1188,7 @@ class App:
         y += gap
         self.button(y, "BACK", "back", selected=False, width=12)
         y += gap
-        self.center(y, f"up/down select   ENTER buy   {QUICK_KEYS[0]}-{QUICK_KEYS[n - 1]} quick buy   ESC back",
+        self.center(y, f"up/down select   ENTER buy   {QUICK_KEYS[0]}-{QUICK_KEYS[min(n, 10) - 1]} quick buy   ESC back",
                     curses.A_DIM)
 
     def draw_run(self):
@@ -1129,7 +1212,7 @@ class App:
         # range preview of the tower under the cursor
         cur = tuple(r.cursor)
         ct = r.towers.get(cur)
-        rng2 = r.stats(ct)["rng"] ** 2 if ct and ct.kind else -1
+        rng2 = r.stats(ct)["rng"] ** 2 if ct and ct.kind in WEAPONS else -1
 
         starts = {}
         for p in r.paths:
@@ -1145,14 +1228,17 @@ class App:
                     continue
                 if c in r.path_set:
                     s, a = ("::", self.color(PATH))
-                    if c in starts:
+                    trap = r.traps.get(c)
+                    if trap:
+                        s, a = (BUILDINGS[trap]["ch"] * 2, self.color(BUILDINGS[trap]["color"]) | curses.A_BOLD)
+                    elif c in starts:
                         s, a = (starts[c], self.color(RED) | curses.A_BOLD)
                     elif blink_new and c in r.newest:
                         a = self.color(RED) | curses.A_BOLD | curses.A_REVERSE
                 elif c in r.towers:
                     t = r.towers[c]
                     if t.kind:
-                        w = WEAPONS[t.kind]
+                        w = ITEMS[t.kind]
                         s, a = (w["ch"] + str(t.level), self.color(w["color"]) | curses.A_REVERSE | curses.A_BOLD)
                     else:
                         s, a = ("[]", self.color(STRUCT) | curses.A_BOLD)
@@ -1212,11 +1298,16 @@ class App:
         self.draw_overlay()
 
     def draw_panel(self, px, py):
-        """Info + build menu on the right. Everything fits in PANEL_W (24) columns."""
+        """Info + build menu on the right, within PANEL_W (24) columns.
+        Rows marked with a drop rank are hidden (highest rank first) when the terminal is too short."""
         r = self.run
         bottom = py + r.H + 1                  # don't run into the message line
-        rows = []                              # list of lists of (text, attr, x offset)
+        rows = []                              # (list of (text, attr, x offset), drop rank or None)
         bold, dim = curses.A_BOLD, curses.A_DIM
+        gold_c = self.color(GOLD)
+
+        def add(items, drop=None):
+            rows.append((items, drop))
 
         phase = {"build": "BUILD PHASE", "wave": "WAVE ACTIVE", "perk": "WAVE CLEARED",
                  "levelup": "LEVEL CLEARED", "paused": "PAUSED", "confirm": "...", "over": "GAME OVER"}[r.state]
@@ -1225,82 +1316,106 @@ class App:
         bar_w = 8
         filled = max(0, int(bar_w * r.hp / max(1, r.max_hp)))
 
-        rows.append([(f"LEVEL {r.level}", self.color(CASTLE) | bold, 0),
-                     (f"wave {r.wave_in_level()}/{WAVES_PER_LEVEL}", bold, 9)])
-        rows.append([(phase, bold, 0)])
-        rows.append([("CASTLE", bold, 0), ("#" * filled, self.color(RED if filled < 3 else C_BOW) | bold, 7),
-                     ("-" * (bar_w - filled), dim, 7 + filled), (f"{r.hp}/{r.max_hp}", 0, 8 + bar_w)])
-        rows.append([(f"GOLD {r.gold}", self.color(GOLD) | bold, 0),
-                     (f"GEMS {int(r.gems_raw)}", self.color(GEM) | bold, 12)])
+        add([(f"LEVEL {r.level}", self.color(CASTLE) | bold, 0),
+             (f"wave {r.wave_in_level()}/{WAVES_PER_LEVEL}", bold, 9)])
+        add([(phase, bold, 0)])
+        add([("CASTLE", bold, 0), ("#" * filled, self.color(RED if filled < 3 else C_BOW) | bold, 7),
+             ("-" * (bar_w - filled), dim, 7 + filled), (f"{r.hp}/{r.max_hp}", 0, 8 + bar_w)])
+        add([(f"GOLD {r.gold}", gold_c | bold, 0), (f"GEMS {int(r.gems_raw)}", self.color(GEM) | bold, 12)])
         boss = r.boss_alive()
         if boss:
             bf = max(0, min(bar_w, int(bar_w * boss.hp / boss.maxhp + 0.99)))
-            rows.append([(boss.name, self.color(RED if boss.enraged else MAG) | bold, 0)])
-            rows.append([("BOSS", bold, 0), ("#" * bf, self.color(MAG) | bold, 7),
-                         ("-" * (bar_w - bf), dim, 7 + bf), (f"{int(boss.hp)}", 0, 8 + bar_w)])
+            add([(boss.name, self.color(RED if boss.enraged else MAG) | bold, 0)])
+            add([("BOSS", bold, 0), ("#" * bf, self.color(MAG) | bold, 7),
+                 ("-" * (bar_w - bf), dim, 7 + bf), (f"{int(boss.hp)}", 0, 8 + bar_w)])
         else:
             b, cycle = r.level_boss()
-            rows.append([(f"paths {len(r.paths)}  speed x{r.speed}", dim, 0)])
-            rows.append([(f"boss: {b['name']}{ROMAN[min(cycle, 5)]}", dim, 0)])
+            add([(f"boss: {b['name']}{ROMAN[min(cycle, 5)]}", dim, 0)], drop=3)
 
         # what's under the cursor
         cur = tuple(r.cursor)
         t = r.towers.get(cur)
-        if t and t.kind:
-            s = r.stats(t)
+        trap = r.traps.get(cur)
+        if t and t.kind in WEAPONS:
+            st = r.stats(t)
             w = WEAPONS[t.kind]
-            rows.append([(f"{w['name']} lv {t.level}", self.color(w["color"]) | bold, 0),
-                         (special_text(t.kind, s), dim, len(w["name"]) + 6)])
-            rows.append([(f"dmg {s['dmg']:.1f} rng {s['rng']:.1f} {1 / s['cd']:.1f}/s", dim, 0)])
+            add([(f"{w['name']} lv {t.level}", self.color(w["color"]) | bold, 0),
+                 (special_text(t.kind, st), dim, len(w["name"]) + 6)])
+            add([(f"dmg {st['dmg']:.1f} rng {st['rng']:.1f} {1 / st['cd']:.1f}/s", dim, 0)], drop=2)
+        elif t and t.kind == "goldmine":
+            add([(f"Gold Mine lv {t.level}", gold_c | bold, 0)])
+            add([(f"+{r.income(t)} gold per wave", dim, 0)], drop=2)
+        elif trap == "mine":
+            add([("Mine", self.color(RED) | bold, 0), (f"blast {r.mine_damage():.0f} dmg", dim, 5)])
+            add([("explodes once when hit", dim, 0)], drop=2)
+        elif trap == "tar":
+            add([("Tar", self.color(C_FROST) | bold, 0), ("slows enemies 50%", dim, 4)])
+            add([("stays forever", dim, 0)], drop=2)
         else:
             if t:
                 label = "Structure: pick 1-8"
             elif cur in r.path_set:
-                label = "Enemy path"
+                label = "Enemy path: M / T"
             elif cur in r.castle_cells:
                 label = "Your castle!"
             else:
                 label = "Grass: buildable"
-            rows.append([(label, bold if t else dim, 0)])
-            rows.append([])
+            add([(label, bold if t else dim, 0)])
+            add([], drop=2)
 
         # build menu with weapon stats:  "3 Cannon 60  7.0 4.0 0.6"
-        gold_c = self.color(GOLD)
-        rows.append([("  weapon  $  dmg rng  /s", dim, 0)])
+        add([("  weapon  $  dmg rng  /s", dim, 0)], drop=1)
         sc = r.mods["struct_cost"]
         ok = r.gold >= sc and r.free(cur)
-        rows.append([("B struct", 0 if ok else dim, 0), (str(sc).rjust(2), gold_c if ok else dim, 9)])
+        add([("B struct", 0 if ok else dim, 0), (str(sc).rjust(2), gold_c if ok else dim, 9)])
         for kind in WEAPON_ORDER:
             w = WEAPONS[kind]
-            locked = kind not in r.unlocked
-            line = f"{w['key']} {w['name']:<6}"
-            if locked:
-                rows.append([(line, dim, 0), ("locked", dim, 9)])
+            line = f"{w['key']} {w.get('short', w['name']):<6}"
+            if kind not in r.unlocked:
+                add([(line, dim, 0), ("locked", dim, 9)])
                 continue
-            s = r.stats_for(kind)
+            st = r.stats_for(kind)
             ok = bool(t) and not t.kind and r.gold >= w["cost"]
             here = bool(t) and t.kind == kind
             attr = self.color(w["color"]) | bold if (ok or here) else 0
-            rows.append([(line, attr, 0), (str(w["cost"]).rjust(2), gold_c if ok else dim, 9),
-                         (f"{num(s['dmg'], 4)} {num(s['rng'], 3)} {num(1 / s['cd'], 3)}", 0 if ok else dim, 12)])
+            add([(line, attr, 0), (str(w["cost"]).rjust(2), gold_c if ok else dim, 9),
+                 (f"{num(st['dmg'], 4)} {num(st['rng'], 3)} {num(1 / st['cd'], 3)}", 0 if ok else dim, 12)])
+        # placeable buildings: gold mine (grass), mine + tar (path)
+        effects = {"goldmine": f"+{BUILDINGS['goldmine']['income']}/wave",
+                   "mine": f"dmg {r.mine_damage():.0f}", "tar": "slow 50%"}
+        for kind in BUILDING_ORDER:
+            b = BUILDINGS[kind]
+            line = f"{b['key'].upper()} {b['short']:<6}"
+            if kind not in r.unlocked:
+                add([(line, dim, 0), ("locked", dim, 9)])
+                continue
+            spot = r.free(cur) if b["where"] == "grass" else (cur in r.path_set and cur not in r.traps)
+            ok = spot and r.gold >= b["cost"]
+            attr = self.color(b["color"]) | bold if ok else 0
+            add([(line, attr, 0), (str(b["cost"]).rjust(2), gold_c if ok else dim, 9),
+                 (effects[kind], 0 if ok else dim, 12)])
+        # upgrade + sell on one row
         if t and t.kind and t.level < MAX_LEVEL:
             uc = r.upgrade_cost(t)
-            ok = r.gold >= uc
-            rows.append([("U upgrade", 0 if ok else dim, 0), (f"{uc}g", gold_c if ok else dim, 10)])
+            up = [("U up", 0 if r.gold >= uc else dim, 0), (f"{uc}g", gold_c if r.gold >= uc else dim, 5)]
         else:
-            rows.append([("U upgrade", dim, 0), ("-", dim, 10)])
-        rows.append([("X sell", 0 if t else dim, 0), (f"+{t.invested // 2}g" if t else "-", dim, 10)])
-        rows.append([])
+            up = [("U up -", dim, 0)]
+        refund = t.invested // 2 if t else (BUILDINGS[trap]["cost"] // 2 if trap else 0)
+        add(up + [("X sell", 0 if refund else dim, 11), (f"+{refund}g" if refund else "-", dim, 18)])
+        add([], drop=4)
         for line in ("N wave F speed P pause", "K cash out    Q quit",
                      "move: arrows/wasd/mouse", "Shift+WASD = 5 tiles"):
-            rows.append([(line, dim, 0)])
+            add([(line, dim, 0)], drop=5)
 
-        for i, row in enumerate(rows):
-            y = py + i
-            if y > bottom:
+        available = bottom - py + 1
+        while len(rows) > available:
+            droppable = [i for i, (_, d) in enumerate(rows) if d is not None]
+            if not droppable:
                 break
-            for text, attr, dx in row:
-                self.put(y, px + dx, text, attr)
+            rows.pop(max(droppable, key=lambda i: (rows[i][1], i)))
+        for i, (items, _) in enumerate(rows[:available]):
+            for text, attr, dx in items:
+                self.put(py + i, px + dx, text, attr)
 
     def draw_overlay(self):
         r = self.run

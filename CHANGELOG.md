@@ -8,9 +8,47 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-12
+
+`keep.py` 1390 → 1505 lines
+
+### Added
+- **Gold Mine** `$` (key `G`, 60g, unlock 8 gems): placed on any empty grass tile without a structure.
+  It deals no damage but pays +12 gold after every wave, +8 more per upgrade level (`U`, max level 5).
+  The wave-cleared screen shows how much came from mines.
+- **Mine** `**` (key `M`, 25g, unlock 6 gems): placed on the enemy path. The first enemy that steps on it
+  sets it off, dealing a one-time blast to every enemy within 1.5 tiles. Damage starts at 24 and grows
+  with the wave like enemy HP. Boss armor applies.
+- **Tar** `~~` (key `T`, 30g, unlock 5 gems): placed on the enemy path. Enemies on it move at half speed.
+  It deals no damage and is permanent. The Shadow Wraith ignores it, like every other slow.
+- Mines and Tar can be removed with `X` for half their price; only one fits on each path tile.
+- Side panel rows for `G` / `M` / `T` with cost and effect (income, current mine damage, slow). Hovering
+  them shows their details.
+- Upgrades screen: unlocks for Tar, Mine and Gold Mine (13 items now; `1`–`9`, `0` quick-buy the first ten).
+
+### Changed
+- **Tesla became the Lightning tower** `Z` (key `8`, 15 gems). It chains to 4 enemies, and each jump deals
+  **75%** of the previous hit. Before, it was 80% and the percentage wasn't shown. The falloff is a
+  stat (`falloff`) shown on the tower as `4x 75%`.
+  Save files that unlocked Tesla automatically get Lightning.
+- Blessing "Overcharge" now boosts Lightning. The "Tar Pits" blessing was renamed **Heavy Mud** to avoid
+  confusion with the new Tar trap. Armory can now also unlock a building.
+- Side panel: upgrade and sell share one row, and low-priority rows (next boss, second info line, column
+  header, help) hide automatically on short terminals so the build menu always fits at 70×22.
+- The Upgrades screen packs tighter on short terminals.
+
+### Technical notes
+- New `BUILDINGS` table and `ITEMS = {**WEAPONS, **BUILDINGS}`. Gold Mines are `Tower` objects with
+  `kind="goldmine"`, and Mines and Tar live in the new `Run.traps` map (path tile → kind).
+- New methods: `Run.place_building()`, `Run.explode()`, `Run.income()` and `Run.mine_damage()`.
+- `load_meta()` migrates the `tesla` unlock to `lightning`.
+- Tested: placement rules, selling, upgrading, income, the mine blast, the tar slowdown, lightning falloff,
+  save migration, and that the layout fits at 70×22 with a boss on screen, plus full bot games.
+
 ## [0.5.0] - 2026-10-12
 
-`keep.py` 1425 → 1390 lines
+Commit [`60add35`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/60add3596f06ee9d9b72d16cc2dbd5febcd74231)
+· `keep.py` 1425 → 1390 lines
 
 ### Changed
 - **The map is as wide as it can be while keeping the side panel.** The panel was redesigned to fit in
@@ -183,7 +221,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.2.0...v0.3.0
