@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.9.0-orange)
+![Version](https://img.shields.io/badge/version-0.10.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount weapons on
 them, and survive as many levels as you can. Every level ends with a **big boss** and the next one
@@ -74,7 +74,8 @@ When the castle falls you keep your **gems** and spend them on permanent upgrade
 - **Retro menu.** A window-style main menu with START GAME, UPGRADES, PREMIUM and QUIT buttons.
 - **Premium store (preview).** A real-money shop for the Nuke, gem packs and more. It's a preview:
   payments aren't connected yet, so nothing can actually be bought.
-- **Music.** A menu theme and a different theme for each of the 5 levels, all looping seamlessly.
+- **Music and sound.** A menu theme and a different theme for each of the 5 levels, all looping seamlessly,
+  plus voiced death sounds for grunts, runners and brutes.
 - **Zero dependencies.** It's a single Python file that uses only the standard library.
 
 ## Getting started
@@ -85,7 +86,7 @@ When the castle falls you keep your **gems** and spend them on permanent upgrade
 - A terminal of at least **70×22** characters. Bigger is better, because the map fills the window
   next to the side panel (80 columns gives a 26-tile-wide map, 200 columns gives 86).
 - Windows only: `pip install windows-curses`
-- Music plays with what your OS already has (see [Music](#music)). Use `python3 keep.py --mute` to turn it off.
+- Music and sound play with what your OS already has (see [Music](#music)). Use `python3 keep.py --mute` to turn them off.
 
 ### Install and run
 
@@ -125,7 +126,7 @@ python3 keep.py
 | `Enter` / `Space` | Press the selected button / buy the selected upgrade |
 | `U` | Open the Upgrades screen from the main menu |
 | `P` | Open the Premium store from the main menu |
-| `M` | All music on / off (saved). You can also click `[M] music` in the bottom-left corner |
+| `M` | All sound (music + effects) on / off (saved). You can also click `[M] sound` in the bottom-left corner |
 | `Y` / `N` | Confirm / cancel a purchase in the Premium store |
 | `1`–`9`, `0` | Quick-buy one of the first ten upgrades (Upgrades screen) |
 | `Esc` / `Backspace` / `B` | Back to the main menu |
@@ -303,6 +304,23 @@ louder at the loop point. The length is unchanged, so the beat stays on time. Me
 the volume stays within 2.4 dB of the track's own natural bar transitions (the unfixed files were off by
 up to 12 dB). The script needs `numpy` and `ffmpeg`; the game doesn't.
 
+### Sound effects
+
+When a **grunt**, **runner** or **brute** dies, its own death sound plays once, on top of the music.
+Bosses and enemies that reach your castle make no death sound. If several enemies of the same kind die
+in the same instant (a cannon blast, a mine), you hear one shout instead of a pile of identical copies.
+At most 4 effects play at the same time.
+
+| Enemy | Sound file | Cut from |
+| --- | --- | --- |
+| Grunt `o` | `assets/sfx/grunt_death.wav` | take 2 of `assets/source/Grunt.m4a` |
+| Runner `r` | `assets/sfx/runner_death.wav` | take 2 of `assets/source/Runner.m4a` |
+| Brute `B` | `assets/sfx/brute_death.wav` | take 3 of `assets/source/Brute.m4a` |
+
+Each recording has three takes. `tools/make_sfx.py` finds them, keeps the one in its `TAKES` table (the
+strongest, complete take), trims it tightly, removes rumble, adds tiny fades so it can't click, and levels
+all three to the same loudness. To use a different take, change the number in `TAKES` and run the script again.
+
 **How it plays** (`Music` class, first one available wins):
 
 | Player | Where | Loop |
@@ -334,6 +352,7 @@ All balance numbers live at the top of `keep.py`:
 | `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
 | `PREMIUM`, `PAYMENTS_ENABLED` | premium store items and euro prices; payments switch (off) |
 | `MUSIC_DIR`, `MENU_TRACK`, `LEVEL_TRACKS`, `MENU_STATES` | where the music lives, which track plays on the menu screens and in each level |
+| `DEATH_SOUNDS`, `SFX_MAX_AT_ONCE`, `SFX_MIN_GAP` | which sound each enemy makes when it dies, and how many effects may overlap |
 | `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and width of the side panel (24) |
 | `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 150×70) |
 
@@ -345,9 +364,11 @@ All balance numbers live at the top of `keep.py`:
 ├── assets/
 │   ├── menu_loop.wav              # seamless loops made by the tool below
 │   ├── level1_loop.wav … level5_loop.wav
-│   └── source/                    # original tracks: medieval_td_loop.ogg, Level_1.ogg … Level_5.ogg
+│   ├── sfx/                       # grunt_death.wav, runner_death.wav, brute_death.wav
+│   └── source/                    # originals: music .ogg files and the Grunt/Runner/Brute .m4a recordings
 ├── tools/
-│   └── make_loops.py              # rebuilds all loops from the originals (numpy + ffmpeg)
+│   ├── make_loops.py              # rebuilds all music loops from the originals (numpy + ffmpeg)
+│   └── make_sfx.py                # cuts the death sounds out of the recordings (numpy + ffmpeg)
 ├── README.md        # this file
 ├── CHANGELOG.md     # version history: what changed and when
 ├── .gitignore       # ignores __pycache__ and the save file
@@ -361,7 +382,7 @@ All balance numbers live at the top of `keep.py`:
 | Section | Responsibility |
 | --- | --- |
 | Constants | balance data (`WEAPONS`, `ENEMIES`, `BOSSES`, `META_UPGRADES`, `PERKS`, …) |
-| `Music` | music: picks a player (pygame, winsound, paplay/aplay/sox, afplay), loops a track and switches between tracks; `App.update()` picks the menu or level track |
+| `Music` | music and sound effects: picks a player (pygame, winsound + MCI, paplay/aplay/sox, afplay), loops a track, switches tracks, and plays one-shot effects on top (`effect()`). `App.update()` picks the menu or level track and plays death sounds from `Run.events` |
 | `load_meta` / `save_meta` | read and write the JSON save file |
 | `Enemy` | an enemy walking along **its own path** (`pos` = how many cells it has walked). Bosses carry their ability state (armor, timer, enraged) |
 | `Tower` | a structure on a tile, with an optional weapon (`kind`, `level`, `invested`) |
@@ -414,7 +435,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.6.0](CHANGELOG.md#060---2026-10-12) | 2026-10-12 | `4468936` | Lightning tower (replaces Tesla), Gold Mine, Mine and Tar as gem unlocks | 1505 lines |
 | [0.7.0](CHANGELOG.md#070---2026-10-12) | 2026-10-12 | `d3e9b48` | PREMIUM button + real-money store preview (Nuke, gem packs, …), payments not connected | 1617 lines |
 | [0.8.0](CHANGELOG.md#080---2026-10-13) | 2026-10-13 | `aef90c3` | Seamless looping menu music (menu screens only), `M` to mute | 1798 lines |
-| [0.9.0](CHANGELOG.md#090---2026-10-13) | 2026-10-13 | tag `v0.9.0` | Level 1-5 music (seamless loops), track switching per level | 1847 lines |
+| [0.9.0](CHANGELOG.md#090---2026-10-13) | 2026-10-13 | `5d878c2` | Level 1-5 music (seamless loops), track switching per level | 1847 lines |
+| [0.10.0](CHANGELOG.md#0100---2026-10-13) | 2026-10-13 | tag `v0.10.0` | Death sounds for grunts, runners and brutes | 1920 lines |
 
 ## Contributing
 

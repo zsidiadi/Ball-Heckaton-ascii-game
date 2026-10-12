@@ -8,9 +8,34 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-13
+
+`keep.py` 1847 → 1920 lines
+
+### Added
+- **Death sounds** for the small enemies. When a grunt, runner or brute dies, its own voiced sound plays
+  once, mixed on top of the level music. Bosses and enemies that reach the castle make no death sound.
+- The sounds were cut from the team's recordings (`assets/source/Grunt.m4a`, `Runner.m4a`, `Brute.m4a`;
+  three takes each). The take used: Grunt 2 (clearly the strongest), Runner 2 (most energy of three
+  short ones), Brute 3 (longest and strongest; take 1 sounded cut short at 180 ms). Each was trimmed,
+  high-passed at 70 Hz, given 3 ms / 25 ms fades (they start and end at exact zero, so no clicks), and
+  levelled so its loudest 100 ms sits at -16 dBFS (all three within 0.3 dB of each other), with a gentle
+  peak limiter at -1 dBFS.
+- `tools/make_sfx.py` reproduces them (numpy + ffmpeg). Change `TAKES` to pick another take.
+- `Music.effect(name)` plays one-shot effects over the music: pygame on spare channels; Windows through
+  MCI (winsound can only play one sound at a time, and it's busy with the music); Linux and macOS with a
+  short-lived `paplay` / `aplay` / `sox` / `afplay` process. At most 4 at once (`SFX_MAX_AT_ONCE`), and the same
+  sound never restarts within 60 ms (`SFX_MIN_GAP`).
+- `Run.events` lists the enemy kinds that died each frame. The App plays each kind's sound once per frame,
+  so a cannon blast killing 5 grunts gives one grunt shout, not five stacked copies.
+
+### Changed
+- `M` / `[M] sound` and `--mute` now cover music **and** sound effects.
+
 ## [0.9.0] - 2026-10-13
 
-`keep.py` 1798 → 1847 lines
+Commit [`5d878c2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/5d878c205cf345d8f9566233e9de7953fcad2d97)
+· `keep.py` 1798 → 1847 lines
 
 ### Added
 - **Level music.** Five new tracks, one per level: Level 1 plays `level1_loop.wav`, Level 2 plays
@@ -302,7 +327,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.6.0...v0.7.0

@@ -14,7 +14,7 @@ your own castle (K) to cash out early: leftover gold turns into bonus gems.
 Spend gems in the UPGRADES menu on permanent upgrades and new weapons.
 
 Run:  python3 keep.py          (Windows: pip install windows-curses first)
-      python3 keep.py --mute   (no music)
+      python3 keep.py --mute   (no music or sound effects)
 """
 
 import curses
@@ -33,12 +33,16 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.9.0"
+VERSION = "0.10.0"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium")   # the menu music plays only on these screens
 # level N plays LEVEL_TRACKS[N-1]; from level 6 on they repeat (level 6 = track 1), like the bosses
 LEVEL_TRACKS = ["level1_loop.wav", "level2_loop.wav", "level3_loop.wav", "level4_loop.wav", "level5_loop.wav"]
+# sound played once when a small enemy dies (files in assets/sfx/); bosses have none
+DEATH_SOUNDS = {"grunt": "grunt_death.wav", "runner": "runner_death.wav", "brute": "brute_death.wav"}
+SFX_MAX_AT_ONCE = 4          # never more than this many effects playing together
+SFX_MIN_GAP = 0.06           # the same sound isn't restarted more often than this (seconds)
 
 MIN_W, MIN_H = 70, 22
 MAP_X, MAP_Y = 1, 2          # screen position of the top-left map cell
@@ -193,6 +197,10 @@ class Music:
         self.thread = None
         self.stop_evt = threading.Event()
         self.player = None
+        self.sfx_procs = []         # running one-shot effect players (pipe / afplay backends)
+        self.sfx_last = {}          # effect name -> time it last started
+        self.sfx_slot = {}          # Windows MCI: effect name -> next alias slot
+        self.mci_ok = True
         self.backend = self._pick()
 
     def _pick(self):
@@ -200,6 +208,7 @@ class Music:
         try:
             import pygame
             pygame.mixer.init()
+            pygame.mixer.set_num_channels(16)           # music + several overlapping effects
             return "pygame"
         except Exception:
             pass
@@ -351,8 +360,64 @@ class Music:
             self.thread.join(timeout=1)
             self.thread = None
 
+    def effect(self, name):
+        """Play a short one-shot sound (a file in the sfx folder) on top of the music."""
+        if not self.backend:
+            return
+        now = time.time()
+        if now - self.sfx_last.get(name, -1.0) < SFX_MIN_GAP:
+            return
+        self.sfx_last[name] = now
+        path = os.path.join(self.folder, "sfx", name)
+        if not os.path.exists(path):
+            return
+        try:
+            if self.backend == "pygame":
+                import pygame
+                key = "sfx/" + name
+                if key not in self.sounds:
+                    self.sounds[key] = pygame.mixer.Sound(path)
+                self.sounds[key].play()
+            elif self.backend == "winsound":
+                self._mci_effect(name, path)
+            else:
+                self.sfx_procs = [p for p in self.sfx_procs if p.poll() is None]
+                if len(self.sfx_procs) >= SFX_MAX_AT_ONCE:
+                    return
+                cmd = {"paplay": ["paplay", path], "aplay": ["aplay", "-q", path], "play": ["play", "-q", path],
+                       None: ["afplay", path]}[self.player if self.backend == "pipe" else None]
+                self.sfx_procs.append(subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                                       stderr=subprocess.DEVNULL))
+        except Exception:
+            pass                                      # a missing effect must never break the game
+
+    def _mci_effect(self, name, path):
+        """Windows: winsound can only play one sound at a time (the music), so effects go through MCI,
+        which Windows mixes with it. Each effect gets a few pre-opened aliases so overlaps are possible."""
+        if not self.mci_ok:
+            return
+        import ctypes
+        mci = ctypes.windll.winmm.mciSendStringW
+        slot = self.sfx_slot.get(name, 0)
+        self.sfx_slot[name] = (slot + 1) % SFX_MAX_AT_ONCE
+        alias = f"sfx_{os.path.splitext(name)[0]}_{slot}"
+        if mci(f"status {alias} mode", None, 0, None) != 0:            # not opened yet
+            if mci(f'open "{path}" type waveaudio alias {alias}', None, 0, None) != 0:
+                self.mci_ok = False                                       # MCI unavailable: effects stay off
+                return
+        mci(f"play {alias} from 0", None, 0, None)
+
     def close(self):
         self.stop()
+        for p in self.sfx_procs:
+            self._kill(p)
+        self.sfx_procs = []
+        if self.backend == "winsound" and self.sfx_slot:
+            try:
+                import ctypes
+                ctypes.windll.winmm.mciSendStringW("close all", None, 0, None)
+            except Exception:
+                pass
         for tmp in self.tmps.values():
             try:
                 os.remove(tmp)
@@ -520,6 +585,7 @@ class Run:
         self.cleared = 0
         self.kills = 0
         self.gems_raw = 0.0
+        self.events = []          # things the App should play a sound for (enemy kinds that died)
         self.towers = {}          # grass tiles: structures, weapons and gold mines
         self.traps = {}           # path tiles: "mine" or "tar"
         self.enemies = []
@@ -877,6 +943,8 @@ class Run:
                 alive.append(e)
             elif not e.leaked:
                 self.kills += 1
+                if e.kind in DEATH_SOUNDS:
+                    self.events.append(e.kind)
                 self.gold += e.gold + self.mods["bounty"]
                 if e.boss:
                     g = e.boss["gems"]
@@ -1363,6 +1431,11 @@ class App:
         if self.state == "run":
             for _ in range(self.run.speed):
                 self.run.update(dt)
+            if self.run.events:                # each kind that died this frame: its death sound, once
+                if self.music and self.meta.get("music", True):
+                    for kind in dict.fromkeys(self.run.events):
+                        self.music.effect(DEATH_SOUNDS[kind])
+                self.run.events.clear()
 
     # -------------------------------------------------------------- draw
     def draw(self):
@@ -1394,7 +1467,7 @@ class App:
         self.put(h - 1, 0, "+" + "-" * (w - 3) + "+", curses.A_DIM)
         self.put(h - 1, w - 4 - len(VERSION) - 2, f" v{VERSION} ", curses.A_DIM)
         if self.music and self.music.backend:
-            label = f" [M] music: {'ON' if self.meta.get('music', True) else 'off'} "
+            label = f" [M] sound: {'ON' if self.meta.get('music', True) else 'off'} "
             self.put(h - 1, 2, label, curses.A_DIM)
             self.zones.append((h - 1, 2, 2 + len(label), "music"))
 
@@ -1423,7 +1496,7 @@ class App:
             self.button(y, label, action, selected=(i == self.menu_sel))
             y += step
         y += 1
-        self.center(y, "arrows + ENTER or click   U upgrades  P premium  M music  Q quit", curses.A_DIM)
+        self.center(y, "arrows + ENTER or click   U upgrades  P premium  M sound  Q quit", curses.A_DIM)
 
     def draw_upgrades(self):
         m = self.meta
