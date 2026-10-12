@@ -1,35 +1,41 @@
-# ASCII KEEP
+# cool tower defense game.exe
 
 > A roguelike tower defense game that runs in your terminal. It was made for the **B.A.L.L.S hackathon**.
 
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.2.0-orange)
+![Version](https://img.shields.io/badge/version-0.3.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount weapons on
 them, and survive as many levels as you can. Every level opens **one more path** to your castle.
 When the castle falls you keep your **gems** and spend them on permanent upgrades for the next run.
 
 ```
- ASCII KEEP   level 2   wave 1/5   kills 56   gem bank 0
-+--------------------------------------------------------------------+  LEVEL 2  wave 1/5
-|  vv.      '   .    .      '   .    .      '   .    .      '   .    |  WAVE ACTIVE
-|  ::r:o:::::::::::o:r.o ::::r:::::::::::::::::::::::::::::::::::::  |  paths 2   speed x1   left 1
-|   .  C1.      '   .    .      '   .    .      '   .    .   A1C1:: .|  CASTLE ########## 40/40
-|  ::::::::::::::::::::::::::::::::::::::::::::    .      '::::::::. |  GOLD   5
-|  ::   .    .      '   .    .      '   .    ::     '   .  ::C1:::: '|  GEMS   11 this run
-| .::  []     '   .    .      '   .    .     ::   .    .   ::G2::::  |
-|. o:   '   .    .      '   .    .      '   .::  .      '  ::F1::::  |  Cannon lv 1
-| 'B: .    .      '   .    .      '   .    . ::   '   .   .::G1::::  |   dmg 7.0 rng 4.0 0.6/s
-|  o:.      '   .    .      '   .    .      ':: .    .  . .::G1:::: .|
-|  :: '   .    .      '   .    .      '   .  ::.      ' . .::A1:::: .|  B  structure    10g
-|  ::    .      '   .    .      '   .    .   :: '   . . . .::C1:::: .|  1  Bow          25g
-|  ::     '   .    .      '   .    .      '  ::    .    . .:: .::/^^\|  2  Gun          40g
-|  B:   .    .      '   .    .      '   .    ::     '   . .:: .::|[]||  3  Cannon       60g
-|B:B:  .      '   .    .      '   .    .     ::   .    .  .:: . .|__||  4  Frost        45g
-|.      '   .    .      '   .    .      '   .:::::::::::::::: .  .   |  U  upgrade      45g
-+--------------------------------------------------------------------+  X  sell         +35g
+LEVEL 2 wave 1/5  WAVE ACTIVE (17 left)  CASTLE ########-- 41/50  GOLD 9  GEMS 8  paths 2  x1
++--------------------------------------------------------------------------------------------+
+|    .   vv '   .    .      '   .    .      '   .    .      '   .    .      '   .    .      '|
+|     '  r:    .      '   .    .      '   .    .      '  ::::::::::::::::::::::::::::::::::  |
+|   .    ::     '   .    .      '   .    .      '   .    ::     '   .    .      '   .    ::  |
+|  .     o:   .    .      '   .    .      '   .    .     ::   .    .      '   .    . F1  ::  |
+|   '   .::  .      '   .    .      '   .    .      '   .::  .      '   .    .     ::::::::  |
+| .    . ::   '   .    .      '   .    .      '   .    . ::   '   .    .      '   .::[]::::  |
+|>>     ':: .    .      '   .    .      '   .    .      ':: .    .      '   .    . ::A1:::: .|
+|B:   .  o:::o:::::o:::o:::::::::::::::::::::::::::::::::::.      '   .    .      '::A1::::. |
+|B:  .      '   .    .      '   .    .      '   .    .      '   .    .      '   .  ::. :::: '|
+|::   '   .    .     :::::::::::::::::::::::::::::::::::::::::::::::::::::::: . . .:: '::::  |
+|B: .    .      '   .::  .      '   .    .      '   .    .      '   .     .:: . . .:: .::/^^\|
+|::.      '   .    . ::   '   .    .      '   .    .      '   .    .      .:: . . .:: .::|[]||
+|o: '   .    .      ':: .    .      '   .    .      '   .    .      '   . .:: .C1 .:: . .|__||
+|::    .      '   .  ::.      '   .    .      '   .    .      '   .    .  .:: .F2 .:: ..     |
+|::     '   .    .   :: '   .    .      '   .    .      '   .    .      ' .:: .C1 .:: . '   .|
+|::::o:::o:::o:::::::::    .      '   .    .      '   .    .      '   .    :::::::::: .    . |
+|    .      '   .    .      '   .    .      '   .    .      '   .    .      '   .    .      '|
+|     '   .    .      '   .    .      '   .    .      '   .    .      '   .    .      '   .  |
++--------------------------------------------------------------------------------------------+
+ [B]5g [1]Bow25g [2]Gun40g [3]Can60g [4]Fro45g [U]45g [X]+35g
+ Cannon lv 1  dmg 7.0  rng 4.0  0.6/s                 N wave  F speed  P pause  K boom  Q quit
+ Level 2, wave 1/5 incoming! (17 enemies)
 ```
 
 ## Table of contents
@@ -57,7 +63,9 @@ When the castle falls you keep your **gems** and spend them on permanent upgrade
   Weapons upgrade up to level 5.
 - **Meta progression.** Gems survive death and buy permanent upgrades and weapon unlocks.
 - **Cash out on purpose.** Blow up your own castle to keep your gems and turn leftover gold into bonus gems.
-- **Full-screen map.** The map scales to your terminal size. You can use the mouse or the keyboard.
+- **Full-width map.** The map scales to your terminal size, and the HUD sits underneath it.
+  You can use the mouse or the keyboard.
+- **Retro menu.** A window-style main menu with START GAME, UPGRADES and QUIT buttons.
 - **Zero dependencies.** It's a single Python file that uses only the standard library.
 
 ## Getting started
@@ -65,7 +73,8 @@ When the castle falls you keep your **gems** and spend them on permanent upgrade
 ### Requirements
 
 - Python **3.8+**
-- A terminal of at least **70×22** characters. Bigger is better, because the map fills the window.
+- A terminal of at least **70×22** characters. Bigger is better, because the map fills the window
+  (80 columns gives a 38-tile-wide map).
 - Windows only: `pip install windows-curses`
 
 ### Install and run
@@ -89,9 +98,23 @@ python3 keep.py
    which blinks red. If the new path runs over a tower, you get that tower's full cost back.
 6. **Lose well.** When the castle falls you keep the run's gems. Press **K** at any time to blow up the
    castle yourself; every 25 leftover gold becomes 1 extra gem. Quitting with **Q** forfeits the run's gems.
-7. **Upgrade.** Spend gems in the main menu's gem shop, then start a stronger run.
+7. **Upgrade.** Open **UPGRADES** in the main menu, spend your gems, then start a stronger run.
 
 ## Controls
+
+### Menus
+
+| Key | Action |
+| --- | --- |
+| Up / Down (or `w` / `s`) | Move between buttons / upgrades |
+| `Enter` / `Space` | Press the selected button / buy the selected upgrade |
+| `U` | Open the Upgrades screen from the main menu |
+| `1`–`6` | Quick-buy an upgrade (Upgrades screen) |
+| `Esc` / `Backspace` / `B` | Back to the main menu |
+| `Q` | Quit (main menu) |
+| Mouse click | Click any button, upgrade row or `[ BUY ]`. `[X]` in the title bar closes the screen |
+
+### In game
 
 | Key | Action |
 | --- | --- |
@@ -107,7 +130,7 @@ python3 keep.py
 | `P` | Pause |
 | `K` | Destroy your own castle (cash out) |
 | `Q` | Quit run (gems lost) |
-| `Enter` | Start run / continue |
+| `Enter` | Continue (level complete, game over) |
 
 ## Game reference
 
@@ -155,7 +178,9 @@ Enemy HP grows ×1.25 every wave. The mark after an enemy's letter shows its hea
 Gold Rush, Mason, Fletcher, Gunsmith, Black Powder, Deep Freeze, Eagle Eye, Tar Pits, Bounty,
 Cheap Bricks, Gem Shard, Whetstone. Blessings for weapons you haven't unlocked never show up.
 
-### Gem shop (permanent)
+### Upgrades (permanent, bought with gems)
+
+All upgrades live behind the **UPGRADES** button in the main menu.
 
 | Upgrade | Effect per level | Max | Cost |
 | --- | --- | --- | --- |
@@ -179,10 +204,12 @@ All balance numbers live at the top of `keep.py`:
 | `HP_GROWTH` | how fast enemies get tougher each wave (default `1.25`) |
 | `WAVES_PER_LEVEL` | waves per level (default `5`) |
 | `STRUCT_COST`, `MAX_LEVEL` | structure price, max weapon level |
-| `META_UPGRADES` | gem shop items and prices |
+| `META_UPGRADES` | items and prices on the Upgrades screen |
 | `PERKS` | the blessing pool |
 | `EDGES` | the order in which new paths enter the map |
-| `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and side panel width |
+| `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
+| `MIN_W`, `MIN_H`, `HUD_H` | minimum terminal size and number of HUD rows under the map |
+| `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 150×70) |
 
 ## Project structure
 
@@ -206,7 +233,7 @@ All balance numbers live at the top of `keep.py`:
 | `Enemy` | an enemy walking along **its own path** (`pos` = how many cells it has walked) |
 | `Tower` | a structure on a tile, with an optional weapon (`kind`, `level`, `invested`) |
 | `Run` | one playthrough: map, paths, towers, enemies, waves, levels and the run state machine |
-| `App` | main menu and gem shop, input routing, mouse, and **all drawing** |
+| `App` | main menu, Upgrades screen, clickable buttons, input routing, mouse, and **all drawing** (map, header, HUD, overlays) |
 | `main()` | curses setup, colours, then a fixed **30 FPS** loop: input → update → draw |
 
 **Run state machine**
@@ -239,6 +266,7 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | 0.0.0 | 2026-10-12 | `f9ef6a2` | Repository created | — |
 | [0.1.0](CHANGELOG.md#010---2026-10-12) | 2026-10-12 | `d2ddb55` | First playable tower defense: weapons, waves, blessings, gems, gem shop | 834 lines |
 | [0.2.0](CHANGELOG.md#020---2026-10-12) | 2026-10-12 | `cc20d54` | Full-screen map, 5-wave levels, +1 enemy path per level, mouse support | 1037 lines |
+| [0.3.0](CHANGELOG.md#030---2026-10-12) | 2026-10-12 | tag `v0.3.0` | Renamed to *cool tower defense game.exe*, full-width map with HUD below, menu buttons + Upgrades screen, standard README and CHANGELOG | 1218 lines |
 
 ## Contributing
 

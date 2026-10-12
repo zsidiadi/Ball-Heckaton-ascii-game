@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **ASCII KEEP** are documented in this file.
+All notable changes to **cool tower defense game.exe** (formerly *ASCII KEEP*) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,11 +8,49 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-12
+
+`keep.py` 1037 → 1218 lines
+
 ### Added
+- **Main menu buttons:** START GAME, UPGRADES and QUIT. You can use them with up/down + Enter,
+  hotkeys (`U`, `Q`) or a mouse click.
+- **Upgrades screen:** every permanent gem upgrade now lives behind the UPGRADES button. You can
+  select with up/down, buy with Enter, quick-buy with `1`–`6`, click `[ BUY ]`, and go back with Esc,
+  Backspace, `B` or `[ BACK ]`.
+- A retro desktop-window frame on the menus, with a title bar `cool tower defense game.exe   [_] [#] [X]`.
+  Clicking `[X]` quits from the main menu or goes back from Upgrades.
+- The version number (`v0.3.0`) is shown in the menu frame.
 - README rewritten in a standard open-source layout: features, install, full gameplay
   reference, architecture overview, tuning guide, contributing rules and project history.
 - `CHANGELOG.md` (this file), covering the project's history from the first commit.
-- Git tags `v0.1.0` and `v0.2.0` marking the two earlier releases.
+
+### Changed
+- **Renamed the game from "ASCII KEEP" to "cool tower defense game.exe"** in the game (new big
+  title art, title bar, header) and on GitHub (README title and repository description).
+- **The map now uses the full terminal width.** The side panel was removed, and its information moved to:
+  - a header row: level, wave, phase, castle HP bar, gold, gems, paths, speed;
+  - a 3-row HUD under the map: build bar with prices, selected-tile info with controls, and messages.
+  At 80 columns the map is 38 tiles wide (was 24); at 150 columns it is 73 (was 59).
+  The max map size went from 120×70 to 150×70 tiles.
+- The castle is unchanged: same 3-row art, still on the right edge.
+- Header and build bar automatically switch to shorter layouts on narrow terminals.
+- The game-over screen now says "THE CASTLE HAS FALLEN" (was "THE KEEP HAS FALLEN").
+- `Esc` reacts instantly (`ESCDELAY` set to 25 ms).
+
+### Removed
+- The gem shop list from the main menu (moved to the Upgrades screen).
+- The right-hand side panel during a run (replaced by the header and HUD).
+
+### Technical notes
+- New constants `GAME_NAME`, `VERSION`, `HUD_H`, `MAX_MAP_W`, `MAX_MAP_H`; `PANEL_W` was removed.
+- `TITLE` is now a list of art blocks, each centered on its own.
+- `App` has a third state, `upgrades`, next to `menu` and `run`. Buttons register clickable zones
+  (`App.zones`) while they are drawn, and mouse clicks are matched against them.
+- `draw_panel` was replaced by `draw_header` and `draw_hud`. A small `fit()` helper drops the
+  lowest-priority header items until the line fits the terminal width.
+- `Run` (game logic) is unchanged. A bot balance check still shows players with no upgrades reaching level 3–4
+  on an 80-column terminal.
 
 ## [0.2.0] - 2026-10-12
 
@@ -82,7 +120,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/f9ef6a2...v0.1.0
 [0.0.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f9ef6a228a87bdbaf17ee5fcb89c06409e78d5bc

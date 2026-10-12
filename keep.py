@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ASCII KEEP - a roguelike tower defense for the terminal.
+cool tower defense game.exe - a roguelike tower defense for the terminal.
 
 Protect your castle from waves of enemies walking down random paths.
   1. Build a STRUCTURE on a grass tile           (B)
@@ -11,7 +11,7 @@ and the next one opens ONE MORE enemy path to your castle.
 After every wave you pick one of three random blessings.
 When the castle falls you KEEP the gems you earned. You can also blow up
 your own castle (K) to cash out early: leftover gold turns into bonus gems.
-Spend gems in the main menu on permanent upgrades and new weapons.
+Spend gems in the UPGRADES menu on permanent upgrades and new weapons.
 
 Run:  python3 keep.py          (Windows: pip install windows-curses first)
 """
@@ -25,9 +25,13 @@ import time
 SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.json")
 FPS = 30
 DT = 1.0 / FPS
+GAME_NAME = "cool tower defense game.exe"
+VERSION = "0.3.0"
+
 MIN_W, MIN_H = 70, 22
 MAP_X, MAP_Y = 1, 2          # screen position of the top-left map cell
-PANEL_W = 28                 # width of the info panel on the right
+HUD_H = 3                    # rows of info under the map (build bar, tile info, message)
+MAX_MAP_W, MAX_MAP_H = 150, 70
 
 # colour pair ids
 GRASS, PATH, STRUCT, C_BOW, C_GUN, C_CANNON, C_FROST, RED, CASTLE, GOLD, GEM, CURSOR, MAG = range(1, 14)
@@ -69,11 +73,21 @@ META_UPGRADES = [
     ("frost",  "Unlock Frost",    "frost towers slow enemies", 10, 1),
 ]
 
+# two blocks of big letters: "cool tower" / "defense game.exe"
 TITLE = [
-    "    _    ____   ____ ___ ___     _  __ ___ ___ ___ ",
-    "   /_\\  / ___| / ___|_ _|_ _|   | |/ /| __| __| _ \\",
-    "  / _ \\ \\___ \\| |    | | | |    | ' < | _|| _||  _/",
-    " /_/ \\_\\|____/ \\____|___|___|   |_|\\_\\|___|___|_|  ",
+    [
+        '             _   _',
+        ' __ ___  ___| | | |_ _____ __ _____ _ _',
+        "/ _/ _ \\/ _ \\ | |  _/ _ \\ V  V / -_) '_|",
+        '\\__\\___/\\___/_|  \\__\\___/\\_/\\_/\\___|_|',
+    ],
+    [
+        '    _      __',
+        ' __| |___ / _|___ _ _  ___ ___   __ _ __ _ _ __  ___   _____ _____',
+        "/ _` / -_)  _/ -_) ' \\(_-</ -_) / _` / _` | '  \\/ -_)_/ -_) \\ / -_)",
+        '\\__,_\\___|_| \\___|_||_/__/\\___| \\__, \\__,_|_|_|_\\___(_)___/_\\_\\___|',
+        '                                |___/',
+    ],
 ]
 
 
@@ -660,14 +674,25 @@ class Run:
 
 
 # ------------------------------------------------------------------ app / drawing
+ENTER_KEYS = (10, 13, curses.KEY_ENTER, ord(" "))
+BACK_KEYS = (27, curses.KEY_BACKSPACE, 127, 8, ord("q"), ord("Q"), ord("b"), ord("B"))
+UP_KEYS = (curses.KEY_UP, ord("w"), ord("W"))
+DOWN_KEYS = (curses.KEY_DOWN, ord("s"), ord("S"))
+
+MENU_ITEMS = [("START GAME", "start"), ("UPGRADES", "upgrades"), ("QUIT", "quit")]
+
+
 class App:
     def __init__(self, scr):
         self.scr = scr
         self.meta = load_meta()
-        self.state = "menu"
+        self.state = "menu"        # menu, upgrades, run
         self.run = None
         self.running = True
-        self.menu_msg = ""
+        self.menu_sel = 0
+        self.shop_sel = 0
+        self.shop_msg = ""
+        self.zones = []            # clickable areas: (y, x0, x1, action)
         self.anim = 0.0
 
     def color(self, n):
@@ -686,7 +711,19 @@ class App:
 
     def center(self, y, s, attr=0):
         w = self.scr.getmaxyx()[1]
-        self.put(y, max(0, (w - len(s)) // 2), s, attr)
+        x = max(0, (w - len(s)) // 2)
+        self.put(y, x, s, attr)
+        return x
+
+    def button(self, y, label, action, selected=False, width=20):
+        """Draw a clickable [ BUTTON ] centered on row y."""
+        text = f"[ {label.center(width - 4)} ]"
+        attr = curses.A_REVERSE | curses.A_BOLD if selected else curses.A_BOLD
+        x = self.center(y, text, self.color(CASTLE) | attr if selected else attr)
+        if selected:
+            self.put(y, x - 3, ">", self.color(CASTLE) | curses.A_BOLD)
+            self.put(y, x + len(text) + 2, "<", self.color(CASTLE) | curses.A_BOLD)
+        self.zones.append((y, x, x + len(text), action))
 
     def box(self, lines, attr=0):
         h, w = self.scr.getmaxyx()
@@ -705,42 +742,81 @@ class App:
                 _, mx, my, _, _ = curses.getmouse()
             except curses.error:
                 return
-            if self.state == "run" and mx >= MAP_X:
-                self.run.click((mx - MAP_X) // 2, my - MAP_Y)
+            if self.state == "run":
+                if mx >= MAP_X:
+                    self.run.click((mx - MAP_X) // 2, my - MAP_Y)
+            else:
+                for y, x0, x1, action in self.zones:
+                    if my == y and x0 <= mx < x1:
+                        self.do(action)
+                        break
             return
         if self.state == "menu":
-            if k in (ord("q"), ord("Q")):
-                self.running = False
-            elif k in (10, 13, curses.KEY_ENTER, ord(" ")):
-                self.new_run()
-            elif ord("1") <= k <= ord(str(len(META_UPGRADES))):
-                self.buy(k - ord("1"))
+            n = len(MENU_ITEMS)
+            if k in UP_KEYS:
+                self.menu_sel = (self.menu_sel - 1) % n
+            elif k in DOWN_KEYS:
+                self.menu_sel = (self.menu_sel + 1) % n
+            elif k in ENTER_KEYS:
+                self.do(MENU_ITEMS[self.menu_sel][1])
+            elif k in (ord("u"), ord("U")):
+                self.do("upgrades")
+            elif k in (ord("q"), ord("Q"), 27):
+                self.do("quit")
+        elif self.state == "upgrades":
+            n = len(META_UPGRADES)
+            if k in UP_KEYS:
+                self.shop_sel = (self.shop_sel - 1) % n
+            elif k in DOWN_KEYS:
+                self.shop_sel = (self.shop_sel + 1) % n
+            elif k in ENTER_KEYS:
+                self.buy(self.shop_sel)
+            elif ord("1") <= k <= ord(str(n)):
+                self.shop_sel = k - ord("1")
+                self.buy(self.shop_sel)
+            elif k in BACK_KEYS:
+                self.do("back")
         else:
             self.run.key(k)
             if self.run.done:
                 self.state = "menu"
                 self.run = None
 
+    def do(self, action):
+        if action == "start":
+            self.new_run()
+        elif action == "upgrades":
+            self.state, self.shop_msg = "upgrades", ""
+        elif action == "quit":
+            self.running = False
+        elif action == "back":
+            self.state = "menu"
+        elif action[0] == "sel":
+            self.shop_sel = action[1]
+        elif action[0] == "buy":
+            self.shop_sel = action[1]
+            self.buy(action[1])
+
     def buy(self, i):
         uid, name, desc, base, mx = META_UPGRADES[i]
         lv = self.meta["up"].get(uid, 0)
         if lv >= mx:
-            self.menu_msg = f"{name} is already maxed."
+            self.shop_msg = f"{name} is already maxed."
             return
         cost = meta_cost(base, lv)
         if self.meta["gems"] < cost:
-            self.menu_msg = f"{name} costs {cost} gems - you have {self.meta['gems']}."
+            self.shop_msg = f"{name} costs {cost} gems - you have {self.meta['gems']}."
             return
         self.meta["gems"] -= cost
         self.meta["up"][uid] = lv + 1
         save_meta(self.meta)
-        self.menu_msg = f"Bought {name}!"
+        self.shop_msg = f"Bought {name}!" + (f" Now level {lv + 1}." if mx > 1 else "")
 
     def new_run(self):
-        # the map fills the whole terminal, minus the info panel on the right
+        # the map takes the full terminal width; the HUD lives under it
         h, w = self.scr.getmaxyx()
-        W = max(19, min(120, (w - MAP_X - 3 - PANEL_W) // 2))
-        H = max(14, min(70, h - MAP_Y - 2))
+        W = max(19, min(MAX_MAP_W, (w - 3) // 2))
+        H = max(12, min(MAX_MAP_H, h - MAP_Y - 1 - HUD_H))
         self.run = Run(W, H, self.meta)
         self.state = "run"
 
@@ -753,59 +829,109 @@ class App:
     # -------------------------------------------------------------- draw
     def draw(self):
         self.scr.erase()
+        self.zones = []
         if self.state == "menu":
             self.draw_menu()
+        elif self.state == "upgrades":
+            self.draw_upgrades()
         else:
             self.draw_run()
         self.scr.refresh()
 
+    def window(self, subtitle=""):
+        """Retro desktop-window frame around the whole screen."""
+        h, w = self.scr.getmaxyx()
+        bar = curses.A_REVERSE | curses.A_BOLD
+        self.put(0, 0, " " * (w - 1), bar)
+        self.put(0, 1, f" {GAME_NAME}" + (f" - {subtitle}" if subtitle else ""), bar)
+        btns = "[_] [#] [X]"
+        bx = w - 2 - len(btns)
+        self.put(0, bx, btns, bar)
+        self.zones.append((0, bx + 8, bx + 11, "quit" if self.state == "menu" else "back"))
+        for y in range(1, h - 1):
+            self.put(y, 0, "|", curses.A_DIM)
+            self.put(y, w - 2, "|", curses.A_DIM)
+        self.put(h - 1, 0, "+" + "-" * (w - 3) + "+", curses.A_DIM)
+        self.put(h - 1, w - 4 - len(VERSION) - 2, f" v{VERSION} ", curses.A_DIM)
+
     def draw_menu(self):
         m = self.meta
-        h = self.scr.getmaxyx()[0]
-        y = max(1, (h - 24) // 2)
-        for line in TITLE:
-            self.center(y, line, self.color(CASTLE) | curses.A_BOLD)
+        h, w = self.scr.getmaxyx()
+        self.window()
+        roomy = h >= 30
+        step = 2 if roomy else 1
+        total = sum(len(b) + 1 for b in TITLE) + (2 if roomy else 0) + 2 + len(MENU_ITEMS) * step + 2
+        y = max(1, 1 + (h - 2 - total) // 2)
+        for block in TITLE:
+            bw = max(len(l) for l in block)
+            x = max(1, (w - bw) // 2)
+            for line in block:
+                self.put(y, x, line, self.color(CASTLE) | curses.A_BOLD)
+                y += 1
             y += 1
-        y += 1
-        self.center(y, "a roguelike tower defense  -  protect the keep, keep the gems", curses.A_DIM)
+        if roomy:
+            self.center(y, "a roguelike tower defense  -  protect the castle, keep the gems", curses.A_DIM)
+            y += 2
+        self.center(y, f"GEMS {m['gems']}    best: level {m.get('best_level', 0)}, wave {m.get('best', 0)}"
+                       f"    runs {m.get('runs', 0)}", self.color(GEM) | curses.A_BOLD)
         y += 2
-        self.center(y, f"GEMS: {m['gems']}    best: level {m.get('best_level', 0)}, wave {m.get('best', 0)}"
-                       f"    runs: {m.get('runs', 0)}", self.color(GEM) | curses.A_BOLD)
-        y += 2
-        self.center(y, "-- GEM SHOP (permanent) --", curses.A_BOLD)
+        for i, (label, action) in enumerate(MENU_ITEMS):
+            self.button(y, label, action, selected=(i == self.menu_sel))
+            y += 2 if roomy else 1
         y += 1
-        w = self.scr.getmaxyx()[1]
-        left = max(0, (w - 62) // 2)
+        self.center(y, "up/down + ENTER   or click   (U upgrades, Q quit)", curses.A_DIM)
+
+    def draw_upgrades(self):
+        m = self.meta
+        h, w = self.scr.getmaxyx()
+        self.window("Upgrades")
+        n = len(META_UPGRADES)
+        total = n + 11
+        y = max(1, 1 + (h - 2 - total) // 2)
+        self.center(y, "-=  U P G R A D E S  =-", self.color(CASTLE) | curses.A_BOLD)
+        y += 1
+        self.center(y, f"GEMS {m['gems']}", self.color(GEM) | curses.A_BOLD)
+        y += 2
+        row_w = 52
+        left = max(2, (w - row_w) // 2)
         for i, (uid, name, desc, base, mx) in enumerate(META_UPGRADES):
             lv = m["up"].get(uid, 0)
-            if lv >= mx:
-                price = "MAXED" if mx > 1 else "OWNED"
-            else:
-                price = f"{meta_cost(base, lv)} gems"
+            maxed = lv >= mx
+            cost = meta_cost(base, lv)
+            price = ("MAXED" if mx > 1 else "OWNED") if maxed else f"{cost} gems"
             lvl = f"lv {lv}/{mx}" if mx > 1 else ""
-            can = lv < mx and m["gems"] >= meta_cost(base, lv)
-            attr = self.color(GEM) | curses.A_BOLD if can else (curses.A_DIM if lv >= mx else 0)
-            self.put(y, left, f" {i + 1}) {name:<16} {desc:<26} {lvl:<8} {price}", attr)
+            sel = i == self.shop_sel
+            can = not maxed and m["gems"] >= cost
+            attr = curses.A_REVERSE | curses.A_BOLD if sel else (curses.A_DIM if maxed else 0)
+            text = f" {i + 1}) {name:<16} {lvl:<8} {price:<10} "
+            self.put(y, left, ">" if sel else " ", self.color(CASTLE) | curses.A_BOLD)
+            self.put(y, left + 2, text, attr)
+            self.zones.append((y, left, left + 2 + len(text), ("sel", i)))
+            if not maxed:
+                bx = left + 3 + len(text)
+                self.put(y, bx, "[ BUY ]", self.color(GEM) | curses.A_BOLD if can else curses.A_DIM)
+                self.zones.append((y, bx, bx + 7, ("buy", i)))
             y += 1
         y += 1
-        if self.menu_msg:
-            self.center(y, self.menu_msg, self.color(GOLD))
+        uid, name, desc, base, mx = META_UPGRADES[self.shop_sel]
+        lv = m["up"].get(uid, 0)
+        detail = f"{name}: {desc}" + (" per level" if mx > 1 else "")
+        if lv < mx:
+            detail += f"  -  next costs {meta_cost(base, lv)} gems"
+        self.center(y, detail)
         y += 2
-        self.center(y, f"each level = {WAVES_PER_LEVEL} waves, every new level opens one more path to your castle",
-                    curses.A_DIM)
+        self.center(y, self.shop_msg, self.color(GOLD) | curses.A_BOLD)
         y += 2
-        blink = curses.A_BOLD if int(self.anim * 2) % 2 else 0
-        self.center(y, "ENTER  start a new run        1-6  buy upgrade        Q  quit", blink)
+        self.button(y, "BACK", "back", selected=False, width=12)
+        y += 2
+        self.center(y, "up/down select   ENTER buy   1-6 quick buy   ESC back   or click", curses.A_DIM)
 
     def draw_run(self):
         r = self.run
         mx, my = MAP_X, MAP_Y
         W, H = r.W, r.H
 
-        # header
-        hdr = f" ASCII KEEP   level {r.level}   wave {r.wave_in_level()}/{WAVES_PER_LEVEL}   kills {r.kills}"
-        self.put(0, 0, hdr, curses.A_BOLD)
-        self.put(0, len(hdr) + 3, f"gem bank {self.meta['gems']}", self.color(GEM))
+        self.draw_header()
 
         # frame
         self.put(my - 1, mx - 1, "+" + "-" * (2 * W) + "+")
@@ -851,7 +977,7 @@ class App:
                         s, a = (" .", self.color(WEAPONS[ct.kind]["color"]))
                 self.put(my + y, mx + 2 * x, s, a)
 
-        # castle
+        # castle (unchanged: right edge, 3 rows tall)
         cy = r.castle_y
         cx = mx + 2 * (W - 2)
         hp_frac = r.hp / max(1, r.max_hp)
@@ -883,10 +1009,129 @@ class App:
                 self.put(my + y, mx + 2 * x - 1, "{", self.color(CURSOR) | curses.A_BOLD)
                 self.put(my + y, mx + 2 * x + 2, "}", self.color(CURSOR) | curses.A_BOLD)
 
-        self.draw_panel(mx + 2 * W + 3, my - 1)
-        self.put(my + H + 1, 0, " " + r.msg, self.color(GOLD))
+        self.draw_hud(my + H + 1)
+        self.draw_overlay()
 
-        # overlays
+    def draw_line(self, y, x, pieces, gap=2):
+        """Draw [(text, attr), ...] pieces left to right on one row."""
+        for text, attr in pieces:
+            self.put(y, x, text, attr)
+            x += len(text)
+        return x
+
+    def fit(self, groups, width, gap="  "):
+        """groups = [(priority, [(text, attr), ...]), ...] in display order.
+        Drop the lowest-priority groups until the line fits in `width`."""
+        groups = list(groups)
+        while groups:
+            length = sum(len(t) for _, g in groups for t, _ in g) + len(gap) * (len(groups) - 1)
+            if length <= width:
+                break
+            groups.remove(min(groups, key=lambda g: g[0]))
+        out = []
+        for i, (_, g) in enumerate(groups):
+            if i:
+                out.append((gap, 0))
+            out += g
+        return out
+
+    def draw_header(self):
+        r = self.run
+        w = self.scr.getmaxyx()[1]
+        bar_w = 10
+        filled = max(0, int(bar_w * r.hp / max(1, r.max_hp)))
+        phase = {"build": "BUILD PHASE", "wave": "WAVE ACTIVE", "perk": "WAVE CLEARED",
+                 "levelup": "LEVEL CLEARED", "paused": "PAUSED", "confirm": "...", "over": "GAME OVER"}[r.state]
+        if r.state == "wave":
+            phase += f" ({len(r.spawn_queue) + len(r.enemies)} left)"
+        bold = curses.A_BOLD
+        groups = [
+            (3, [(f" {GAME_NAME} ", curses.A_REVERSE | bold)]),
+            (10, [(f"LEVEL {r.level}", self.color(CASTLE) | bold),
+                  (f" wave {r.wave_in_level()}/{WAVES_PER_LEVEL}", bold)]),
+            (6, [(phase, bold)]),
+            (9, [("CASTLE ", bold), ("#" * filled, self.color(RED if filled < 4 else C_BOW) | bold),
+                 ("-" * (bar_w - filled), curses.A_DIM), (f" {r.hp}/{r.max_hp}", 0)]),
+            (8, [(f"GOLD {r.gold}", self.color(GOLD) | bold)]),
+            (7, [(f"GEMS {int(r.gems_raw)}", self.color(GEM) | bold)]),
+            (4, [(f"paths {len(r.paths)}  x{r.speed}", curses.A_DIM)]),
+            (2, [(f"kills {r.kills}", curses.A_DIM)]),
+        ]
+        self.draw_line(0, 0, self.fit(groups, w - 1))
+
+    def draw_hud(self, y):
+        r = self.run
+        w = self.scr.getmaxyx()[1]
+        cur = tuple(r.cursor)
+        t = r.towers.get(cur)
+        gold = self.color(GOLD) | curses.A_BOLD
+        dim = curses.A_DIM
+
+        # row 1: build bar
+        items = []
+        sc = r.mods["struct_cost"]
+        items.append(("B", "structure", "struct", f"{sc}g", r.gold >= sc and r.free(cur), False))
+        for kind in WEAPON_ORDER:
+            wd = WEAPONS[kind]
+            locked = kind not in r.unlocked
+            items.append((wd["key"], wd["name"], wd["name"][:4], "locked" if locked else f"{wd['cost']}g",
+                          bool(t) and not t.kind and r.gold >= wd["cost"] and not locked, locked))
+        if t and t.kind and t.level < MAX_LEVEL:
+            uc = r.upgrade_cost(t)
+            items.append(("U", "upgrade", "upg", f"{uc}g", r.gold >= uc, False))
+        else:
+            items.append(("U", "upgrade", "upg", "-", False, False))
+        items.append(("X", "sell", "sell", f"+{t.invested // 2}g" if t else "-", bool(t), False))
+        items.append(("N", "next wave", "wave", "", r.state == "build", False))
+
+        for style in ("long", "medium", "tiny"):
+            pieces = []
+            for key, name, short, cost, ok, locked in items:
+                if style == "tiny" and key == "N":
+                    continue                     # N is listed in the help row instead
+                if pieces:
+                    pieces.append(("  " if style == "long" else " ", 0))
+                pieces.append((f"[{key}]", curses.A_BOLD if ok else dim))
+                if style == "long":
+                    label, price = f" {name}", (f" {cost}" if cost else "")
+                elif style == "medium":
+                    label, price = f" {short}", (f" {cost}" if cost else "")
+                else:
+                    label = name[:3] if key in "1234" else ""
+                    price = "" if locked else cost
+                pieces.append((label, 0 if ok else dim))
+                if price:
+                    pieces.append((price, gold if ok else dim))
+            if sum(len(p[0]) for p in pieces) <= w - 2:
+                break
+        self.draw_line(y, 1, pieces)
+
+        # row 2: tile info + controls
+        if t and t.kind:
+            s = r.stats(t)
+            wd = WEAPONS[t.kind]
+            info = [(f"{wd['name']} lv {t.level}", self.color(wd["color"]) | curses.A_BOLD),
+                    (f"  dmg {s['dmg']:.1f}  rng {s['rng']:.1f}  {1 / s['cd']:.1f}/s", dim)]
+        elif t:
+            info = [("Structure - add a weapon with 1-4", curses.A_BOLD)]
+        elif cur in r.path_set:
+            info = [("Enemy path", dim)]
+        elif cur in r.castle_cells:
+            info = [("Your castle!", dim)]
+        else:
+            info = [("Grass - buildable", dim)]
+        x = self.draw_line(y + 1, 1, info)
+        for helptext in ("N wave  F speed  P pause  K boom  Q quit  |  move: arrows/wasd/mouse, shift x5",
+                         "N wave  F speed  P pause  K boom  Q quit", "N wave F speed P pause K boom Q quit", ""):
+            if x + 4 + len(helptext) <= w - 2:
+                self.put(y + 1, w - 2 - len(helptext), helptext, dim)
+                break
+
+        # row 3: message
+        self.put(y + 2, 1, r.msg, self.color(GOLD))
+
+    def draw_overlay(self):
+        r = self.run
         if r.state == "perk":
             lines = [r.wave_msg, "", "Choose a blessing:", ""]
             for i, (name, desc, _, _) in enumerate(r.offer):
@@ -909,77 +1154,12 @@ class App:
             self.box(lines, self.color(RED) | curses.A_BOLD)
         elif r.state == "over":
             f = r.final
-            title = "*** KABOOM! You destroyed your own keep ***" if f["manual"] else "*** THE KEEP HAS FALLEN ***"
+            title = "*** KABOOM! You destroyed your own castle ***" if f["manual"] else "*** THE CASTLE HAS FALLEN ***"
             lines = [title, "", f"reached level:  {f['level']}", f"waves survived: {f['waves']}",
                      f"enemies slain:  {f['kills']}",
                      f"gems kept:      {f['gems']}" + (f"  (incl. {f['bonus']} from gold)" if f["bonus"] else ""),
-                     f"gem bank now:   {self.meta['gems']}", "", "ENTER - back to the gem shop"]
+                     f"gem bank now:   {self.meta['gems']}", "", "ENTER - back to the menu"]
             self.box(lines, self.color(RED if not f["manual"] else GOLD) | curses.A_BOLD)
-
-    def draw_panel(self, px, py):
-        r = self.run
-        y = py
-        bar_w = 10
-        filled = int(bar_w * r.hp / max(1, r.max_hp))
-        phase = {"build": "BUILD PHASE", "wave": "WAVE ACTIVE", "perk": "WAVE CLEARED",
-                 "levelup": "LEVEL CLEARED", "paused": "PAUSED", "confirm": "...", "over": "GAME OVER"}[r.state]
-        self.put(y, px, f"LEVEL {r.level}", self.color(CASTLE) | curses.A_BOLD)
-        self.put(y, px + 9, f"wave {r.wave_in_level()}/{WAVES_PER_LEVEL}", curses.A_BOLD); y += 1
-        self.put(y, px, phase, curses.A_BOLD); y += 1
-        info = f"paths {len(r.paths)}   speed x{r.speed}"
-        if r.state == "wave":
-            info += f"   left {len(r.spawn_queue) + len(r.enemies)}"
-        self.put(y, px, info, curses.A_DIM); y += 1
-        self.put(y, px, "CASTLE ", curses.A_BOLD)
-        self.put(y, px + 7, "#" * filled, self.color(RED if filled < 4 else C_BOW) | curses.A_BOLD)
-        self.put(y, px + 7 + filled, "-" * (bar_w - filled), curses.A_DIM)
-        self.put(y, px + 8 + bar_w, f"{r.hp}/{r.max_hp}"); y += 1
-        self.put(y, px, f"GOLD   {r.gold}", self.color(GOLD) | curses.A_BOLD); y += 1
-        self.put(y, px, f"GEMS   {int(r.gems_raw)} this run", self.color(GEM) | curses.A_BOLD); y += 2
-
-        cur = tuple(r.cursor)
-        t = r.towers.get(cur)
-        if t and t.kind:
-            s = r.stats(t)
-            w = WEAPONS[t.kind]
-            self.put(y, px, f"{w['name']} lv {t.level}", self.color(w["color"]) | curses.A_BOLD); y += 1
-            self.put(y, px, f" dmg {s['dmg']:.1f} rng {s['rng']:.1f} {1 / s['cd']:.1f}/s", curses.A_DIM); y += 1
-        elif t:
-            self.put(y, px, "Structure (no weapon)", curses.A_BOLD); y += 2
-        elif cur in r.path_set:
-            self.put(y, px, "Enemy path", curses.A_DIM); y += 2
-        elif cur in r.castle_cells:
-            self.put(y, px, "Your castle!", curses.A_DIM); y += 2
-        else:
-            self.put(y, px, "Grass - buildable", curses.A_DIM); y += 2
-        y += 1
-
-        def row(key, label, cost, ok, locked=False):
-            nonlocal y
-            attr = curses.A_DIM if (locked or not ok) else 0
-            self.put(y, px, f"{key:<2} {label:<12}", attr | curses.A_BOLD if not attr else attr)
-            self.put(y, px + 16, "locked" if locked else cost,
-                     curses.A_DIM if (locked or not ok) else self.color(GOLD))
-            y += 1
-
-        sc = r.mods["struct_cost"]
-        row("B", "structure", f"{sc}g", r.gold >= sc and r.free(cur))
-        for kind in WEAPON_ORDER:
-            w = WEAPONS[kind]
-            row(w["key"], w["name"], f"{w['cost']}g",
-                bool(t) and not t.kind and r.gold >= w["cost"], kind not in r.unlocked)
-        if t and t.kind and t.level < MAX_LEVEL:
-            row("U", "upgrade", f"{r.upgrade_cost(t)}g", r.gold >= r.upgrade_cost(t))
-        else:
-            row("U", "upgrade", "-", False)
-        row("X", "sell", f"+{t.invested // 2}g" if t else "-", bool(t))
-        y += 1
-        bottom = py + r.H + 1          # don't run into the message line
-        for line in ("N next wave   F speed x1-3", "P pause  K boom  Q quit",
-                     "move: arrows/wasd/mouse", "shift+WASD jumps 5 tiles"):
-            if y <= bottom:
-                self.put(y, px, line, curses.A_DIM)
-            y += 1
 
 
 def main(scr):
@@ -1031,6 +1211,7 @@ def main(scr):
 
 
 if __name__ == "__main__":
+    os.environ.setdefault("ESCDELAY", "25")   # make ESC react instantly
     try:
         curses.wrapper(main)
     except KeyboardInterrupt:
