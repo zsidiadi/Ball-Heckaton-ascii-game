@@ -8,9 +8,39 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-13
+
+`keep.py` 1617 → 1798 lines
+
+### Added
+- **Menu music.** The medieval theme plays on the main menu, Upgrades and Premium screens only. It keeps
+  playing while you move between them, stops when a run starts, and comes back on returning to the menu.
+- **Seamless loop.** The source track is exactly 16 bars at 132 BPM, but its last ~45 ms were faded out.
+  `assets/menu_loop.wav` replaces that fade with the lead-in to bar 11 (30 ms equal-power crossfade)
+  and blends the first 25 ms (donor continuation → real opening), so the end flows straight into the start.
+  The length is unchanged. Measured at the seam, the volume now matches the music's natural bar transitions
+  (quietest 5 ms: 0.034, where it was 0.009 before).
+- `tools/make_menu_loop.py` rebuilds the loop from `assets/source/medieval_td_loop.ogg` (numpy + ffmpeg)
+  and reproduces the shipped WAV byte for byte.
+- `Music` class with no required dependencies: pygame → winsound (Windows) → paplay / aplay / sox
+  (raw audio streamed into the player for gapless looping) → afplay (macOS, multi-loop file, tiny gap
+  every ~5 min). If no player exists, the game stays silent. A player that keeps crashing is retried
+  3 times, then left alone.
+- `M` on the menu (or clicking `[M] music` in the bottom-left corner) toggles music. The choice is saved
+  as `"music"` in `keep_save.json`.
+- `--mute` command-line flag.
+
+### Technical notes
+- `App` now takes the music player (`App(scr, music)`) and syncs it every frame against `MENU_STATES`.
+  The player is created before curses starts and closed in a `finally` block on exit.
+- Tested with stand-in players: the streamed bytes are the loop repeated exactly (no gap or padding at the
+  wrap), `stop()` kills the player, the afplay fallback restarts and backs off correctly, and the pygame
+  backend plays and stops (SDL dummy audio driver).
+
 ## [0.7.0] - 2026-10-12
 
-`keep.py` 1505 → 1617 lines
+Commit [`d3e9b48`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/d3e9b4896813809d8e80a4f62bcef8b37e2f542c)
+· `keep.py` 1505 → 1617 lines
 
 ### Added
 - **PREMIUM button** in the main menu (hotkey `P`) that opens a real-money store titled
@@ -245,7 +275,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.4.0...v0.5.0
