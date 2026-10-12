@@ -26,7 +26,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 
 MIN_W, MIN_H = 70, 22
 MAP_X, MAP_Y = 1, 2          # screen position of the top-left map cell
@@ -108,6 +108,23 @@ META_UPGRADES = [
 ] + sorted([(k, f"Unlock {w['name']}", w["info"], w["unlock"], 1) for k, w in ITEMS.items() if w["unlock"]],
            key=lambda u: u[3])
 QUICK_KEYS = "1234567890"
+
+# Premium store (real money). Payments are NOT connected yet: buying only shows a confirmation and a
+# "coming soon" message - nothing is charged and nothing is handed out. Prices are in euros.
+PAYMENTS_ENABLED = False
+PREMIUM = [
+    # id,        name,             price, description
+    ("nuke",     "Nuke",            5.00, "kills every enemy on the field (one use)"),
+    ("gems10",   "10 Gems",         5.00, "+10 gems to spend on Upgrades"),
+    ("revive",   "Second Chance",   3.00, "your castle survives one deadly hit per run"),
+    ("doubler",  "Gem Doubler",     8.00, "earn 2x gems from every run, forever"),
+    ("unlock",   "Unlock All",     10.00, "every weapon and building unlocked at once"),
+    ("golden",   "Golden Castle",   2.00, "a shiny golden castle (cosmetic only)"),
+]
+
+
+def eur(price):
+    return f"EUR {price:.2f}"   # ASCII on purpose: the euro sign breaks some terminals
 
 # two blocks of big letters: "cool tower" / "defense game.exe"
 TITLE = [
@@ -935,19 +952,22 @@ BACK_KEYS = (27, curses.KEY_BACKSPACE, 127, 8, ord("q"), ord("Q"), ord("b"), ord
 UP_KEYS = (curses.KEY_UP, ord("w"), ord("W"))
 DOWN_KEYS = (curses.KEY_DOWN, ord("s"), ord("S"))
 
-MENU_ITEMS = [("START GAME", "start"), ("UPGRADES", "upgrades"), ("QUIT", "quit")]
+MENU_ITEMS = [("START GAME", "start"), ("UPGRADES", "upgrades"), ("PREMIUM", "premium"), ("QUIT", "quit")]
 
 
 class App:
     def __init__(self, scr):
         self.scr = scr
         self.meta = load_meta()
-        self.state = "menu"        # menu, upgrades, run
+        self.state = "menu"        # menu, upgrades, premium, run
         self.run = None
         self.running = True
         self.menu_sel = 0
         self.shop_sel = 0
         self.shop_msg = ""
+        self.prem_sel = 0
+        self.prem_confirm = None   # index of the premium item in the "are you sure?" dialog
+        self.prem_msg = ""
         self.zones = []            # clickable areas: (y, x0, x1, action)
         self.anim = 0.0
 
@@ -990,6 +1010,7 @@ class App:
         for i, s in enumerate(lines):
             self.put(top + 1 + i, left, "| " + s.ljust(bw - 4) + " |", attr)
         self.put(top + 1 + len(lines), left, "+" + "-" * (bw - 2) + "+", attr)
+        return top, left, bw
 
     # -------------------------------------------------------------- input
     def key(self, k):
@@ -1017,6 +1038,8 @@ class App:
                 self.do(MENU_ITEMS[self.menu_sel][1])
             elif k in (ord("u"), ord("U")):
                 self.do("upgrades")
+            elif k in (ord("p"), ord("P")):
+                self.do("premium")
             elif k in (ord("q"), ord("Q"), 27):
                 self.do("quit")
         elif self.state == "upgrades":
@@ -1032,6 +1055,23 @@ class App:
                 self.buy(self.shop_sel)
             elif k in BACK_KEYS:
                 self.do("back")
+        elif self.state == "premium":
+            n = len(PREMIUM)
+            if self.prem_confirm is not None:            # the "are you sure?" dialog is open
+                if k in (ord("y"), ord("Y")) or k in ENTER_KEYS:
+                    self.do("pyes")
+                elif k in (ord("n"), ord("N")) or k in BACK_KEYS:
+                    self.do("pno")
+            elif k in UP_KEYS:
+                self.prem_sel = (self.prem_sel - 1) % n
+            elif k in DOWN_KEYS:
+                self.prem_sel = (self.prem_sel + 1) % n
+            elif k in ENTER_KEYS:
+                self.do(("pbuy", self.prem_sel))
+            elif ord("1") <= k < ord("1") + n:
+                self.do(("pbuy", k - ord("1")))
+            elif k in BACK_KEYS:
+                self.do("back")
         else:
             self.run.key(k)
             if self.run.done:
@@ -1043,10 +1083,21 @@ class App:
             self.new_run()
         elif action == "upgrades":
             self.state, self.shop_msg = "upgrades", ""
+        elif action == "premium":
+            self.state, self.prem_msg, self.prem_confirm = "premium", "", None
         elif action == "quit":
             self.running = False
         elif action == "back":
             self.state = "menu"
+        elif action == "pyes":
+            self.purchase(self.prem_confirm)
+        elif action == "pno":
+            self.prem_confirm = None
+            self.prem_msg = "Purchase cancelled."
+        elif action[0] == "psel":
+            self.prem_sel = action[1]
+        elif action[0] == "pbuy":
+            self.prem_sel = self.prem_confirm = action[1]
         elif action[0] == "sel":
             self.shop_sel = action[1]
         elif action[0] == "buy":
@@ -1067,6 +1118,15 @@ class App:
         self.meta["up"][uid] = lv + 1
         save_meta(self.meta)
         self.shop_msg = f"Bought {name}!" + (f" Now level {lv + 1}." if mx > 1 else "")
+
+    def purchase(self, i):
+        """Real-money purchase. Not wired to a payment provider yet, so it never charges or grants anything."""
+        pid, name, price, desc = PREMIUM[i]
+        self.prem_confirm = None
+        if not PAYMENTS_ENABLED:
+            self.prem_msg = f"Payments aren't connected yet - nothing was charged for {name} ({eur(price)})."
+            return
+        # When payments are connected: charge through the provider, then grant the item here.
 
     def new_run(self):
         # the map fills the terminal, minus the info panel on the right
@@ -1090,6 +1150,8 @@ class App:
             self.draw_menu()
         elif self.state == "upgrades":
             self.draw_upgrades()
+        elif self.state == "premium":
+            self.draw_premium()
         else:
             self.draw_run()
         self.scr.refresh()
@@ -1135,7 +1197,7 @@ class App:
             self.button(y, label, action, selected=(i == self.menu_sel))
             y += step
         y += 1
-        self.center(y, "up/down + ENTER   or click   (U upgrades, Q quit)", curses.A_DIM)
+        self.center(y, "up/down + ENTER   or click   (U upgrades, P premium, Q quit)", curses.A_DIM)
 
     def draw_upgrades(self):
         m = self.meta
@@ -1190,6 +1252,56 @@ class App:
         y += gap
         self.center(y, f"up/down select   ENTER buy   {QUICK_KEYS[0]}-{QUICK_KEYS[min(n, 10) - 1]} quick buy   ESC back",
                     curses.A_DIM)
+
+    def draw_premium(self):
+        h, w = self.scr.getmaxyx()
+        self.window("Premium")
+        n = len(PREMIUM)
+        total = 3 + n + 9
+        y = max(1, 1 + (h - 2 - total) // 2)
+        self.center(y, "$$$  P R E M I U M   G E A R  $$$", self.color(GOLD) | curses.A_BOLD)
+        y += 1
+        self.center(y, "real-money store - payments are not connected yet (coming soon)", curses.A_DIM)
+        y += 2
+        row_w = 44
+        left = max(2, (w - row_w) // 2)
+        for i, (pid, name, price, desc) in enumerate(PREMIUM):
+            sel = i == self.prem_sel
+            text = f" {i + 1}) {name:<16} {eur(price):>10} "
+            self.put(y, left, ">" if sel else " ", self.color(GOLD) | curses.A_BOLD)
+            self.put(y, left + 2, text, curses.A_REVERSE | curses.A_BOLD if sel else 0)
+            self.zones.append((y, left, left + 2 + len(text), ("psel", i)))
+            bx = left + 3 + len(text)
+            self.put(y, bx, "[ BUY ]", self.color(GOLD) | curses.A_BOLD)
+            self.zones.append((y, bx, bx + 7, ("pbuy", i)))
+            y += 1
+        y += 1
+        pid, name, price, desc = PREMIUM[self.prem_sel]
+        self.center(y, f"{name}: {desc}")
+        y += 2
+        self.center(y, self.prem_msg, self.color(GOLD) | curses.A_BOLD)
+        y += 2
+        self.button(y, "BACK", "back", selected=False, width=12)
+        y += 2
+        self.center(y, f"up/down select   ENTER buy   1-{n} quick buy   ESC back   or click", curses.A_DIM)
+
+        if self.prem_confirm is not None:
+            self.zones = []                      # only the dialog's buttons are clickable now
+            pid, name, price, desc = PREMIUM[self.prem_confirm]
+            lines = [f"BUY {name.upper()}?", "", f"price: {eur(price)}", desc, "",
+                     "(payments are not connected yet -", " nothing will be charged)", "", ""]
+            top = max(0, (h - len(lines)) // 2 - 1)
+            for yy in range(top, top + len(lines) + 2):     # blank the rows behind the dialog
+                self.put(yy, 1, " " * (w - 3))
+            top, left, bw = self.box(lines, self.color(GOLD) | curses.A_BOLD)
+            by = top + len(lines)
+            yes, no = "[  YES  ]", "[  NO  ]"
+            bx = left + (bw - len(yes) - 3 - len(no)) // 2
+            self.put(by, bx, yes, self.color(GOLD) | curses.A_REVERSE | curses.A_BOLD)
+            self.zones.append((by, bx, bx + len(yes), "pyes"))
+            nx = bx + len(yes) + 3
+            self.put(by, nx, no, curses.A_BOLD)
+            self.zones.append((by, nx, nx + len(no), "pno"))
 
     def draw_run(self):
         r = self.run

@@ -8,9 +8,33 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-12
+
+`keep.py` 1505 → 1617 lines
+
+### Added
+- **PREMIUM button** in the main menu (hotkey `P`) that opens a real-money store titled
+  "PREMIUM GEAR", with prices in euros:
+  Nuke (EUR 5.00, kills every enemy on the field), 10 Gems (EUR 5.00), Second Chance (EUR 3.00),
+  Gem Doubler (EUR 8.00), Unlock All (EUR 10.00), Golden Castle skin (EUR 2.00).
+- The purchase flow: pick an item (keyboard, `1`–`6`, or click `[ BUY ]`), then a confirm dialog with
+  `[ YES ]` / `[ NO ]` (keyboard `Y` / `N` / Enter / Esc, or click).
+- `PREMIUM` table, `PAYMENTS_ENABLED` switch, `eur()` price formatter and `App.purchase()`.
+
+### Not yet working (on purpose)
+- **Payments are not connected.** Confirming a purchase only shows
+  "Payments aren't connected yet - nothing was charged", so **no money is taken and nothing is granted**.
+  The premium items have no in-game effect yet. The store screen says so, and the confirm dialog repeats it.
+  Real sales need a payment provider before `PAYMENTS_ENABLED` can be turned on.
+
+### Changed
+- Main menu has 4 buttons, and the hint line mentions `P premium`.
+- `App.box()` now returns its position so dialogs can place buttons inside it.
+
 ## [0.6.0] - 2026-10-12
 
-`keep.py` 1390 → 1505 lines
+Commit [`4468936`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/4468936802bf8b1fe608422c936beae257da8378)
+· `keep.py` 1390 → 1505 lines
 
 ### Added
 - **Gold Mine** `$` (key `G`, 60g, unlock 8 gems): placed on any empty grass tile without a structure.
@@ -221,7 +245,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.3.0...v0.4.0

@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.6.0-orange)
+![Version](https://img.shields.io/badge/version-0.7.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount weapons on
 them, and survive as many levels as you can. Every level ends with a **big boss** and the next one
@@ -71,7 +71,9 @@ When the castle falls you keep your **gems** and spend them on permanent upgrade
 - **Cash out on purpose.** Blow up your own castle to keep your gems and turn leftover gold into bonus gems.
 - **Full-screen layout.** The map takes every column of your terminal except a slim 24-column panel
   on the right, which holds all the info, build options and weapon stats. You can use the mouse or the keyboard.
-- **Retro menu.** A window-style main menu with START GAME, UPGRADES and QUIT buttons.
+- **Retro menu.** A window-style main menu with START GAME, UPGRADES, PREMIUM and QUIT buttons.
+- **Premium store (preview).** A real-money shop for the Nuke, gem packs and more. It's a preview:
+  payments aren't connected yet, so nothing can actually be bought.
 - **Zero dependencies.** It's a single Python file that uses only the standard library.
 
 ## Getting started
@@ -120,6 +122,8 @@ python3 keep.py
 | Up / Down (or `w` / `s`) | Move between buttons / upgrades |
 | `Enter` / `Space` | Press the selected button / buy the selected upgrade |
 | `U` | Open the Upgrades screen from the main menu |
+| `P` | Open the Premium store from the main menu |
+| `Y` / `N` | Confirm / cancel a purchase in the Premium store |
 | `1`–`9`, `0` | Quick-buy one of the first ten upgrades (Upgrades screen) |
 | `Esc` / `Backspace` / `B` | Back to the main menu |
 | `Q` | Quit (main menu) |
@@ -249,6 +253,25 @@ All upgrades live behind the **UPGRADES** button in the main menu.
 
 Progress is saved in `keep_save.json` next to `keep.py`. Delete that file to reset.
 
+### Premium store (preview: payments not connected)
+
+The **PREMIUM** button in the main menu opens a real-money store. Right now it's only a preview:
+choosing an item and confirming shows *"Payments aren't connected yet - nothing was charged"*.
+**No money is taken and nothing is given**, and the items don't do anything in the game yet.
+
+| Item | Price | What it will do |
+| --- | --- | --- |
+| Nuke | EUR 5.00 | kills every enemy on the field (one use) |
+| 10 Gems | EUR 5.00 | +10 gems to spend on Upgrades |
+| Second Chance | EUR 3.00 | your castle survives one deadly hit per run |
+| Gem Doubler | EUR 8.00 | earn 2x gems from every run, forever |
+| Unlock All | EUR 10.00 | every weapon and building unlocked at once |
+| Golden Castle | EUR 2.00 | a shiny golden castle (cosmetic only) |
+
+Prices are shown as `EUR` instead of `€` because the euro sign doesn't display in every terminal.
+To sell these for real, the game needs a payment provider (for example Stripe). Then set
+`PAYMENTS_ENABLED = True` and grant the item in `App.purchase()` after a successful payment.
+
 ## Tuning the game
 
 All balance numbers live at the top of `keep.py`:
@@ -266,6 +289,7 @@ All balance numbers live at the top of `keep.py`:
 | `PERKS` | the blessing pool |
 | `EDGES` | the order in which new paths enter the map |
 | `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
+| `PREMIUM`, `PAYMENTS_ENABLED` | premium store items and euro prices; payments switch (off) |
 | `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and width of the side panel (24) |
 | `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 150×70) |
 
@@ -291,7 +315,7 @@ All balance numbers live at the top of `keep.py`:
 | `Enemy` | an enemy walking along **its own path** (`pos` = how many cells it has walked). Bosses carry their ability state (armor, timer, enraged) |
 | `Tower` | a structure on a tile, with an optional weapon (`kind`, `level`, `invested`) |
 | `Run` | one playthrough: map, paths, towers, enemies, waves, levels and the run state machine |
-| `App` | main menu, Upgrades screen, clickable buttons, input routing, mouse, and **all drawing** (map, boss sprites, side panel, overlays) |
+| `App` | main menu, Upgrades screen, Premium store (with confirm dialog), clickable buttons, input routing, mouse, and **all drawing** (map, boss sprites, side panel, overlays) |
 | `main()` | curses setup, colours, then a fixed **30 FPS** loop: input → update → draw |
 
 **Run state machine**
@@ -336,7 +360,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.3.0](CHANGELOG.md#030---2026-10-12) | 2026-10-12 | `e973e43` | Renamed to *cool tower defense game.exe*, full-width map with HUD below, menu buttons + Upgrades screen, standard README and CHANGELOG | 1218 lines |
 | [0.4.0](CHANGELOG.md#040---2026-10-12) | 2026-10-12 | `b3344c7` | Side panel back on the right, 8 weapons with live stats, 5 big bosses, trees and flowers | 1425 lines |
 | [0.5.0](CHANGELOG.md#050---2026-10-12) | 2026-10-12 | `60add35` | Trees and flowers removed, slimmer 24-column panel so the map is as wide as possible | 1390 lines |
-| [0.6.0](CHANGELOG.md#060---2026-10-12) | 2026-10-12 | tag `v0.6.0` | Lightning tower (replaces Tesla), Gold Mine, Mine and Tar as gem unlocks | 1505 lines |
+| [0.6.0](CHANGELOG.md#060---2026-10-12) | 2026-10-12 | `4468936` | Lightning tower (replaces Tesla), Gold Mine, Mine and Tar as gem unlocks | 1505 lines |
+| [0.7.0](CHANGELOG.md#070---2026-10-12) | 2026-10-12 | tag `v0.7.0` | PREMIUM button + real-money store preview (Nuke, gem packs, …), payments not connected | 1617 lines |
 
 ## Contributing
 
@@ -363,6 +388,7 @@ These are ideas, not promises:
 - [ ] Sound effects (terminal bell)
 - [ ] Local high-score table
 - [ ] Automated smoke tests in CI
+- [ ] Connect a payment provider and make the Premium items work
 
 ## Authors
 
