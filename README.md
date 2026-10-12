@@ -5,37 +5,40 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.3.0-orange)
+![Version](https://img.shields.io/badge/version-0.4.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount weapons on
-them, and survive as many levels as you can. Every level opens **one more path** to your castle.
+them, and survive as many levels as you can. Every level ends with a **big boss** and the next one
+opens **one more path** to your castle.
 When the castle falls you keep your **gems** and spend them on permanent upgrades for the next run.
 
 ```
-LEVEL 2 wave 1/5  WAVE ACTIVE (17 left)  CASTLE ########-- 41/50  GOLD 9  GEMS 8  paths 2  x1
-+--------------------------------------------------------------------------------------------+
-|    .   vv '   .    .      '   .    .      '   .    .      '   .    .      '   .    .      '|
-|     '  r:    .      '   .    .      '   .    .      '  ::::::::::::::::::::::::::::::::::  |
-|   .    ::     '   .    .      '   .    .      '   .    ::     '   .    .      '   .    ::  |
-|  .     o:   .    .      '   .    .      '   .    .     ::   .    .      '   .    . F1  ::  |
-|   '   .::  .      '   .    .      '   .    .      '   .::  .      '   .    .     ::::::::  |
-| .    . ::   '   .    .      '   .    .      '   .    . ::   '   .    .      '   .::[]::::  |
-|>>     ':: .    .      '   .    .      '   .    .      ':: .    .      '   .    . ::A1:::: .|
-|B:   .  o:::o:::::o:::o:::::::::::::::::::::::::::::::::::.      '   .    .      '::A1::::. |
-|B:  .      '   .    .      '   .    .      '   .    .      '   .    .      '   .  ::. :::: '|
-|::   '   .    .     :::::::::::::::::::::::::::::::::::::::::::::::::::::::: . . .:: '::::  |
-|B: .    .      '   .::  .      '   .    .      '   .    .      '   .     .:: . . .:: .::/^^\|
-|::.      '   .    . ::   '   .    .      '   .    .      '   .    .      .:: . . .:: .::|[]||
-|o: '   .    .      ':: .    .      '   .    .      '   .    .      '   . .:: .C1 .:: . .|__||
-|::    .      '   .  ::.      '   .    .      '   .    .      '   .    .  .:: .F2 .:: ..     |
-|::     '   .    .   :: '   .    .      '   .    .      '   .    .      ' .:: .C1 .:: . '   .|
-|::::o:::o:::o:::::::::    .      '   .    .      '   .    .      '   .    :::::::::: .    . |
-|    .      '   .    .      '   .    .      '   .    .      '   .    .      '   .    .      '|
-|     '   .    .      '   .    .      '   .    .      '   .    .      '   .    .      '   .  |
-+--------------------------------------------------------------------------------------------+
- [B]5g [1]Bow25g [2]Gun40g [3]Can60g [4]Fro45g [U]45g [X]+35g
- Cannon lv 1  dmg 7.0  rng 4.0  0.6/s                 N wave  F speed  P pause  K boom  Q quit
- Level 2, wave 1/5 incoming! (17 enemies)
+ cool tower defense game.exe   level 1   wave 5/5   kills 67   gem bank 0
++--------------------------------------------------------------------+  LEVEL 1  wave 5/5
+|    .      '   .    .      '   .    .      '   .    ,*     '   .    |  WAVE ACTIVE - 3 left
+|     '   *  *, *     '   .    .      '   .    .      '/\ .    .     |  CASTLE ########## 40/40
+|   .  /\.      '   .    .      '   .    .      '/\/\/\   &  *, '   .|  GOLD 110    GEMS 8
+|  /\& /\ '::::B:::::::::::::::::::::::   '   .    .   /\ '/\ .     *|  GOBLIN KING
+|   '& /\  B..     *,   .    . *    ':: .    .     /\/\ & &  .      '|  BOSS   #######--- 236
+| .  /\. /\:: '   ./\  .      '   .  ::.      '*, ./\  . /\/\/\ & .  |  Gun lv 2
+|.     /\/\::    .      '   .    .   :: '   .    .      '  *,   *.   |   dmg 1.4  rng 3.3  6.0/s
+| '   .    ::     '   .    .      '  ::    .   *, '   .    .     /^^\|    weapon cost  dmg rng  /s
+|    .     ::   .*  *.      ' \^^/.G2::::::::::::::::::::::::::::|[]||  B struct  10g
+|,*   '   .:::::::::::::::::::(oo):::A2,* .    .      '   .    . |__||  1 Bow     25g  3.0 3.5 1.4
+|   .    .      '   .  *,*, . . . .:: .  . *    '   .    .      '   .|  2 Gun     40g  1.0 3.0 5.6
+|  .      '   &    .      . . .G2 .:: .   '   .*   .      '   .    . |  3 Cannon  60g  7.0 4.0 0.6
+|   '   *  &  &  &  '   . . . .[],*:: . .    .      '   .    .      '|  4 Frost   45g  0.6 3.0 2.0
+|>>    .      '   &    . *  . . . .::  .      '   .    .      '   .  |  5 Flamer  50g  0.9 2.0 4.0
+|::::::::::::::::::::::::::::::::::::   '   .    .      '   .  /\.   |  6 Poison locked
+| '   .    .      '   .,*  .      '  /\    .      '   .    .      '  |  7 Sniper  70g 22.0 7.0 0.4
+|*   .      '   .    .   *  '   .    .      '   .    . *    '   .    |  8 Tesla   65g  4.0 3.5 1.0
+|     '   .    . /\   '   .    .  &   '*,/\    .      '   .    .     |  U upgrade 60g
+|   .    &      '  ,*    . *    '   .    .      '   .    .      '   .|  X sell   +40g
+|  .      '   .    .      '   .    .      '   .    *,     '   .    . |
+|   '   .    .      '& *,    .      '   .    .      '   .    . *    '|  N wave   F speed   P pause
+| .    .      '/\ .    .   ,* '   .    .      '   *    .      '   .  |  K boom (cash out)   Q quit
++--------------------------------------------------------------------+  move: arrows/wasd/mouse
+ GOBLIN KING summons goblins!
 ```
 
 ## Table of contents
@@ -57,14 +60,17 @@ LEVEL 2 wave 1/5  WAVE ACTIVE (17 left)  CASTLE ########-- 41/50  GOLD 9  GEMS 8
 ## Features
 
 - **Roguelike runs.** Every run has a new random map, and after every wave you choose 1 of 3 random blessings.
-- **Levels that grow.** A level is 5 waves with a boss at the end, and each new level adds another
-  enemy path to your castle.
-- **Two-step building.** First build a structure, then mount a weapon on it: Bow, Gun, Cannon or Frost.
-  Weapons upgrade up to level 5.
+- **Levels that grow.** A level is 5 waves, and each new level adds another enemy path to your castle.
+- **5 big bosses.** One of them ends every level: Goblin King, Iron Golem, Swamp Hydra, Shadow Wraith
+  and Bone Dragon, each with its own ability. After the 5th they come back stronger (II, III, …).
+- **8 weapons.** First build a structure, then mount a weapon on it: Bow, Gun, Cannon, Frost, Flamer,
+  Poison, Sniper or Tesla. Weapons upgrade up to level 5, and their stats are shown live in the side panel.
 - **Meta progression.** Gems survive death and buy permanent upgrades and weapon unlocks.
 - **Cash out on purpose.** Blow up your own castle to keep your gems and turn leftover gold into bonus gems.
-- **Full-width map.** The map scales to your terminal size, and the HUD sits underneath it.
-  You can use the mouse or the keyboard.
+- **Cute map.** Little forests `/\` `&` and flowers `*,` grow on the grass. You can build right
+  over them.
+- **Full-screen layout.** The map scales to your terminal size, with all the info and build options
+  in a panel on the right. You can use the mouse or the keyboard.
 - **Retro menu.** A window-style main menu with START GAME, UPGRADES and QUIT buttons.
 - **Zero dependencies.** It's a single Python file that uses only the standard library.
 
@@ -74,7 +80,7 @@ LEVEL 2 wave 1/5  WAVE ACTIVE (17 left)  CASTLE ########-- 41/50  GOLD 9  GEMS 8
 
 - Python **3.8+**
 - A terminal of at least **70×22** characters. Bigger is better, because the map fills the window
-  (80 columns gives a 38-tile-wide map).
+  next to the side panel.
 - Windows only: `pip install windows-curses`
 
 ### Install and run
@@ -91,14 +97,17 @@ python3 keep.py
 ## How to play
 
 1. **Build.** Move the cursor onto a grass tile and press **B** to build a structure `[]` (10 gold).
-2. **Arm it.** Press **1–4** to mount a weapon on that structure.
+2. **Arm it.** Press **1–8** to mount a weapon on that structure. The side panel shows each weapon's
+   cost, damage, range and shots per second.
 3. **Fight.** Press **N** to send the next wave. Kills give gold.
 4. **Choose a blessing.** After each wave, pick 1 of 3 random bonuses.
-5. **Level up.** Clear all 5 waves of a level and you get a reward. The next level opens a new path,
+5. **Beat the boss.** Wave 5 of every level ends with a big boss. Its name and HP bar appear in
+   the side panel.
+6. **Level up.** Clear all 5 waves of a level and you get a reward. The next level opens a new path,
    which blinks red. If the new path runs over a tower, you get that tower's full cost back.
-6. **Lose well.** When the castle falls you keep the run's gems. Press **K** at any time to blow up the
+7. **Lose well.** When the castle falls you keep the run's gems. Press **K** at any time to blow up the
    castle yourself; every 25 leftover gold becomes 1 extra gem. Quitting with **Q** forfeits the run's gems.
-7. **Upgrade.** Open **UPGRADES** in the main menu, spend your gems, then start a stronger run.
+8. **Upgrade.** Open **UPGRADES** in the main menu, spend your gems, then start a stronger run.
 
 ## Controls
 
@@ -109,7 +118,7 @@ python3 keep.py
 | Up / Down (or `w` / `s`) | Move between buttons / upgrades |
 | `Enter` / `Space` | Press the selected button / buy the selected upgrade |
 | `U` | Open the Upgrades screen from the main menu |
-| `1`–`6` | Quick-buy an upgrade (Upgrades screen) |
+| `1`–`9`, `0` | Quick-buy an upgrade (Upgrades screen) |
 | `Esc` / `Backspace` / `B` | Back to the main menu |
 | `Q` | Quit (main menu) |
 | Mouse click | Click any button, upgrade row or `[ BUY ]`. `[X]` in the title bar closes the screen |
@@ -122,7 +131,7 @@ python3 keep.py
 | `W` `A` `S` `D` (Shift) | Move cursor 5 tiles |
 | Mouse click | Move cursor to the clicked tile |
 | `B` | Build structure |
-| `1` `2` `3` `4` | Mount Bow / Gun / Cannon / Frost |
+| `1`–`8` | Mount Bow / Gun / Cannon / Frost / Flamer / Poison / Sniper / Tesla |
 | `U` | Upgrade weapon |
 | `X` | Sell (50% refund) |
 | `N` | Start next wave |
@@ -136,12 +145,19 @@ python3 keep.py
 
 ### Weapons
 
-| Key | Weapon | Map | Cost | Damage | Range | Fires every | Special |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Bow | `A` | 25g | 3.0 | 3.5 | 0.70 s | — |
-| 2 | Gun | `G` | 40g | 1.0 | 3.0 | 0.18 s | very high fire rate |
-| 3 | Cannon | `C` | 60g | 7.0 | 4.0 | 1.80 s | splash radius 1.3 · unlock: 8 gems |
-| 4 | Frost | `F` | 45g | 0.6 | 3.0 | 0.50 s | halves enemy speed for 1.2 s · unlock: 10 gems |
+| Key | Weapon | Map | Cost | Damage | Range | Shots/s | Special | Unlock |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | Bow | `A` | 25g | 3.0 | 3.5 | 1.4 | steady single target | free |
+| 2 | Gun | `G` | 40g | 1.0 | 3.0 | 5.6 | very high fire rate | free |
+| 3 | Cannon | `C` | 60g | 7.0 | 4.0 | 0.6 | splash radius 1.3 | 8 gems |
+| 4 | Frost | `F` | 45g | 0.6 | 3.0 | 2.0 | halves enemy speed for 1.2 s | 10 gems |
+| 5 | Flamer | `L` | 50g | 0.9 | 2.0 | 4.0 | burns **every** enemy in range | 6 gems |
+| 6 | Poison | `P` | 50g | 0.5 | 3.5 | 1.1 | poison: 2 dmg/s for 3 s, **ignores armor** | 10 gems |
+| 7 | Sniper | `S` | 70g | 22.0 | 7.0 | 0.4 | huge range, shoots the enemy with the **most HP** | 12 gems |
+| 8 | Tesla | `T` | 65g | 4.0 | 3.5 | 1.0 | lightning jumps to 4 enemies (−20% per jump, +1 jump every 2 levels) | 15 gems |
+
+Locked weapons are unlocked permanently with gems on the Upgrades screen, or for one run with the
+**Armory** blessing.
 
 Each upgrade level gives +40% damage, +0.3 range and fires 8% faster, up to level 5.
 An upgrade costs 75% of the weapon's base price × its current level.
@@ -154,10 +170,24 @@ The number on a tower (`A2`, `G3`, …) is its level.
 | `o` | Grunt | 8 | 1.5 | 1 | 3 | always |
 | `r` | Runner | 5 | 2.8 | 1 | 3 | from wave 2 |
 | `B` | Brute | 32 | 0.85 | 3 | 8 | from wave 4 (10% chance to drop a gem) |
-| `M` | Boss | 160 | 0.6 | 10 | 40 | wave 5 of every level (+3 gems) |
 
 Enemy HP grows ×1.25 every wave. The mark after an enemy's letter shows its health:
-`:` means healthy, `.` means hurt, and nothing means almost dead. A slowed enemy turns blue.
+`:` means healthy, `.` means hurt, and nothing means almost dead. A slowed enemy turns blue,
+and a poisoned one turns magenta.
+
+### Bosses
+
+One big boss closes every level: it's the last enemy of wave 5, 10, 15, … Bosses are drawn 2 rows tall,
+and their HP bar appears in the side panel.
+
+| Level | Boss | Sprite | Base HP | Speed | Castle damage | Reward | Ability |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | Goblin King | `\^^/` `(oo)` | 140 | 0.60 | 10 | 40g, 3 gems | summons 2 goblins every 5 s |
+| 2 | Iron Golem | `[##]` `/\|\|\` | 150 | 0.45 | 12 | 50g, 4 gems | armor: every hit loses 3 + 0.2×wave damage (min 20% gets through). Poison ignores it |
+| 3 | Swamp Hydra | `~@@~` `\HH/` | 170 | 0.55 | 14 | 60g, 5 gems | regenerates 1.5% of max HP per second |
+| 4 | Shadow Wraith | `(..)` `/~~\` | 130 | 0.70 | 16 | 70g, 6 gems | can't be slowed, teleports 4 tiles forward every 4 s |
+| 5 | Bone Dragon | `/\/\` `<DD>` | 220 | 0.55 | 20 | 100g, 8 gems | enrages below 50% HP: double speed |
+| 6+ | the same five again | | | | | | named *II*, *III*, … with HP for that wave |
 
 ### Levels
 
@@ -175,7 +205,8 @@ Enemy HP grows ×1.25 every wave. The mark after an enemy's letter shows its hea
 
 ### Blessings (pick 1 of 3 after each wave)
 
-Gold Rush, Mason, Fletcher, Gunsmith, Black Powder, Deep Freeze, Eagle Eye, Tar Pits, Bounty,
+Gold Rush, Mason, Fletcher, Gunsmith, Black Powder, Deep Freeze, Pyromaniac, Toxicology, Deadeye,
+Overcharge, Armory (unlocks a random locked weapon for this run), Eagle Eye, Tar Pits, Bounty,
 Cheap Bricks, Gem Shard, Whetstone. Blessings for weapons you haven't unlocked never show up.
 
 ### Upgrades (permanent, bought with gems)
@@ -188,8 +219,12 @@ All upgrades live behind the **UPGRADES** button in the main menu.
 | War Chest | +20 starting gold (base 60) | 10 | 3 × next level |
 | Sharpened Steel | +10% weapon damage | 10 | 4 × next level |
 | Gem Magnet | +25% gems earned | 5 | 5 × next level |
+| Unlock Flamer | Flamer can be built | 1 | 6 |
 | Unlock Cannon | Cannon can be built | 1 | 8 |
 | Unlock Frost | Frost can be built | 1 | 10 |
+| Unlock Poison | Poison can be built | 1 | 10 |
+| Unlock Sniper | Sniper can be built | 1 | 12 |
+| Unlock Tesla | Tesla can be built | 1 | 15 |
 
 Progress is saved in `keep_save.json` next to `keep.py`. Delete that file to reset.
 
@@ -199,8 +234,10 @@ All balance numbers live at the top of `keep.py`:
 
 | Constant | What it controls |
 | --- | --- |
-| `WEAPONS` | cost, damage, range, cooldown and specials of each weapon |
-| `ENEMIES` | HP, speed, castle damage and gold of each enemy |
+| `WEAPONS` | cost, damage, range, cooldown, specials and gem unlock price of each weapon |
+| `ENEMIES` | HP, speed, castle damage and gold of each normal enemy |
+| `BOSSES` | name, sprite, HP, speed, damage, rewards and ability of the 5 bosses |
+| `TREES`, `FLOWERS`, `FLOWER_COLORS` | the decorations scattered on the grass |
 | `HP_GROWTH` | how fast enemies get tougher each wave (default `1.25`) |
 | `WAVES_PER_LEVEL` | waves per level (default `5`) |
 | `STRUCT_COST`, `MAX_LEVEL` | structure price, max weapon level |
@@ -208,8 +245,8 @@ All balance numbers live at the top of `keep.py`:
 | `PERKS` | the blessing pool |
 | `EDGES` | the order in which new paths enter the map |
 | `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
-| `MIN_W`, `MIN_H`, `HUD_H` | minimum terminal size and number of HUD rows under the map |
-| `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 150×70) |
+| `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and width of the side panel |
+| `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 120×70) |
 
 ## Project structure
 
@@ -228,12 +265,12 @@ All balance numbers live at the top of `keep.py`:
 
 | Section | Responsibility |
 | --- | --- |
-| Constants | balance data (`WEAPONS`, `ENEMIES`, `META_UPGRADES`, `PERKS`, …) |
+| Constants | balance data (`WEAPONS`, `ENEMIES`, `BOSSES`, `META_UPGRADES`, `PERKS`, …) |
 | `load_meta` / `save_meta` | read and write the JSON save file |
-| `Enemy` | an enemy walking along **its own path** (`pos` = how many cells it has walked) |
+| `Enemy` | an enemy walking along **its own path** (`pos` = how many cells it has walked). Bosses carry their ability state (armor, timer, enraged) |
 | `Tower` | a structure on a tile, with an optional weapon (`kind`, `level`, `invested`) |
 | `Run` | one playthrough: map, paths, towers, enemies, waves, levels and the run state machine |
-| `App` | main menu, Upgrades screen, clickable buttons, input routing, mouse, and **all drawing** (map, header, HUD, overlays) |
+| `App` | main menu, Upgrades screen, clickable buttons, input routing, mouse, and **all drawing** (map, decorations, boss sprites, side panel, overlays) |
 | `main()` | curses setup, colours, then a fixed **30 FPS** loop: input → update → draw |
 
 **Run state machine**
@@ -253,8 +290,14 @@ The generator makes 250 candidate paths and scores each one. It avoids paths tha
 overlap other paths, touch themselves or run alongside other paths, and it prefers paths of a good length.
 The best-scoring candidate wins.
 
-**Combat:** every frame, each weapon whose cooldown is ready targets the enemy in range with the
-fewest tiles left to the castle. Cannons hit everything within their splash radius, and Frost slows its target.
+**Combat** (`update`, `fire`, `hit`, `boss_ability`): every frame, each weapon whose cooldown is ready
+looks at the enemies in range. Most weapons target the enemy with the fewest tiles left to the castle,
+the Sniper targets the one with the most HP, and the Flamer hits all of them. Cannons damage everything
+in their splash radius, Frost slows, Poison applies damage over time, and Tesla chains to nearby enemies.
+All direct hits go through `hit()`, which applies boss armor. Poison damage skips it.
+
+**Decorations** (`make_deco`): a few random "forest centers" are picked. Trees are likely near them,
+and flowers are scattered everywhere else. New paths and new structures clear what's in their way.
 
 ## Project history
 
@@ -266,7 +309,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | 0.0.0 | 2026-10-12 | `f9ef6a2` | Repository created | — |
 | [0.1.0](CHANGELOG.md#010---2026-10-12) | 2026-10-12 | `d2ddb55` | First playable tower defense: weapons, waves, blessings, gems, gem shop | 834 lines |
 | [0.2.0](CHANGELOG.md#020---2026-10-12) | 2026-10-12 | `cc20d54` | Full-screen map, 5-wave levels, +1 enemy path per level, mouse support | 1037 lines |
-| [0.3.0](CHANGELOG.md#030---2026-10-12) | 2026-10-12 | tag `v0.3.0` | Renamed to *cool tower defense game.exe*, full-width map with HUD below, menu buttons + Upgrades screen, standard README and CHANGELOG | 1218 lines |
+| [0.3.0](CHANGELOG.md#030---2026-10-12) | 2026-10-12 | `e973e43` | Renamed to *cool tower defense game.exe*, full-width map with HUD below, menu buttons + Upgrades screen, standard README and CHANGELOG | 1218 lines |
+| [0.4.0](CHANGELOG.md#040---2026-10-12) | 2026-10-12 | tag `v0.4.0` | Side panel back on the right, 8 weapons with live stats, 5 big bosses, trees and flowers | 1425 lines |
 
 ## Contributing
 

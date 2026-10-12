@@ -8,9 +8,56 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-12
+
+`keep.py` 1218 → 1425 lines
+
+### Added
+- **4 new weapons** (8 total), each with its own mechanic:
+  - **Flamer** `L` (key 5, 50g): burns *every* enemy in a short range. Unlock: 6 gems.
+  - **Poison** `P` (key 6, 50g): poison damage over time that ignores armor. Unlock: 10 gems.
+  - **Sniper** `S` (key 7, 70g): 22 damage, range 7, shoots the enemy with the most HP. Unlock: 12 gems.
+  - **Tesla** `T` (key 8, 65g): lightning that jumps between up to 4 enemies, gaining a jump every
+    2 levels. Unlock: 15 gems.
+- **Live weapon stats** in the side panel: cost, damage, range and shots per second for every weapon,
+  including your run's upgrades and blessings. Hovering a tower also shows its special (splash, slow,
+  chain, poison, …).
+- **5 big bosses.** One ends every level as the last enemy of wave 5, 10, 15, …:
+  Goblin King (summons goblins), Iron Golem (armor), Swamp Hydra (regenerates),
+  Shadow Wraith (can't be slowed, teleports), Bone Dragon (enrages at half HP).
+  They are drawn 2 rows tall, get a name and HP bar in the side panel, and are announced when they appear.
+  After level 5 they return as *II*, *III*, ….
+- The level-complete screen names the next level's boss and its ability.
+- **Trees and flowers.** Little forests (`/\`, `&`) and colorful flowers (`*,`) are scattered on
+  the grass. They are cosmetic: building on a tile clears it, and new paths cut through them.
+- New blessings: Pyromaniac, Toxicology, Deadeye, Overcharge, and **Armory** (unlocks a random
+  locked weapon for the current run).
+- Upgrades screen: 6 weapon unlocks (sorted by price) and quick-buy keys `1`–`9`, `0`.
+
+### Changed
+- **The in-game info and build options are back in a panel on the right**, where they were before 0.3.0.
+  The header and the 3-row HUD under the map were removed, and the message line is below the map again.
+- The map is again sized to the terminal minus the 28-column side panel (max 120×70 tiles).
+- Bosses are now part of each level's identity instead of one generic boss `M`.
+- The Goblin King was tuned to be beatable by a fresh player (140 base HP, summons every 5 s).
+
+### Technical notes
+- `WEAPONS` entries gained `unlock` (gem price; 0 = free) and optional `aoe`, `poison`, `strong` and
+  `chain` fields. `META_UPGRADES` builds its unlock items from `WEAPONS` automatically.
+- `Run.stats_for(kind, level)` computes stats for any weapon (used by the panel), and `stats(tower)` wraps it.
+- Tower firing now collects the enemies in range first, then chooses a target by weapon type: first in line,
+  most HP, or everyone for the Flamer.
+- New `Run.hit()` applies armor to every direct hit, and `Run.boss_ability()` runs the boss abilities.
+  `Enemy` gained `boss`, `name`, `armor`, `no_slow`, `timer`, `enraged`, `poison_t` and `poison_dps`.
+- New `Run.make_deco()` and the `Run.deco` map; the drawing code renders it under towers and enemies.
+- `draw_header`, `draw_hud` and `fit` (0.3.0) were replaced by a row-based `draw_panel`.
+- Tested with a fake terminal: every weapon fires and kills, every boss ability works, and full bot games
+  run at 70×22, 80×24 and 160×45. Fresh players (bot) reach level 3 most of the time.
+
 ## [0.3.0] - 2026-10-12
 
-`keep.py` 1037 → 1218 lines
+Commit [`e973e43`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/e973e43305e6c7a6e11cc4902758ea29629d6f06)
+· `keep.py` 1037 → 1218 lines
 
 ### Added
 - **Main menu buttons:** START GAME, UPGRADES and QUIT. You can use them with up/down + Enter,
@@ -120,7 +167,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/f9ef6a2...v0.1.0
