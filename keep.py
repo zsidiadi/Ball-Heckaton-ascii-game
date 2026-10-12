@@ -33,14 +33,21 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.10.0"
+VERSION = "0.11.0"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium")   # the menu music plays only on these screens
 # level N plays LEVEL_TRACKS[N-1]; from level 6 on they repeat (level 6 = track 1), like the bosses
 LEVEL_TRACKS = ["level1_loop.wav", "level2_loop.wav", "level3_loop.wav", "level4_loop.wav", "level5_loop.wav"]
-# sound played once when a small enemy dies (files in assets/sfx/); bosses have none
-DEATH_SOUNDS = {"grunt": "grunt_death.wav", "runner": "runner_death.wav", "brute": "brute_death.wav"}
+# one-shot sounds (paths inside assets/)
+# played once when a small enemy dies; bosses have none
+DEATH_SOUNDS = {"grunt": "sfx/grunt_death.wav", "runner": "sfx/runner_death.wav", "brute": "sfx/brute_death.wav"}
+# voice line when the "LEVEL N COMPLETE" screen appears (levels 1-5; the level music pauses for it)
+LEVEL_COMPLETE_SOUNDS = ["voice/level1_complete.wav", "voice/level2_complete.wav", "voice/level3_complete.wav",
+                         "voice/level4_complete.wav", "voice/level5_complete.wav"]
+# special thanks from the creator: played when a player starts level 6, the first level past the five
+SPECIAL_THANKS = "special/special_thanks_from_the_creator.wav"
+SPECIAL_THANKS_LEVEL = 6
 SFX_MAX_AT_ONCE = 4          # never more than this many effects playing together
 SFX_MIN_GAP = 0.06           # the same sound isn't restarted more often than this (seconds)
 
@@ -201,6 +208,7 @@ class Music:
         self.sfx_last = {}          # effect name -> time it last started
         self.sfx_slot = {}          # Windows MCI: effect name -> next alias slot
         self.mci_ok = True
+        self.mci_aliases = set()
         self.backend = self._pick()
 
     def _pick(self):
@@ -361,20 +369,21 @@ class Music:
             self.thread = None
 
     def effect(self, name):
-        """Play a short one-shot sound (a file in the sfx folder) on top of the music."""
+        """Play a one-shot sound on top of the music. `name` is a path inside the assets folder,
+        e.g. "sfx/grunt_death.wav" or "voice/level1_complete.wav"."""
         if not self.backend:
             return
         now = time.time()
         if now - self.sfx_last.get(name, -1.0) < SFX_MIN_GAP:
             return
         self.sfx_last[name] = now
-        path = os.path.join(self.folder, "sfx", name)
+        path = os.path.join(self.folder, name)
         if not os.path.exists(path):
             return
         try:
             if self.backend == "pygame":
                 import pygame
-                key = "sfx/" + name
+                key = "fx:" + name
                 if key not in self.sounds:
                     self.sounds[key] = pygame.mixer.Sound(path)
                 self.sounds[key].play()
@@ -400,12 +409,38 @@ class Music:
         mci = ctypes.windll.winmm.mciSendStringW
         slot = self.sfx_slot.get(name, 0)
         self.sfx_slot[name] = (slot + 1) % SFX_MAX_AT_ONCE
-        alias = f"sfx_{os.path.splitext(name)[0]}_{slot}"
+        alias = "fx_" + "".join(c if c.isalnum() else "_" for c in os.path.splitext(name)[0]) + f"_{slot}"
         if mci(f"status {alias} mode", None, 0, None) != 0:            # not opened yet
             if mci(f'open "{path}" type waveaudio alias {alias}', None, 0, None) != 0:
                 self.mci_ok = False                                       # MCI unavailable: effects stay off
                 return
+            self.mci_aliases.add(alias)
         mci(f"play {alias} from 0", None, 0, None)
+
+    def stop_effects(self):
+        """Silence every one-shot sound that is still playing (e.g. a voice line when the player quits)."""
+        for p in self.sfx_procs:
+            self._kill(p)
+        self.sfx_procs = []
+        try:
+            if self.backend == "pygame":
+                for key, snd in self.sounds.items():
+                    if key.startswith("fx:"):
+                        snd.stop()
+            elif self.backend == "winsound" and self.mci_aliases:
+                import ctypes
+                for alias in self.mci_aliases:
+                    ctypes.windll.winmm.mciSendStringW(f"stop {alias}", None, 0, None)
+        except Exception:
+            pass
+
+    def duration(self, name):
+        """Length in seconds of a WAV inside the assets folder (0 if it can't be read)."""
+        try:
+            with wave.open(os.path.join(self.folder, name)) as w:
+                return w.getnframes() / float(w.getframerate())
+        except (OSError, EOFError, wave.Error):
+            return 0.0
 
     def close(self):
         self.stop()
@@ -585,7 +620,7 @@ class Run:
         self.cleared = 0
         self.kills = 0
         self.gems_raw = 0.0
-        self.events = []          # things the App should play a sound for (enemy kinds that died)
+        self.events = []          # sound cues for the App: ("death", kind), ("level_complete", n), ("level_start", n)
         self.towers = {}          # grass tiles: structures, weapons and gold mines
         self.traps = {}           # path tiles: "mine" or "tar"
         self.enemies = []
@@ -856,6 +891,7 @@ class Run:
         self.meta["best_level"] = max(self.meta.get("best_level", 0), lv)
         save_meta(self.meta)
         self.state = "levelup"
+        self.events.append(("level_complete", lv))
 
     def next_level(self):
         self.level += 1
@@ -864,6 +900,7 @@ class Run:
         if crushed:
             self.msg += f" It crushed {crushed} tower(s): +{refund} gold refunded."
         self.state = "build"
+        self.events.append(("level_start", self.level))
 
     def end(self, manual):
         bonus = self.gold // 25 if manual else 0
@@ -944,7 +981,7 @@ class Run:
             elif not e.leaked:
                 self.kills += 1
                 if e.kind in DEATH_SOUNDS:
-                    self.events.append(e.kind)
+                    self.events.append(("death", e.kind))
                 self.gold += e.gold + self.mods["bounty"]
                 if e.boss:
                     g = e.boss["gems"]
@@ -1244,6 +1281,7 @@ class App:
         self.prem_msg = ""
         self.zones = []            # clickable areas: (y, x0, x1, action)
         self.anim = 0.0
+        self.music_hold_until = 0.0   # level music waits until a voice line (special thanks) has finished
 
     def color(self, n):
         return curses.color_pair(n) if curses.has_colors() else 0
@@ -1353,6 +1391,9 @@ class App:
             if self.run.done:
                 self.state = "menu"
                 self.run = None
+                self.music_hold_until = 0.0
+                if self.music:
+                    self.music.stop_effects()     # don't let a voice line keep talking over the menu
 
     def do(self, action):
         if action == "start":
@@ -1417,25 +1458,44 @@ class App:
 
     def update(self, dt):
         self.anim += dt
-        if self.music:                     # menu theme on menu screens, level N's theme during level N
-            track = None
-            if self.meta.get("music", True):
-                if self.state in MENU_STATES:
-                    track = MENU_TRACK
-                elif self.state == "run" and self.run:
-                    track = LEVEL_TRACKS[(self.run.level - 1) % len(LEVEL_TRACKS)]
-            if track:
-                self.music.play(track)
-            else:
-                self.music.stop()
         if self.state == "run":
             for _ in range(self.run.speed):
                 self.run.update(dt)
-            if self.run.events:                # each kind that died this frame: its death sound, once
-                if self.music and self.meta.get("music", True):
-                    for kind in dict.fromkeys(self.run.events):
-                        self.music.effect(DEATH_SOUNDS[kind])
-                self.run.events.clear()
+            self.play_cues()
+        self.sync_music()
+
+    def play_cues(self):
+        """Turn the run's sound cues into sounds. Each cue plays once; several enemies of the same kind
+        dying in the same frame give one death sound."""
+        events, self.run.events = self.run.events, []
+        if not (self.music and self.meta.get("music", True)):
+            return
+        for cue, value in dict.fromkeys(events):
+            if cue == "death":
+                self.music.effect(DEATH_SOUNDS[value])
+            elif cue == "level_complete" and value <= len(LEVEL_COMPLETE_SOUNDS):
+                self.music.effect(LEVEL_COMPLETE_SOUNDS[value - 1])
+            elif cue == "level_start" and value == SPECIAL_THANKS_LEVEL:
+                self.music.effect(SPECIAL_THANKS)
+                self.music_hold_until = time.time() + self.music.duration(SPECIAL_THANKS)
+
+    def sync_music(self):
+        """Menu theme on menu screens, level N's theme during level N. Silence on the LEVEL COMPLETE screen of
+        levels 1-5 (their voice line plays alone) and while the special thanks is speaking."""
+        if not self.music:
+            return
+        track = None
+        if self.meta.get("music", True):
+            if self.state in MENU_STATES:
+                track = MENU_TRACK
+            elif self.state == "run" and self.run and time.time() >= self.music_hold_until and not (
+                    self.run.level <= len(LEVEL_COMPLETE_SOUNDS) and          # a voice line is speaking
+                    (self.run.state == "levelup" or (self.run.state == "confirm" and self.run.prev_state == "levelup"))):
+                track = LEVEL_TRACKS[(self.run.level - 1) % len(LEVEL_TRACKS)]
+        if track:
+            self.music.play(track)
+        else:
+            self.music.stop()
 
     # -------------------------------------------------------------- draw
     def draw(self):

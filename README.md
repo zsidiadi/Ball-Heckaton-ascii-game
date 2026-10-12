@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.10.0-orange)
+![Version](https://img.shields.io/badge/version-0.11.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount weapons on
 them, and survive as many levels as you can. Every level ends with a **big boss** and the next one
@@ -75,7 +75,8 @@ When the castle falls you keep your **gems** and spend them on permanent upgrade
 - **Premium store (preview).** A real-money shop for the Nuke, gem packs and more. It's a preview:
   payments aren't connected yet, so nothing can actually be bought.
 - **Music and sound.** A menu theme and a different theme for each of the 5 levels, all looping seamlessly,
-  plus voiced death sounds for grunts, runners and brutes.
+  plus voiced death sounds for grunts, runners and brutes, a "level complete" voice line for levels 1-5, and a
+  special thanks from the creator when you reach level 6.
 - **Zero dependencies.** It's a single Python file that uses only the standard library.
 
 ## Getting started
@@ -317,9 +318,28 @@ At most 4 effects play at the same time.
 | Runner `r` | `assets/sfx/runner_death.wav` | take 2 of `assets/source/Runner.m4a` |
 | Brute `B` | `assets/sfx/brute_death.wav` | take 3 of `assets/source/Brute.m4a` |
 
-Each recording has three takes. `tools/make_sfx.py` finds them, keeps the one in its `TAKES` table (the
+Each recording has three takes. `tools/make_sfx.py` finds them, keeps the one in its `SOUNDS` table (the
 strongest, complete take), trims it tightly, removes rumble, adds tiny fades so it can't click, and levels
-all three to the same loudness. To use a different take, change the number in `TAKES` and run the script again.
+all three to the same loudness. To use a different take, change the number in `SOUNDS` and run the script again.
+
+### Voice lines
+
+| When | Sound | File |
+| --- | --- | --- |
+| the **LEVEL 1 COMPLETE** screen appears | "Level 1 complete" recording | `assets/voice/level1_complete.wav` |
+| … LEVEL 2 … 5 COMPLETE | the matching recording | `assets/voice/level2_complete.wav` … `level5_complete.wav` |
+| a player **starts level 6** (the first level past the five) | special thanks from the creator | `assets/special/special_thanks_from_the_creator.wav` |
+
+- On the Level Complete screen of levels 1-5, the level music pauses so the voice line plays on its own.
+  The next level's music starts when you press Enter. Levels 6+ have no voice line, so their music keeps going.
+- When level 6 starts, the special thanks plays first and level 6's music begins as soon as it ends.
+  It plays once per run (not again at level 7, 8, …).
+- The special thanks is kept as its own asset (`assets/special/`, constant `SPECIAL_THANKS`), separate
+  from the level sounds.
+- Quitting to the menu stops any voice line that is still speaking.
+- `tools/make_sfx.py` makes these too: it keeps each whole recording from the first to the last spoken word
+  (skipping breaths and clicks before and after), de-clicks it, and levels it a little louder than the death
+  sounds.
 
 **How it plays** (`Music` class, first one available wins):
 
@@ -353,6 +373,7 @@ All balance numbers live at the top of `keep.py`:
 | `PREMIUM`, `PAYMENTS_ENABLED` | premium store items and euro prices; payments switch (off) |
 | `MUSIC_DIR`, `MENU_TRACK`, `LEVEL_TRACKS`, `MENU_STATES` | where the music lives, which track plays on the menu screens and in each level |
 | `DEATH_SOUNDS`, `SFX_MAX_AT_ONCE`, `SFX_MIN_GAP` | which sound each enemy makes when it dies, and how many effects may overlap |
+| `LEVEL_COMPLETE_SOUNDS`, `SPECIAL_THANKS`, `SPECIAL_THANKS_LEVEL` | voice line for each level's Level Complete screen; the creator's thanks and the level that triggers it |
 | `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and width of the side panel (24) |
 | `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 150×70) |
 
@@ -365,10 +386,12 @@ All balance numbers live at the top of `keep.py`:
 │   ├── menu_loop.wav              # seamless loops made by the tool below
 │   ├── level1_loop.wav … level5_loop.wav
 │   ├── sfx/                       # grunt_death.wav, runner_death.wav, brute_death.wav
-│   └── source/                    # originals: music .ogg files and the Grunt/Runner/Brute .m4a recordings
+│   ├── voice/                     # level1_complete.wav … level5_complete.wav
+│   ├── special/                   # special_thanks_from_the_creator.wav
+│   └── source/                    # originals: music .ogg files and all .m4a voice recordings
 ├── tools/
 │   ├── make_loops.py              # rebuilds all music loops from the originals (numpy + ffmpeg)
-│   └── make_sfx.py                # cuts the death sounds out of the recordings (numpy + ffmpeg)
+│   └── make_sfx.py                # makes the death sounds and voice lines from the recordings (numpy + ffmpeg)
 ├── README.md        # this file
 ├── CHANGELOG.md     # version history: what changed and when
 ├── .gitignore       # ignores __pycache__ and the save file
@@ -436,7 +459,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.7.0](CHANGELOG.md#070---2026-10-12) | 2026-10-12 | `d3e9b48` | PREMIUM button + real-money store preview (Nuke, gem packs, …), payments not connected | 1617 lines |
 | [0.8.0](CHANGELOG.md#080---2026-10-13) | 2026-10-13 | `aef90c3` | Seamless looping menu music (menu screens only), `M` to mute | 1798 lines |
 | [0.9.0](CHANGELOG.md#090---2026-10-13) | 2026-10-13 | `5d878c2` | Level 1-5 music (seamless loops), track switching per level | 1847 lines |
-| [0.10.0](CHANGELOG.md#0100---2026-10-13) | 2026-10-13 | tag `v0.10.0` | Death sounds for grunts, runners and brutes | 1920 lines |
+| [0.10.0](CHANGELOG.md#0100---2026-10-13) | 2026-10-13 | `45fc505` | Death sounds for grunts, runners and brutes | 1920 lines |
+| [0.11.0](CHANGELOG.md#0110---2026-10-13) | 2026-10-13 | tag `v0.11.0` | Level complete voice lines (1-5), special thanks at level 6 | 1980 lines |
 
 ## Contributing
 

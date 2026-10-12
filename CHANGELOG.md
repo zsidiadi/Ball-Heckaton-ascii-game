@@ -8,9 +8,36 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-13
+
+`keep.py` 1920 → 1980 lines
+
+### Added
+- **Level complete voice lines.** When the LEVEL N COMPLETE screen appears (levels 1-5), that level's
+  recording plays (`assets/voice/levelN_complete.wav`). The level music pauses for it, and the next level's
+  music starts when the player continues. Levels 6+ have no line, so their music keeps playing.
+- **Special thanks from the creator** (`assets/special/special_thanks_from_the_creator.wav`, its own asset and
+  constant `SPECIAL_THANKS`). It plays when a player starts level 6, the first level past the five, once per run.
+  Level 6's music waits until it has finished (4.6 s).
+- Quitting to the menu stops any voice line that is still playing (`Music.stop_effects()`).
+- `tools/make_sfx.py` also builds the voice lines. Each keeps the whole recording from the first to the last
+  spoken word: breaths and clicks before or after are skipped (level 4 had 0.36 s of breath noise and
+  level 2 a stray click before the words). Lines are de-clicked and levelled to -14 dBFS (loudest 100 ms),
+  a bit louder than the death sounds. The limiter may lower a voice peak by at most 3 dB, so level 1
+  (one hard consonant) ends up ~3 dB quieter instead of squashed.
+
+### Changed
+- `Run.events` now carries typed cues: `("death", kind)`, `("level_complete", n)`, `("level_start", n)`.
+  `App.play_cues()` turns them into sounds, and `App.sync_music()` picks the track (or silence).
+- `Music.effect()` takes a path inside `assets/` (`"sfx/grunt_death.wav"`, `"voice/level1_complete.wav"`, …).
+  New: `Music.stop_effects()` and `Music.duration()`.
+- `make_sfx.py`: the `TAKES` table became `SOUNDS` (output path, take or `None` for a whole recording,
+  target loudness). The death sounds come out byte-identical to 0.10.0.
+
 ## [0.10.0] - 2026-10-13
 
-`keep.py` 1847 → 1920 lines
+Commit [`45fc505`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/45fc505055a18bde0fa44d605d8c0ecc49ea7d7a)
+· `keep.py` 1847 → 1920 lines
 
 ### Added
 - **Death sounds** for the small enemies. When a grunt, runner or brute dies, its own voiced sound plays
@@ -327,7 +354,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.7.0...v0.8.0
