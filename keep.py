@@ -26,12 +26,12 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 
 MIN_W, MIN_H = 70, 22
 MAP_X, MAP_Y = 1, 2          # screen position of the top-left map cell
-PANEL_W = 28                 # width of the info panel on the right
-MAX_MAP_W, MAX_MAP_H = 120, 70
+PANEL_W = 24                 # width of the info panel on the right (kept as narrow as possible)
+MAX_MAP_W, MAX_MAP_H = 150, 70
 
 # colour pair ids
 GRASS, PATH, STRUCT, C_BOW, C_GUN, C_CANNON, C_FROST, RED, CASTLE, GOLD, GEM, CURSOR, MAG = range(1, 14)
@@ -95,11 +95,6 @@ META_UPGRADES = [
 ] + sorted([(k, f"Unlock {w['name']}", w["info"], w["unlock"], 1) for k, w in WEAPONS.items() if w["unlock"]],
            key=lambda u: u[3])
 QUICK_KEYS = "1234567890"
-
-# decoration on grass (purely cosmetic, you can build over it)
-TREES = ["/\\", "/\\", "/\\", " &", "& "]
-FLOWERS = ["*,", ",*", " *", "* "]
-FLOWER_COLORS = [MAG, GOLD, RED, C_GUN, C_FROST]
 
 # two blocks of big letters: "cool tower" / "defense game.exe"
 TITLE = [
@@ -215,11 +210,11 @@ def special_text(kind, s):
     if "slow" in w:
         return f"slow {s['slow']:.1f}s"
     if w.get("aoe"):
-        return "hits all in range"
+        return "hits all"
     if "poison" in w:
         return f"poison {s['poison']:.1f}/s"
     if w.get("strong"):
-        return "hits toughest"
+        return "toughest"
     if "chain" in w:
         return f"chain x{s['chain']}"
     return ""
@@ -307,10 +302,8 @@ class Run:
         self.path_set = set()
         self.newest = set()
         self.new_path_t = 0.0
-        self.deco = {}
         self.place_castle()
         self.add_path()
-        self.make_deco()
         self.cursor = list(self.near_free(self.paths[0][len(self.paths[0]) // 2]))
         self.msg = "Build a structure (B), mount a weapon (1-8), then press N to start."
 
@@ -323,22 +316,6 @@ class Run:
         # grass cells touching the castle where a path can end, in order of use
         self.entries = [(W - 3, cy), (W - 2, cy - 2), (W - 2, cy + 2),
                         (W - 3, cy - 1), (W - 3, cy + 1), (W - 1, cy - 2), (W - 1, cy + 2)]
-
-    def make_deco(self):
-        """Scatter little forests and flowers over the grass."""
-        W, H = self.W, self.H
-        centers = [(random.randrange(W), random.randrange(H)) for _ in range(max(3, W * H // 150))]
-        for x in range(W):
-            for y in range(H):
-                c = (x, y)
-                if c in self.path_set or c in self.castle_cells:
-                    continue
-                d = min(dist2(c, k) for k in centers)
-                tree_chance = 0.65 if d <= 2 else (0.35 if d <= 5 else 0.02)
-                if random.random() < tree_chance:
-                    self.deco[c] = (random.choice(TREES), GRASS)
-                elif random.random() < 0.06:
-                    self.deco[c] = (random.choice(FLOWERS), random.choice(FLOWER_COLORS))
 
     def gen_path(self, start, end):
         """Random wiggly path made of straight segments between waypoints."""
@@ -435,8 +412,6 @@ class Run:
         refund = sum(self.towers[c].invested for c in crushed)
         for c in crushed:
             del self.towers[c]
-        for c in cells:
-            self.deco.pop(c, None)
         self.gold += refund
         self.paths.append(cells)
         self.path_set |= set(cells)
@@ -826,9 +801,7 @@ class Run:
         else:
             self.gold -= cost
             self.towers[c] = Tower(cost)
-            cleared = self.deco.pop(c, None)
-            self.msg = ("Cleared the tree and built a structure! " if cleared and cleared[1] == GRASS else
-                        "Structure built! ") + "Now mount a weapon with 1-8."
+            self.msg = "Structure built! Now mount a weapon with 1-8."
 
     def add_weapon(self, kind):
         c = tuple(self.cursor)
@@ -1019,7 +992,7 @@ class App:
     def new_run(self):
         # the map fills the terminal, minus the info panel on the right
         h, w = self.scr.getmaxyx()
-        W = max(19, min(MAX_MAP_W, (w - MAP_X - 3 - PANEL_W) // 2))
+        W = max(19, min(MAX_MAP_W, (w - 4 - PANEL_W) // 2))   # frame + 1 space gap + panel
         H = max(12, min(MAX_MAP_H, h - MAP_Y - 2))
         self.run = Run(W, H, self.meta)
         self.state = "run"
@@ -1183,17 +1156,10 @@ class App:
                         s, a = (w["ch"] + str(t.level), self.color(w["color"]) | curses.A_REVERSE | curses.A_BOLD)
                     else:
                         s, a = ("[]", self.color(STRUCT) | curses.A_BOLD)
+                elif rng2 >= 0 and dist2(c, cur) <= rng2:
+                    s, a = (" .", self.color(WEAPONS[ct.kind]["color"]))
                 else:
-                    d = r.deco.get(c)
-                    in_rng = rng2 >= 0 and dist2(c, cur) <= rng2
-                    if d:
-                        s, a = d[0], self.color(d[1]) | curses.A_BOLD
-                        if in_rng:
-                            a = self.color(WEAPONS[ct.kind]["color"])
-                    elif in_rng:
-                        s, a = (" .", self.color(WEAPONS[ct.kind]["color"]))
-                    else:
-                        s, a = grass[(x * 7 + y * 13) % len(grass)], self.color(GRASS) | curses.A_DIM
+                    s, a = grass[(x * 7 + y * 13) % len(grass)], self.color(GRASS) | curses.A_DIM
                 self.put(my + y, mx + 2 * x, s, a)
 
         # castle (right edge, 3 rows tall)
@@ -1235,17 +1201,18 @@ class App:
         # cursor
         x, y = r.cursor
         if int(self.anim * 4) % 2 == 0 or r.state != "wave":
-            if r.free(cur) and cur not in r.deco:
+            if r.free(cur):
                 self.put(my + y, mx + 2 * x, "<>", self.color(CURSOR) | curses.A_REVERSE)
             else:
                 self.put(my + y, mx + 2 * x - 1, "{", self.color(CURSOR) | curses.A_BOLD)
                 self.put(my + y, mx + 2 * x + 2, "}", self.color(CURSOR) | curses.A_BOLD)
 
-        self.draw_panel(mx + 2 * W + 3, my - 1)
+        self.draw_panel(mx + 2 * W + 2, my - 1)
         self.put(my + H + 1, 0, " " + r.msg, self.color(GOLD))
         self.draw_overlay()
 
     def draw_panel(self, px, py):
+        """Info + build menu on the right. Everything fits in PANEL_W (24) columns."""
         r = self.run
         bottom = py + r.H + 1                  # don't run into the message line
         rows = []                              # list of lists of (text, attr, x offset)
@@ -1255,13 +1222,13 @@ class App:
                  "levelup": "LEVEL CLEARED", "paused": "PAUSED", "confirm": "...", "over": "GAME OVER"}[r.state]
         if r.state == "wave":
             phase += f" - {len(r.spawn_queue) + len(r.enemies)} left"
-        bar_w = 10
+        bar_w = 8
         filled = max(0, int(bar_w * r.hp / max(1, r.max_hp)))
 
         rows.append([(f"LEVEL {r.level}", self.color(CASTLE) | bold, 0),
                      (f"wave {r.wave_in_level()}/{WAVES_PER_LEVEL}", bold, 9)])
         rows.append([(phase, bold, 0)])
-        rows.append([("CASTLE ", bold, 0), ("#" * filled, self.color(RED if filled < 4 else C_BOW) | bold, 7),
+        rows.append([("CASTLE", bold, 0), ("#" * filled, self.color(RED if filled < 3 else C_BOW) | bold, 7),
                      ("-" * (bar_w - filled), dim, 7 + filled), (f"{r.hp}/{r.max_hp}", 0, 8 + bar_w)])
         rows.append([(f"GOLD {r.gold}", self.color(GOLD) | bold, 0),
                      (f"GEMS {int(r.gems_raw)}", self.color(GEM) | bold, 12)])
@@ -1269,11 +1236,11 @@ class App:
         if boss:
             bf = max(0, min(bar_w, int(bar_w * boss.hp / boss.maxhp + 0.99)))
             rows.append([(boss.name, self.color(RED if boss.enraged else MAG) | bold, 0)])
-            rows.append([("BOSS   ", bold, 0), ("#" * bf, self.color(MAG) | bold, 7),
+            rows.append([("BOSS", bold, 0), ("#" * bf, self.color(MAG) | bold, 7),
                          ("-" * (bar_w - bf), dim, 7 + bf), (f"{int(boss.hp)}", 0, 8 + bar_w)])
         else:
             b, cycle = r.level_boss()
-            rows.append([(f"paths {len(r.paths)}   speed x{r.speed}", dim, 0)])
+            rows.append([(f"paths {len(r.paths)}  speed x{r.speed}", dim, 0)])
             rows.append([(f"boss: {b['name']}{ROMAN[min(cycle, 5)]}", dim, 0)])
 
         # what's under the cursor
@@ -1284,31 +1251,29 @@ class App:
             w = WEAPONS[t.kind]
             rows.append([(f"{w['name']} lv {t.level}", self.color(w["color"]) | bold, 0),
                          (special_text(t.kind, s), dim, len(w["name"]) + 6)])
-            rows.append([(f" dmg {s['dmg']:.1f}  rng {s['rng']:.1f}  {1 / s['cd']:.1f}/s", dim, 0)])
+            rows.append([(f"dmg {s['dmg']:.1f} rng {s['rng']:.1f} {1 / s['cd']:.1f}/s", dim, 0)])
         else:
             if t:
-                label = "Structure - pick 1-8"
+                label = "Structure: pick 1-8"
             elif cur in r.path_set:
                 label = "Enemy path"
             elif cur in r.castle_cells:
                 label = "Your castle!"
-            elif cur in r.deco:
-                label = "Tree - build to clear it" if r.deco[cur][1] == GRASS else "Flowers - buildable"
             else:
-                label = "Grass - buildable"
+                label = "Grass: buildable"
             rows.append([(label, bold if t else dim, 0)])
             rows.append([])
 
-        # build menu with weapon stats
+        # build menu with weapon stats:  "3 Cannon 60  7.0 4.0 0.6"
         gold_c = self.color(GOLD)
-        rows.append([("  weapon cost  dmg rng  /s", dim, 0)])
+        rows.append([("  weapon  $  dmg rng  /s", dim, 0)])
         sc = r.mods["struct_cost"]
         ok = r.gold >= sc and r.free(cur)
-        rows.append([("B struct", 0 if ok else dim, 0), (f"{sc}g".rjust(4), gold_c if ok else dim, 9)])
+        rows.append([("B struct", 0 if ok else dim, 0), (str(sc).rjust(2), gold_c if ok else dim, 9)])
         for kind in WEAPON_ORDER:
             w = WEAPONS[kind]
             locked = kind not in r.unlocked
-            line = f"{w['key']} {w['name']:<7}"
+            line = f"{w['key']} {w['name']:<6}"
             if locked:
                 rows.append([(line, dim, 0), ("locked", dim, 9)])
                 continue
@@ -1316,18 +1281,18 @@ class App:
             ok = bool(t) and not t.kind and r.gold >= w["cost"]
             here = bool(t) and t.kind == kind
             attr = self.color(w["color"]) | bold if (ok or here) else 0
-            rows.append([(line, attr, 0), (f"{w['cost']}g".rjust(4), gold_c if ok else dim, 9),
-                         (f"{num(s['dmg'], 4)} {num(s['rng'], 3)} {num(1 / s['cd'], 3)}", 0 if ok else dim, 14)])
+            rows.append([(line, attr, 0), (str(w["cost"]).rjust(2), gold_c if ok else dim, 9),
+                         (f"{num(s['dmg'], 4)} {num(s['rng'], 3)} {num(1 / s['cd'], 3)}", 0 if ok else dim, 12)])
         if t and t.kind and t.level < MAX_LEVEL:
             uc = r.upgrade_cost(t)
             ok = r.gold >= uc
-            rows.append([("U upgrade", 0 if ok else dim, 0), (f"{uc}g".rjust(4), gold_c if ok else dim, 9)])
+            rows.append([("U upgrade", 0 if ok else dim, 0), (f"{uc}g", gold_c if ok else dim, 10)])
         else:
-            rows.append([("U upgrade", dim, 0), ("   -", dim, 9)])
-        rows.append([("X sell", 0 if t else dim, 0), ((f"+{t.invested // 2}g" if t else "-").rjust(4), dim, 9)])
+            rows.append([("U upgrade", dim, 0), ("-", dim, 10)])
+        rows.append([("X sell", 0 if t else dim, 0), (f"+{t.invested // 2}g" if t else "-", dim, 10)])
         rows.append([])
-        for line in ("N wave   F speed   P pause", "K boom (cash out)   Q quit",
-                     "move: arrows/wasd/mouse", "Shift+WASD: jump 5 tiles"):
+        for line in ("N wave F speed P pause", "K cash out    Q quit",
+                     "move: arrows/wasd/mouse", "Shift+WASD = 5 tiles"):
             rows.append([(line, dim, 0)])
 
         for i, row in enumerate(rows):

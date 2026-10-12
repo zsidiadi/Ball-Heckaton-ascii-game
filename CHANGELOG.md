@@ -8,9 +8,25 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-12
+
+`keep.py` 1425 → 1390 lines
+
+### Changed
+- **The map is as wide as it can be while keeping the side panel.** The panel was redesigned to fit in
+  24 columns instead of 28, so the map and panel now use every column of the terminal:
+  80 columns gives a 26-tile-wide map (was 24), and 200 columns gives 86 (was 84). The max map width went from 120 to 150 tiles.
+- Compact side panel: weapon costs are shown in their own `$` column, the castle and boss HP bars are
+  8 characters wide, special labels are shorter (`hits all`, `toughest`), and the help text is shorter.
+
+### Removed
+- **Trees and flowers.** They didn't work out, so the grass is plain again. `TREES`, `FLOWERS`,
+  `FLOWER_COLORS`, `Run.make_deco()` and `Run.deco` were removed.
+
 ## [0.4.0] - 2026-10-12
 
-`keep.py` 1218 → 1425 lines
+Commit [`b3344c7`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/b3344c7b000e5c928796183c6b3b8b1c1e2df600)
+· `keep.py` 1218 → 1425 lines
 
 ### Added
 - **4 new weapons** (8 total), each with its own mechanic:
@@ -167,7 +183,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.1.0...v0.2.0

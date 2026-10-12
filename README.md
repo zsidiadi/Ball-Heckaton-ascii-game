@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.4.0-orange)
+![Version](https://img.shields.io/badge/version-0.5.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount weapons on
 them, and survive as many levels as you can. Every level ends with a **big boss** and the next one
@@ -13,32 +13,30 @@ opens **one more path** to your castle.
 When the castle falls you keep your **gems** and spend them on permanent upgrades for the next run.
 
 ```
- cool tower defense game.exe   level 1   wave 5/5   kills 67   gem bank 0
-+--------------------------------------------------------------------+  LEVEL 1  wave 5/5
-|    .      '   .    .      '   .    .      '   .    ,*     '   .    |  WAVE ACTIVE - 3 left
-|     '   *  *, *     '   .    .      '   .    .      '/\ .    .     |  CASTLE ########## 40/40
-|   .  /\.      '   .    .      '   .    .      '/\/\/\   &  *, '   .|  GOLD 110    GEMS 8
-|  /\& /\ '::::B:::::::::::::::::::::::   '   .    .   /\ '/\ .     *|  GOBLIN KING
-|   '& /\  B..     *,   .    . *    ':: .    .     /\/\ & &  .      '|  BOSS   #######--- 236
-| .  /\. /\:: '   ./\  .      '   .  ::.      '*, ./\  . /\/\/\ & .  |  Gun lv 2
-|.     /\/\::    .      '   .    .   :: '   .    .      '  *,   *.   |   dmg 1.4  rng 3.3  6.0/s
-| '   .    ::     '   .    .      '  ::    .   *, '   .    .     /^^\|    weapon cost  dmg rng  /s
-|    .     ::   .*  *.      ' \^^/.G2::::::::::::::::::::::::::::|[]||  B struct  10g
-|,*   '   .:::::::::::::::::::(oo):::A2,* .    .      '   .    . |__||  1 Bow     25g  3.0 3.5 1.4
-|   .    .      '   .  *,*, . . . .:: .  . *    '   .    .      '   .|  2 Gun     40g  1.0 3.0 5.6
-|  .      '   &    .      . . .G2 .:: .   '   .*   .      '   .    . |  3 Cannon  60g  7.0 4.0 0.6
-|   '   *  &  &  &  '   . . . .[],*:: . .    .      '   .    .      '|  4 Frost   45g  0.6 3.0 2.0
-|>>    .      '   &    . *  . . . .::  .      '   .    .      '   .  |  5 Flamer  50g  0.9 2.0 4.0
-|::::::::::::::::::::::::::::::::::::   '   .    .      '   .  /\.   |  6 Poison locked
-| '   .    .      '   .,*  .      '  /\    .      '   .    .      '  |  7 Sniper  70g 22.0 7.0 0.4
-|*   .      '   .    .   *  '   .    .      '   .    . *    '   .    |  8 Tesla   65g  4.0 3.5 1.0
-|     '   .    . /\   '   .    .  &   '*,/\    .      '   .    .     |  U upgrade 60g
-|   .    &      '  ,*    . *    '   .    .      '   .    .      '   .|  X sell   +40g
-|  .      '   .    .      '   .    .      '   .    *,     '   .    . |
-|   '   .    .      '& *,    .      '   .    .      '   .    . *    '|  N wave   F speed   P pause
-| .    .      '/\ .    .   ,* '   .    .      '   *    .      '   .  |  K boom (cash out)   Q quit
-+--------------------------------------------------------------------+  move: arrows/wasd/mouse
- GOBLIN KING summons goblins!
+ cool tower defense game.exe   level 1   wave 1/5   kills 6   gem bank 0
++----------------------------------------------------+ LEVEL 1  wave 1/5
+|    .      '   .    .      '   .    .      '   .    | WAVE ACTIVE - 1 left
+|   . . . . .  .      '   .  ::::::::::::::::::::    | CASTLE ######## 20/20
+| .:::::::::::: '   .    .   :: '   .    .     ::   .| GOLD 25     GEMS 0
+| .o: . . . .::    .      '  ::    .      '   .::  . | paths 1  speed x1
+| .:: .A2 . .::     '   .    ::     '   .    . ::   '| boss: GOBLIN KING
+| .:: . . . .::   .    .     ::   .    .      ':: .  | Bow lv 2
+|>>:: . . . .::  .      '   .::  .      '   .  ::.   | dmg 4.2 rng 3.8 1.6/s
+| ' . . . . .::   '   .    . ::   '   .    .   ::/^^\|   weapon  $  dmg rng  /s
+|    .      ':: .    .      ':: .    .      '  ::|[]|| B struct 10
+|     '   .  ::.      '   .  ::.      '   .    . |__|| 1 Bow    25  3.0 3.5 1.4
+|   .    .   :: '   .    .   :: '   .    .      '   .| 2 Gun    40  1.0 3.0 5.6
+|  .      '  ::    .      '  ::    .      '   .    . | 3 Cannon 60  7.0 4.0 0.6
+|   '   .    ::     '   .    ::     '   .    .      '| 4 Frost  locked
+| .    .     ::   .    .     ::   .    .      '   .  | 5 Flamer locked
+|.      '   .::::::::::::::::::  .      '   .    .   | 6 Poison locked
+| '   .    .      '   .    .      '   .    .      '  | 7 Sniper 70 22.0 7.0 0.4
+|    .      '   .    .      '   .    .      '   .    | 8 Tesla  locked
+|     '   .    .      '   .    .      '   .    .     | U upgrade 37g
+|   .    .      '   .    .      '   .    .      '   .| X sell    +26g
+|  .      '   .    .      '   .    .      '   .    . |
++----------------------------------------------------+ N wave F speed P pause
+ Level 1, wave 1/5 incoming! (7 enemies)
 ```
 
 ## Table of contents
@@ -67,10 +65,8 @@ When the castle falls you keep your **gems** and spend them on permanent upgrade
   Poison, Sniper or Tesla. Weapons upgrade up to level 5, and their stats are shown live in the side panel.
 - **Meta progression.** Gems survive death and buy permanent upgrades and weapon unlocks.
 - **Cash out on purpose.** Blow up your own castle to keep your gems and turn leftover gold into bonus gems.
-- **Cute map.** Little forests `/\` `&` and flowers `*,` grow on the grass. You can build right
-  over them.
-- **Full-screen layout.** The map scales to your terminal size, with all the info and build options
-  in a panel on the right. You can use the mouse or the keyboard.
+- **Full-screen layout.** The map takes every column of your terminal except a slim 24-column panel
+  on the right, which holds all the info, build options and weapon stats. You can use the mouse or the keyboard.
 - **Retro menu.** A window-style main menu with START GAME, UPGRADES and QUIT buttons.
 - **Zero dependencies.** It's a single Python file that uses only the standard library.
 
@@ -80,7 +76,7 @@ When the castle falls you keep your **gems** and spend them on permanent upgrade
 
 - Python **3.8+**
 - A terminal of at least **70×22** characters. Bigger is better, because the map fills the window
-  next to the side panel.
+  next to the side panel (80 columns gives a 26-tile-wide map, 200 columns gives 86).
 - Windows only: `pip install windows-curses`
 
 ### Install and run
@@ -237,7 +233,6 @@ All balance numbers live at the top of `keep.py`:
 | `WEAPONS` | cost, damage, range, cooldown, specials and gem unlock price of each weapon |
 | `ENEMIES` | HP, speed, castle damage and gold of each normal enemy |
 | `BOSSES` | name, sprite, HP, speed, damage, rewards and ability of the 5 bosses |
-| `TREES`, `FLOWERS`, `FLOWER_COLORS` | the decorations scattered on the grass |
 | `HP_GROWTH` | how fast enemies get tougher each wave (default `1.25`) |
 | `WAVES_PER_LEVEL` | waves per level (default `5`) |
 | `STRUCT_COST`, `MAX_LEVEL` | structure price, max weapon level |
@@ -245,8 +240,8 @@ All balance numbers live at the top of `keep.py`:
 | `PERKS` | the blessing pool |
 | `EDGES` | the order in which new paths enter the map |
 | `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
-| `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and width of the side panel |
-| `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 120×70) |
+| `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and width of the side panel (24) |
+| `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 150×70) |
 
 ## Project structure
 
@@ -270,7 +265,7 @@ All balance numbers live at the top of `keep.py`:
 | `Enemy` | an enemy walking along **its own path** (`pos` = how many cells it has walked). Bosses carry their ability state (armor, timer, enraged) |
 | `Tower` | a structure on a tile, with an optional weapon (`kind`, `level`, `invested`) |
 | `Run` | one playthrough: map, paths, towers, enemies, waves, levels and the run state machine |
-| `App` | main menu, Upgrades screen, clickable buttons, input routing, mouse, and **all drawing** (map, decorations, boss sprites, side panel, overlays) |
+| `App` | main menu, Upgrades screen, clickable buttons, input routing, mouse, and **all drawing** (map, boss sprites, side panel, overlays) |
 | `main()` | curses setup, colours, then a fixed **30 FPS** loop: input → update → draw |
 
 **Run state machine**
@@ -296,9 +291,6 @@ the Sniper targets the one with the most HP, and the Flamer hits all of them. Ca
 in their splash radius, Frost slows, Poison applies damage over time, and Tesla chains to nearby enemies.
 All direct hits go through `hit()`, which applies boss armor. Poison damage skips it.
 
-**Decorations** (`make_deco`): a few random "forest centers" are picked. Trees are likely near them,
-and flowers are scattered everywhere else. New paths and new structures clear what's in their way.
-
 ## Project history
 
 Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git, so
@@ -310,7 +302,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.1.0](CHANGELOG.md#010---2026-10-12) | 2026-10-12 | `d2ddb55` | First playable tower defense: weapons, waves, blessings, gems, gem shop | 834 lines |
 | [0.2.0](CHANGELOG.md#020---2026-10-12) | 2026-10-12 | `cc20d54` | Full-screen map, 5-wave levels, +1 enemy path per level, mouse support | 1037 lines |
 | [0.3.0](CHANGELOG.md#030---2026-10-12) | 2026-10-12 | `e973e43` | Renamed to *cool tower defense game.exe*, full-width map with HUD below, menu buttons + Upgrades screen, standard README and CHANGELOG | 1218 lines |
-| [0.4.0](CHANGELOG.md#040---2026-10-12) | 2026-10-12 | tag `v0.4.0` | Side panel back on the right, 8 weapons with live stats, 5 big bosses, trees and flowers | 1425 lines |
+| [0.4.0](CHANGELOG.md#040---2026-10-12) | 2026-10-12 | `b3344c7` | Side panel back on the right, 8 weapons with live stats, 5 big bosses, trees and flowers | 1425 lines |
+| [0.5.0](CHANGELOG.md#050---2026-10-12) | 2026-10-12 | tag `v0.5.0` | Trees and flowers removed, slimmer 24-column panel so the map is as wide as possible | 1390 lines |
 
 ## Contributing
 
