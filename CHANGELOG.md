@@ -8,9 +8,29 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-13
+
+`cool tower defense game.exe` (was `keep.py`): 2150 lines
+
+### Changed
+- **The game file is now called `cool tower defense game.exe`** (renamed from `keep.py` with `git mv`, so its
+  history is kept). It is still a Python script, so start it with Python:
+  - macOS / Linux: `python3 "cool tower defense game.exe"` (or `./"cool tower defense game.exe"`; it stays executable)
+  - Windows: `py "cool tower defense game.exe"`
+
+  Double-clicking it on Windows doesn't work, because Windows would try to run it as a native program.
+  The quotes are needed because of the spaces.
+- The run instructions in the file's docstring, and the README (install, tuning, project tree, code overview,
+  history table, contributing), now use the new name. Older changelog entries still say `keep.py`, because that
+  was the file's name then.
+- The save file keeps its name, `keep_save.json`, so existing progress isn't lost.
+- New `.gitattributes` tells GitHub the `.exe` is Python, so it gets syntax highlighting and counts in the
+  repository's language bar.
+
 ## [0.12.0] - 2026-10-13
 
-`keep.py` 1980 → 2148 lines
+Commit [`8d963d9`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/8d963d9bed2456102f89c6864d59a65f1434ac31)
+· `keep.py` 1980 → 2148 lines
 
 ### Added
 - **VOLUME screen** (new main-menu button, hotkey `V`) with three sliders from 0 to 100%:
@@ -391,7 +411,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.9.0...v0.10.0

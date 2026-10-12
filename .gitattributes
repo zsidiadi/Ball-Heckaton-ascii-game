@@ -1,0 +1,3 @@
+# The game file is a Python script despite its .exe name:
+# show and count it as Python on GitHub (syntax highlighting + language bar).
+*.exe linguist-language=Python

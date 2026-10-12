@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.12.0-orange)
+![Version](https://img.shields.io/badge/version-0.13.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
@@ -130,8 +130,14 @@ weapon's stats.
 ```bash
 git clone https://github.com/zsidiadi/Ball-Heckaton-ascii-game.git
 cd Ball-Heckaton-ascii-game
-python3 keep.py            # or: python3 keep.py --mute   (no music or sound effects)
+python3 "cool tower defense game.exe"            # macOS / Linux (or: ./"cool tower defense game.exe")
+py "cool tower defense game.exe"                 # Windows
+python3 "cool tower defense game.exe" --mute     # no music or sound effects
 ```
+
+> **It's a Python script, not a real Windows program.** The `.exe` is part of the game's name, so start it
+> with Python as shown above. Double-clicking it on Windows won't work, because Windows would try to run it
+> as a native program. Keep the quotes around the name, since it has spaces.
 
 > **Tip:** maximise or full-screen the terminal **before** starting a run. The map size is fixed
 > when the run begins.
@@ -302,7 +308,8 @@ All upgrades live behind the **UPGRADES** button in the main menu.
 | Unlock Sniper | Sniper can be built | 1 | 12 |
 | Unlock Lightning | Lightning can be built | 1 | 15 |
 
-Progress (gems, upgrades, best level and wave, sound on/off and volumes) is saved in `keep_save.json` next to `keep.py`.
+Progress (gems, upgrades, best level and wave, sound on/off and volumes) is saved in `keep_save.json` next to the game file
+(it kept its old name so nobody loses their progress).
 Delete that file to reset.
 
 ### Premium store (preview: payments not connected)
@@ -435,7 +442,7 @@ If none of these exist, the game just stays silent. For a perfect loop on macOS,
 
 ## Tuning the game
 
-All balance numbers live at the top of `keep.py`:
+All balance numbers live at the top of `cool tower defense game.exe`:
 
 | Constant | What it controls |
 | --- | --- |
@@ -462,7 +469,7 @@ All balance numbers live at the top of `keep.py`:
 
 ```
 .
-├── keep.py                        # the whole game: a single file, standard library only
+├── cool tower defense game.exe    # the whole game: one Python file, standard library only
 ├── assets/
 │   ├── menu_loop.wav              # seamless music loops (made by tools/make_loops.py)
 │   ├── level1_loop.wav … level5_loop.wav
@@ -476,12 +483,13 @@ All balance numbers live at the top of `keep.py`:
 ├── README.md                      # this file
 ├── CHANGELOG.md                   # version history: what changed and when
 ├── .gitignore                     # ignores __pycache__ and the save file
+├── .gitattributes                 # tells GitHub the .exe is Python (highlighting, language bar)
 └── keep_save.json                 # created on first run (git-ignored)
 ```
 
 ## How the code works
 
-`keep.py` is organised top to bottom as follows:
+`cool tower defense game.exe` (a Python script) is organised top to bottom as follows:
 
 | Section | Responsibility |
 | --- | --- |
@@ -531,7 +539,7 @@ per frame. `App.sync_music()` picks the track for the current screen, or silence
 Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git, so
 `git diff v0.1.0 v0.2.0` shows exactly what changed.
 
-| Version | Date | Commit | Highlights | `keep.py` size |
+| Version | Date | Commit | Highlights | game file size |
 | --- | --- | --- | --- | --- |
 | 0.0.0 | 2026-10-12 | `f9ef6a2` | Repository created | — |
 | [0.1.0](CHANGELOG.md#010---2026-10-12) | 2026-10-12 | `d2ddb55` | First playable tower defense: weapons, waves, blessings, gems, gem shop | 834 lines |
@@ -545,7 +553,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.9.0](CHANGELOG.md#090---2026-10-13) | 2026-10-13 | `5d878c2` | Level 1-5 music (seamless loops), track switching per level | 1847 lines |
 | [0.10.0](CHANGELOG.md#0100---2026-10-13) | 2026-10-13 | `45fc505` | Death sounds for grunts, runners and brutes | 1920 lines |
 | [0.11.0](CHANGELOG.md#0110---2026-10-13) | 2026-10-13 | `f23ef8f` | Level complete voice lines (1-5), special thanks at level 6 | 1980 lines |
-| [0.12.0](CHANGELOG.md#0120---2026-10-13) | 2026-10-13 | tag `v0.12.0` | VOLUME screen: separate sliders for music, death sounds and announcer; README refresh | 2148 lines |
+| [0.12.0](CHANGELOG.md#0120---2026-10-13) | 2026-10-13 | `8d963d9` | VOLUME screen: separate sliders for music, death sounds and announcer; README refresh | 2148 lines |
+| [0.13.0](CHANGELOG.md#0130---2026-10-13) | 2026-10-13 | tag `v0.13.0` | Game file renamed from `keep.py` to `cool tower defense game.exe` | 2150 lines |
 
 ## Contributing
 
@@ -554,7 +563,7 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 - **Changelog:** every change that players or developers would notice gets a line under
   `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md), grouped as *Added*, *Changed*, *Fixed* or *Removed*.
 - **Releases:** when you release, rename `Unreleased` to the new version and date, bump `VERSION` in
-  `keep.py` and the version badge in this README, and tag the commit:
+  `cool tower defense game.exe` and the version badge in this README, and tag the commit:
   ```bash
   git tag -a v0.12.0 -m "v0.12.0"
   git push origin v0.12.0
@@ -564,7 +573,7 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 - **Audio:** put new recordings in `assets/source/`, add them to the table in `tools/make_loops.py` (music) or
   `tools/make_sfx.py` (effects and voice), and run the script. Both need `numpy` and `ffmpeg`.
 - **Commits:** use short imperative summaries, e.g. `Add flying enemies` or `Fix cursor on small terminals`.
-- **Before pushing:** run `python3 -m py_compile keep.py`, then play at least one wave.
+- **Before pushing:** run `python3 -m py_compile "cool tower defense game.exe"`, then play at least one wave.
 
 ## Roadmap
 
