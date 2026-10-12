@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.11.0-orange)
+![Version](https://img.shields.io/badge/version-0.12.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
@@ -34,12 +34,12 @@ keep your **gems** and spend them on permanent upgrades for the next run.
 |                          >  [    START GAME    ]  <                         |
 |                             [     UPGRADES     ]                            |
 |                             [     PREMIUM      ]                            |
+|                             [      VOLUME      ]                            |
 |                             [       QUIT       ]                            |
 |                                                                             |
-|       arrows + ENTER or click   U upgrades  P premium  M sound  Q quit      |
+|        ENTER/click  U upgrades  P premium  V volume  M sound  Q quit        |
 |                                                                             |
-|                                                                             |
-+- [M] sound: ON --------------------------------------------------- v0.11.0 -+
++- [M] sound: ON --------------------------------------------------- v0.12.0 -+
 ```
 
 **In a run:** level 1's boss, the Goblin King, summoning goblins. Towers `A` `G` `C` `S` `P` `F` `L` `Z`, a
@@ -105,10 +105,11 @@ weapon's stats.
 - **Cash out on purpose.** Blow up your own castle to keep your gems and turn leftover gold into bonus gems.
 - **Music and voice.** A menu theme and a theme for each of the 5 levels, all looping seamlessly. Grunts,
   runners and brutes each have a voiced death sound, every level from 1 to 5 has a "level complete" voice
-  line, and a special thanks from the creator plays when you reach level 6.
+  line, and a special thanks from the creator plays when you reach level 6. Music, death sounds and the
+  announcer each have their own volume slider.
 - **Full-screen layout.** The map takes every column of your terminal except a slim 24-column side panel.
   You can play with the keyboard or the mouse.
-- **Retro menu.** A window-style main menu with START GAME, UPGRADES, PREMIUM and QUIT buttons.
+- **Retro menu.** A window-style main menu with START GAME, UPGRADES, PREMIUM, VOLUME and QUIT buttons.
 - **Premium store (preview).** A real-money shop for a Nuke, gem packs and more. Payments aren't connected yet,
   so nothing can actually be bought.
 - **Zero dependencies.** One Python file using only the standard library. The music and sound play with
@@ -161,6 +162,8 @@ python3 keep.py            # or: python3 keep.py --mute   (no music or sound eff
 | `Enter` / `Space` | Press the selected button / buy the selected item |
 | `U` | Open the Upgrades screen |
 | `P` | Open the Premium store |
+| `V` | Open the Volume screen |
+| Left / Right (or `a` / `d`, `-` / `+`) | Volume screen: turn the selected slider down / up |
 | `M` | All sound (music, effects, voice) on / off, saved. You can also click `[M] sound` in the bottom-left corner |
 | `1`–`9`, `0` | Upgrades screen: quick-buy one of the first ten upgrades |
 | `1`–`6` | Premium store: pick an item to buy (opens the confirm dialog) |
@@ -299,7 +302,7 @@ All upgrades live behind the **UPGRADES** button in the main menu.
 | Unlock Sniper | Sniper can be built | 1 | 12 |
 | Unlock Lightning | Lightning can be built | 1 | 15 |
 
-Progress (gems, upgrades, best level and wave, sound setting) is saved in `keep_save.json` next to `keep.py`.
+Progress (gems, upgrades, best level and wave, sound on/off and volumes) is saved in `keep_save.json` next to `keep.py`.
 Delete that file to reset.
 
 ### Premium store (preview: payments not connected)
@@ -370,6 +373,52 @@ point the volume stays within 2.4 dB of the track's own bar transitions (the unf
   lines keep the whole recording from the first to the last spoken word. Every sound is trimmed, de-clicked and
   loudness-matched.
 
+### Volume
+
+The **VOLUME** button in the main menu (or `V`) opens three sliders, from 0 to 100% in steps of 10:
+
+```
+  cool tower defense game.exe - Volume                             [_] [#] [X]
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|                             -=  V O L U M E  =-                             |
+|                        all sound: ON   (M to switch)                        |
+|                                                                             |
+|             > Music         [##############------]  70%  [-] [+]            |
+|                                                                             |
+|               Death sounds  [##################--]  90%  [-] [+]            |
+|                                                                             |
+|               Announcer     [####################] 100%  [-] [+]            |
+|                                                                             |
+|              changing Death sounds or Announcer plays a sample              |
+|                                                                             |
+|                                 [   BACK   ]                                |
+|                                                                             |
+|           up/down choose  left/right change  M mute all  ESC back           |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|                                                                             |
++- [M] sound: ON --------------------------------------------------- v0.12.0 -+
+```
+
+| Slider | Controls |
+| --- | --- |
+| Music | the menu theme and the level themes. It changes live while the menu theme plays |
+| Death sounds | the grunt, runner and brute death shouts. Changing it plays a grunt so you can hear the level |
+| Announcer | the "level complete" lines and the special thanks. Changing it plays the level 1 line |
+
+- Use up/down to pick a slider and left/right to change it, or click: a segment of the bar sets that level,
+  `[-]` / `[+]` step it, and clicking the bar's left edge `[` mutes that slider. `M` still switches all sound off or on.
+- The volumes are saved and come back the next time you play.
+- Each step sounds about equally bigger: the gain is (level / 100%)², so 50% is a quarter of the amplitude
+  (about -12 dB).
+- pygame changes volume natively, and the Linux players get the music stream scaled as it's sent (no restart).
+  Players that can't change volume themselves (Windows `winsound`, macOS `afplay`) play quieter copies of the
+  sounds, made on demand in a temporary folder that is deleted when the game closes.
+
 ### How the sound plays
 
 The `Music` class uses the first player it finds:
@@ -403,6 +452,7 @@ All balance numbers live at the top of `keep.py`:
 | `PREMIUM`, `PAYMENTS_ENABLED` | premium store items and euro prices; payments switch (off) |
 | `MUSIC_DIR`, `MENU_TRACK`, `LEVEL_TRACKS`, `MENU_STATES` | where the audio lives, which track plays on the menu screens and in each level |
 | `DEATH_SOUNDS`, `SFX_MAX_AT_ONCE`, `SFX_MIN_GAP` | each enemy's death sound, and how many effects may overlap |
+| `VOLUME_SLIDERS`, `volume_gain()` | the sliders on the Volume screen and how a slider level turns into loudness |
 | `LEVEL_COMPLETE_SOUNDS`, `SPECIAL_THANKS`, `SPECIAL_THANKS_LEVEL` | the Level Complete voice lines; the creator's thanks and the level that triggers it |
 | `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
 | `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and width of the side panel (24) |
@@ -436,7 +486,7 @@ All balance numbers live at the top of `keep.py`:
 | Section | Responsibility |
 | --- | --- |
 | Constants | balance and content data (`WEAPONS`, `BUILDINGS`, `ENEMIES`, `BOSSES`, `META_UPGRADES`, `PERKS`, `PREMIUM`, sound tables, …) |
-| `Music` | all audio: picks a player (pygame, winsound + MCI, paplay/aplay/sox, afplay), loops a track (`play`), switches tracks, plays one-shot sounds on top (`effect`), and stops them (`stop_effects`) |
+| `Music` | all audio: picks a player (pygame, winsound + MCI, paplay/aplay/sox, afplay), loops a track (`play`), switches tracks, plays one-shot sounds on top (`effect`), stops them (`stop_effects`), and sets the volume of music, death sounds and announcer (`set_volume`) |
 | `load_meta` / `save_meta` | read and write the JSON save file |
 | `Enemy` | an enemy walking along **its own path** (`pos` = how many cells it has walked). Bosses carry their ability state (armor, timer, enraged) |
 | `Tower` | a structure, weapon or Gold Mine on a tile (`kind`, `level`, `invested`) |
@@ -495,6 +545,7 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.9.0](CHANGELOG.md#090---2026-10-13) | 2026-10-13 | `5d878c2` | Level 1-5 music (seamless loops), track switching per level | 1847 lines |
 | [0.10.0](CHANGELOG.md#0100---2026-10-13) | 2026-10-13 | `45fc505` | Death sounds for grunts, runners and brutes | 1920 lines |
 | [0.11.0](CHANGELOG.md#0110---2026-10-13) | 2026-10-13 | `f23ef8f` | Level complete voice lines (1-5), special thanks at level 6 | 1980 lines |
+| [0.12.0](CHANGELOG.md#0120---2026-10-13) | 2026-10-13 | tag `v0.12.0` | VOLUME screen: separate sliders for music, death sounds and announcer; README refresh | 2148 lines |
 
 ## Contributing
 

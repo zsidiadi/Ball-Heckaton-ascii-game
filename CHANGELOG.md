@@ -8,12 +8,41 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-13
+
+`keep.py` 1980 → 2148 lines
+
+### Added
+- **VOLUME screen** (new main-menu button, hotkey `V`) with three sliders from 0 to 100%:
+  **Music** (menu and level themes), **Death sounds** (grunt / runner / brute), and **Announcer**
+  (level complete lines and the special thanks).
+  - Keyboard: up/down to pick, left/right (or `a` / `d`, `-` / `+`) to change. Mouse: click a bar segment,
+    `[-]` / `[+]`, or the bar's left edge to mute. `M` still switches all sound off or on.
+  - Music changes live while the menu theme plays. Changing Death sounds plays a grunt, and changing
+    Announcer plays the level 1 line, so you hear the new level right away.
+  - Volumes are saved in `keep_save.json` (`"volume": {"music": 0-10, "effects": 0-10, "voice": 0-10}`)
+    and applied at start-up.
+- `Music.set_volume(group, gain)` for `"music"`, `"effects"` and `"voice"`, with a perceptual curve
+  (`volume_gain(step) = (step/10)^2`).
+  - pygame: `Sound.set_volume`.
+  - Linux players: the music stream is scaled 100 ms at a time, so it changes without a restart.
+  - Windows `winsound` / MCI and macOS `afplay`: quieter copies of the WAVs are made on demand (`scale_pcm`,
+    standard-library `array`) in a temp folder that `close()` deletes. The music restarts with the new copy.
+  - Volume 0 skips playing that sound entirely.
+
 ### Changed
+- Main menu has 5 buttons. The hint line mentions `V volume`.
 - **README refreshed** to match the game as of 0.11.0: new main-menu and in-run screenshots (a boss fight with
   every kind of tower, building and trap), a blessings table with every effect, a merged "Music and sound"
   section (music, death sounds, voice lines, and how each OS plays them), Premium store quick keys, sound cues
   in "How the code works", an audio workflow in Contributing, an updated roadmap (sound effects are done),
   and the commit hash for 0.11.0 in the history table.
+
+### Technical notes
+- Tested: the scaler (exact sample values), the live stream volume change (the bytes after the change are
+  exactly 25%), scaled effect copies (peak ratio exactly 0.36), the Windows restart sequence with a stand-in
+  `winsound`, pygame volumes (SDL dummy driver), the Volume screen with keyboard and mouse at 70×22 and 80×24,
+  saving and restoring, and full bot games.
 
 ## [0.11.0] - 2026-10-13
 
@@ -362,7 +391,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.8.0...v0.9.0

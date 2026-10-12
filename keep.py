@@ -17,6 +17,7 @@ Run:  python3 keep.py          (Windows: pip install windows-curses first)
       python3 keep.py --mute   (no music or sound effects)
 """
 
+import array
 import curses
 import json
 import os
@@ -33,10 +34,10 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.11.0"
+VERSION = "0.12.0"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
-MENU_STATES = ("menu", "upgrades", "premium")   # the menu music plays only on these screens
+MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens
 # level N plays LEVEL_TRACKS[N-1]; from level 6 on they repeat (level 6 = track 1), like the bosses
 LEVEL_TRACKS = ["level1_loop.wav", "level2_loop.wav", "level3_loop.wav", "level4_loop.wav", "level5_loop.wav"]
 # one-shot sounds (paths inside assets/)
@@ -48,6 +49,29 @@ LEVEL_COMPLETE_SOUNDS = ["voice/level1_complete.wav", "voice/level2_complete.wav
 # special thanks from the creator: played when a player starts level 6, the first level past the five
 SPECIAL_THANKS = "special/special_thanks_from_the_creator.wav"
 SPECIAL_THANKS_LEVEL = 6
+# volume sliders on the VOLUME screen: (save key, label). Each goes 0-10; the gain is (step/10)^2, which
+# sounds roughly even step to step. "effects" = death sounds, "voice" = level complete lines + special thanks.
+VOLUME_SLIDERS = [("music", "Music"), ("effects", "Death sounds"), ("voice", "Announcer")]
+
+
+def volume_gain(step):
+    return (max(0, min(10, step)) / 10.0) ** 2
+
+
+def scale_pcm(pcm, width, gain):
+    """Return PCM bytes (8-bit unsigned or 16-bit little-endian signed) with every sample multiplied by gain."""
+    if gain >= 0.999:
+        return bytes(pcm)
+    if width == 1:
+        return bytes(int((b - 128) * gain) + 128 for b in pcm)
+    a = array.array("h")
+    a.frombytes(bytes(pcm))
+    if sys.byteorder == "big":
+        a.byteswap()
+    a = array.array("h", [int(v * gain) for v in a])
+    if sys.byteorder == "big":
+        a.byteswap()
+    return a.tobytes()
 SFX_MAX_AT_ONCE = 4          # never more than this many effects playing together
 SFX_MIN_GAP = 0.06           # the same sound isn't restarted more often than this (seconds)
 
@@ -197,7 +221,6 @@ class Music:
         self.folder = folder
         self.tracks = {}            # name -> (rate, channels, sample width, pcm bytes) or None if unusable
         self.sounds = {}            # pygame Sound objects
-        self.tmps = {}              # afplay: name -> temp multi-loop file
         self.current = None
         self.playing = False
         self.proc = None
@@ -209,6 +232,8 @@ class Music:
         self.sfx_slot = {}          # Windows MCI: effect name -> next alias slot
         self.mci_ok = True
         self.mci_aliases = set()
+        self.gain = {"music": 1.0, "effects": 1.0, "voice": 1.0}
+        self.tmpdir = None          # quieter copies of sounds, for players that can't change volume themselves
         self.backend = self._pick()
 
     def _pick(self):
@@ -252,6 +277,49 @@ class Music:
             "play": ["play", "-q", "-t", "raw", "-r", str(rate), "-e", sx, "-b", str(8 * width), "-c", str(ch), "-"],
         }[self.player]
 
+    @staticmethod
+    def group(name):
+        """Which volume slider a one-shot sound belongs to."""
+        return "effects" if name.startswith("sfx/") else "voice"
+
+    def set_volume(self, group, gain):
+        """Change the volume of "music", "effects" (death sounds) or "voice" (announcer). Music changes live."""
+        gain = max(0.0, min(1.0, gain))
+        old, self.gain[group] = self.gain.get(group, 1.0), gain
+        if group != "music" or not self.playing or abs(old - gain) < 1e-6:
+            return
+        if self.backend == "pygame":
+            snd = self.sounds.get(self.current)
+            if snd:
+                snd.set_volume(gain)
+        elif self.backend == "pipe" and self.thread and self.thread.is_alive():
+            pass                                      # the stream picks up the new gain on its next 100 ms chunk
+        else:                                         # winsound / afplay play files: restart with a rescaled copy
+            name = self.current
+            self.stop()
+            self.play(name)
+
+    def _scaled_path(self, name, gain, loops=1):
+        """Path of `name` at this gain (repeated `loops` times). The original file when nothing changes;
+        otherwise a cached copy in a temp folder."""
+        pct = int(round(gain * 100))
+        if pct >= 100 and loops == 1:
+            return os.path.join(self.folder, name)
+        if not self.tmpdir:
+            self.tmpdir = tempfile.mkdtemp(prefix="ctdg_sound_")
+        safe = "".join(c if c.isalnum() else "_" for c in os.path.splitext(name)[0])
+        path = os.path.join(self.tmpdir, f"{safe}_{pct}_x{loops}.wav")
+        if not os.path.exists(path):
+            rate, ch, width, pcm = self._load(name)
+            data = scale_pcm(pcm, width, gain)
+            with wave.open(path, "wb") as w:
+                w.setnchannels(ch)
+                w.setsampwidth(width)
+                w.setframerate(rate)
+                for _ in range(loops):
+                    w.writeframes(data)
+        return path
+
     def play(self, name):
         """Loop the track `name` (a file in the music folder). Calling it again with the same name does
         nothing, so it can be called every frame. A different name switches tracks."""
@@ -263,18 +331,22 @@ class Music:
             return
         self.current, self.playing = name, True
         self.stop_evt = threading.Event()             # a fresh event per playback, so old threads stay stopped
+        gain = self.gain["music"]
+        if gain <= 0 and self.backend != "pygame":
+            return                                    # volume 0: "playing" in silence; set_volume restarts it
         path = os.path.join(self.folder, name)
         if self.backend == "pygame":
             import pygame
             try:
                 if name not in self.sounds:
                     self.sounds[name] = pygame.mixer.Sound(path)
+                self.sounds[name].set_volume(gain)
                 self.sounds[name].play(loops=-1)
             except Exception:
                 self.playing = False
         elif self.backend == "winsound":
             import winsound
-            winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC |
+            winsound.PlaySound(self._scaled_path(name, gain), winsound.SND_FILENAME | winsound.SND_ASYNC |
                                winsound.SND_LOOP | winsound.SND_NODEFAULT)
         else:
             target = self._stream if self.backend == "pipe" else self._afplay
@@ -295,7 +367,10 @@ class Music:
         pos = 0
         try:
             while not stop_evt.is_set():
-                proc.stdin.write(data[pos:pos + chunk])
+                out, gain = data[pos:pos + chunk], self.gain["music"]
+                if gain < 0.999:
+                    out = scale_pcm(out, width, gain)     # volume applied live, 100 ms at a time
+                proc.stdin.write(out)
                 pos += chunk
                 if pos >= len(data):
                     pos = 0                               # wrap around: the next byte is the loop start
@@ -306,22 +381,13 @@ class Music:
 
     def _afplay(self, name, track, stop_evt):
         rate, ch, width, pcm = track
-        if name not in self.tmps:                         # ~5 minutes of back-to-back loops
-            loops = max(1, int(300 * rate * ch * width / max(1, len(pcm))))
-            fd, tmp = tempfile.mkstemp(suffix=".wav")
-            os.close(fd)
-            with wave.open(tmp, "wb") as w:
-                w.setnchannels(ch)
-                w.setsampwidth(width)
-                w.setframerate(rate)
-                for _ in range(loops):
-                    w.writeframes(pcm)
-            self.tmps[name] = tmp
+        loops = max(1, int(300 * rate * ch * width / max(1, len(pcm))))      # ~5 minutes of back-to-back loops
+        long_file = self._scaled_path(name, self.gain["music"], loops)
         quick_fails = 0
         while not stop_evt.is_set() and quick_fails < 3:
             started = time.time()
             try:
-                proc = subprocess.Popen(["afplay", self.tmps[name]], stdout=subprocess.DEVNULL,
+                proc = subprocess.Popen(["afplay", long_file], stdout=subprocess.DEVNULL,
                                         stderr=subprocess.DEVNULL)
             except OSError:
                 return
@@ -378,7 +444,8 @@ class Music:
             return
         self.sfx_last[name] = now
         path = os.path.join(self.folder, name)
-        if not os.path.exists(path):
+        gain = self.gain[self.group(name)]
+        if not os.path.exists(path) or gain <= 0:
             return
         try:
             if self.backend == "pygame":
@@ -386,9 +453,14 @@ class Music:
                 key = "fx:" + name
                 if key not in self.sounds:
                     self.sounds[key] = pygame.mixer.Sound(path)
+                self.sounds[key].set_volume(gain)
                 self.sounds[key].play()
-            elif self.backend == "winsound":
-                self._mci_effect(name, path)
+                return
+            if not self._load(name):
+                return
+            path = self._scaled_path(name, gain)      # the other players get a quieter copy when needed
+            if self.backend == "winsound":
+                self._mci_effect(f"{name}@{int(round(gain * 100))}", path)
             else:
                 self.sfx_procs = [p for p in self.sfx_procs if p.poll() is None]
                 if len(self.sfx_procs) >= SFX_MAX_AT_ONCE:
@@ -453,17 +525,15 @@ class Music:
                 ctypes.windll.winmm.mciSendStringW("close all", None, 0, None)
             except Exception:
                 pass
-        for tmp in self.tmps.values():
-            try:
-                os.remove(tmp)
-            except OSError:
-                pass
-        self.tmps = {}
+        if self.tmpdir:
+            shutil.rmtree(self.tmpdir, ignore_errors=True)
+            self.tmpdir = None
 
 
 # ------------------------------------------------------------------ save data
 def load_meta():
-    data = {"gems": 0, "best": 0, "best_level": 0, "runs": 0, "up": {}, "music": True}
+    data = {"gems": 0, "best": 0, "best_level": 0, "runs": 0, "up": {}, "music": True,
+            "volume": {"music": 10, "effects": 10, "voice": 10}}
     try:
         with open(SAVE_FILE) as f:
             data.update(json.load(f))
@@ -1262,7 +1332,8 @@ BACK_KEYS = (27, curses.KEY_BACKSPACE, 127, 8, ord("q"), ord("Q"), ord("b"), ord
 UP_KEYS = (curses.KEY_UP, ord("w"), ord("W"))
 DOWN_KEYS = (curses.KEY_DOWN, ord("s"), ord("S"))
 
-MENU_ITEMS = [("START GAME", "start"), ("UPGRADES", "upgrades"), ("PREMIUM", "premium"), ("QUIT", "quit")]
+MENU_ITEMS = [("START GAME", "start"), ("UPGRADES", "upgrades"), ("PREMIUM", "premium"), ("VOLUME", "volume"),
+              ("QUIT", "quit")]
 
 
 class App:
@@ -1282,6 +1353,8 @@ class App:
         self.zones = []            # clickable areas: (y, x0, x1, action)
         self.anim = 0.0
         self.music_hold_until = 0.0   # level music waits until a voice line (special thanks) has finished
+        self.vol_sel = 0              # VOLUME screen: selected slider (len(VOLUME_SLIDERS) = the BACK button)
+        self.apply_volumes()
 
     def color(self, n):
         return curses.color_pair(n) if curses.has_colors() else 0
@@ -1352,6 +1425,8 @@ class App:
                 self.do("upgrades")
             elif k in (ord("p"), ord("P")):
                 self.do("premium")
+            elif k in (ord("v"), ord("V")):
+                self.do("volume")
             elif k in (ord("m"), ord("M")):
                 self.do("music")
             elif k in (ord("q"), ord("Q"), 27):
@@ -1368,6 +1443,20 @@ class App:
                 self.shop_sel = QUICK_KEYS.index(chr(k))
                 self.buy(self.shop_sel)
             elif k in BACK_KEYS:
+                self.do("back")
+        elif self.state == "volume":
+            n = len(VOLUME_SLIDERS) + 1                  # sliders + BACK
+            if k in UP_KEYS:
+                self.vol_sel = (self.vol_sel - 1) % n
+            elif k in DOWN_KEYS:
+                self.vol_sel = (self.vol_sel + 1) % n
+            elif k in (curses.KEY_LEFT, ord("a"), ord("A"), ord("-"), ord("_")) and self.vol_sel < n - 1:
+                self.do(("vstep", VOLUME_SLIDERS[self.vol_sel][0], -1))
+            elif k in (curses.KEY_RIGHT, ord("d"), ord("D"), ord("+"), ord("=")) and self.vol_sel < n - 1:
+                self.do(("vstep", VOLUME_SLIDERS[self.vol_sel][0], +1))
+            elif k in (ord("m"), ord("M")):
+                self.do("music")
+            elif (k in ENTER_KEYS and self.vol_sel == n - 1) or k in BACK_KEYS:
                 self.do("back")
         elif self.state == "premium":
             n = len(PREMIUM)
@@ -1403,6 +1492,21 @@ class App:
         elif action == "music":
             self.meta["music"] = not self.meta.get("music", True)
             save_meta(self.meta)
+        elif action == "volume":
+            self.state = "volume"
+        elif action[0] == "vsel":
+            self.vol_sel = action[1]
+        elif action[0] in ("vstep", "vset"):
+            key = action[1]
+            vol = self.meta.setdefault("volume", {})
+            old = vol.get(key, 10)
+            new = max(0, min(10, old + action[2] if action[0] == "vstep" else action[2]))
+            self.vol_sel = [k for k, _ in VOLUME_SLIDERS].index(key)
+            if new != old:
+                vol[key] = new
+                save_meta(self.meta)
+                self.apply_volumes()
+                self.preview(key)
         elif action == "premium":
             self.state, self.prem_msg, self.prem_confirm = "premium", "", None
         elif action == "quit":
@@ -1438,6 +1542,21 @@ class App:
         self.meta["up"][uid] = lv + 1
         save_meta(self.meta)
         self.shop_msg = f"Bought {name}!" + (f" Now level {lv + 1}." if mx > 1 else "")
+
+    def apply_volumes(self):
+        if self.music:
+            for key, _ in VOLUME_SLIDERS:
+                self.music.set_volume(key, volume_gain(self.meta.get("volume", {}).get(key, 10)))
+
+    def preview(self, key):
+        """Let the player hear the new level: a death sound or an announcer line (music is already playing)."""
+        if not (self.music and self.meta.get("music", True)):
+            return
+        if key == "effects":
+            self.music.effect(DEATH_SOUNDS["grunt"])
+        elif key == "voice":
+            self.music.stop_effects()                 # don't stack announcer lines while the slider moves
+            self.music.effect(LEVEL_COMPLETE_SOUNDS[0])
 
     def purchase(self, i):
         """Real-money purchase. Not wired to a payment provider yet, so it never charges or grants anything."""
@@ -1507,6 +1626,8 @@ class App:
             self.draw_upgrades()
         elif self.state == "premium":
             self.draw_premium()
+        elif self.state == "volume":
+            self.draw_volume()
         else:
             self.draw_run()
         self.scr.refresh()
@@ -1556,7 +1677,7 @@ class App:
             self.button(y, label, action, selected=(i == self.menu_sel))
             y += step
         y += 1
-        self.center(y, "arrows + ENTER or click   U upgrades  P premium  M sound  Q quit", curses.A_DIM)
+        self.center(y, "ENTER/click  U upgrades  P premium  V volume  M sound  Q quit", curses.A_DIM)
 
     def draw_upgrades(self):
         m = self.meta
@@ -1611,6 +1732,53 @@ class App:
         y += gap
         self.center(y, f"up/down select   ENTER buy   {QUICK_KEYS[0]}-{QUICK_KEYS[min(n, 10) - 1]} quick buy   ESC back",
                     curses.A_DIM)
+
+    def draw_volume(self):
+        h, w = self.scr.getmaxyx()
+        self.window("Volume")
+        n = len(VOLUME_SLIDERS)
+        total = 3 + n * 2 + 5                         # title + status + gap, sliders, note/BACK/hint
+        y = max(1, 1 + (h - 2 - total) // 2)
+        self.center(y, "-=  V O L U M E  =-", self.color(CASTLE) | curses.A_BOLD)
+        y += 1
+        on = self.meta.get("music", True)
+        if not (self.music and self.music.backend):
+            self.center(y, "no sound player found on this computer (see README)", self.color(RED))
+        else:
+            self.center(y, f"all sound: {'ON' if on else 'OFF'}   (M to switch)",
+                        (self.color(C_BOW) if on else self.color(RED)) | curses.A_BOLD)
+        y += 2
+        bar_w = 20                                    # 10 steps, 2 characters each
+        row_w = 2 + 14 + bar_w + 2 + 6 + 8
+        left = max(2, (w - row_w) // 2)
+        vols = self.meta.get("volume", {})
+        for i, (key, label) in enumerate(VOLUME_SLIDERS):
+            step = vols.get(key, 10)
+            sel = i == self.vol_sel
+            self.put(y, left, ">" if sel else " ", self.color(CASTLE) | curses.A_BOLD)
+            self.put(y, left + 2, f"{label:<13}", curses.A_REVERSE | curses.A_BOLD if sel else curses.A_BOLD)
+            self.zones.append((y, left, left + 15, ("vsel", i)))
+            bx = left + 16
+            self.put(y, bx, "[", curses.A_BOLD)
+            self.zones.append((y, bx, bx + 1, ("vset", key, 0)))          # clicking the left edge = mute
+            for j in range(10):
+                filled = j < step
+                self.put(y, bx + 1 + 2 * j, "##" if filled else "--",
+                         self.color(GOLD) | curses.A_BOLD if filled else curses.A_DIM)
+                self.zones.append((y, bx + 1 + 2 * j, bx + 3 + 2 * j, ("vset", key, j + 1)))
+            self.put(y, bx + 1 + bar_w, "]", curses.A_BOLD)
+            self.put(y, bx + 3 + bar_w, f"{step * 10:>3}%", curses.A_BOLD)
+            mx = bx + 9 + bar_w
+            self.put(y, mx, "[-]", curses.A_BOLD)
+            self.zones.append((y, mx, mx + 3, ("vstep", key, -1)))
+            self.put(y, mx + 4, "[+]", curses.A_BOLD)
+            self.zones.append((y, mx + 4, mx + 7, ("vstep", key, +1)))
+            y += 2
+        self.center(y, "changing Death sounds or Announcer plays a sample", curses.A_DIM)
+        y += 2
+        self.button(y, "BACK", "back", selected=self.vol_sel == n, width=12)
+        y += 2
+        self.center(y, "up/down choose  left/right change  M mute all  ESC back", curses.A_DIM)
 
     def draw_premium(self):
         h, w = self.scr.getmaxyx()
