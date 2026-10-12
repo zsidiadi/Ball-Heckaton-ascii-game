@@ -14,7 +14,7 @@ your own castle (K) to cash out early: leftover gold turns into bonus gems.
 Spend gems in the UPGRADES menu on permanent upgrades and new weapons.
 
 Run:  python3 keep.py          (Windows: pip install windows-curses first)
-      python3 keep.py --mute   (no menu music)
+      python3 keep.py --mute   (no music)
 """
 
 import curses
@@ -33,9 +33,12 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.8.0"
-MUSIC_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "menu_loop.wav")
+VERSION = "0.9.0"
+MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium")   # the menu music plays only on these screens
+# level N plays LEVEL_TRACKS[N-1]; from level 6 on they repeat (level 6 = track 1), like the bosses
+LEVEL_TRACKS = ["level1_loop.wav", "level2_loop.wav", "level3_loop.wav", "level4_loop.wav", "level5_loop.wav"]
 
 MIN_W, MIN_H = 70, 22
 MAP_X, MAP_Y = 1, 2          # screen position of the top-left map cell
@@ -167,32 +170,29 @@ def num(v, width):
 
 # ------------------------------------------------------------------ music
 class Music:
-    """Seamless looping music with no required dependencies.
+    """Seamless looping music with no required dependencies. Plays one track at a time and switches
+    between them (menu theme, level 1-5 themes).
 
-    The WAV in assets/ is already cut so its end flows straight into its start. Backends, best first:
+    The WAVs in assets/ are already cut so their end flows straight into their start. Backends, best first:
       pygame (if installed)    - in-memory loop, sample-accurate, any OS
       winsound (Windows)       - built in, loops the WAV seamlessly
       paplay / aplay / sox     - built in on most Linux (sox also on macOS via brew): the raw audio is
                                  streamed into the player without pauses, so the loop is seamless
       afplay (macOS)           - built in; a long multi-loop copy is played, so the tiny restart gap
                                  only happens every ~5 minutes
-    If none is available the game simply stays silent."""
+    If none is available, or a file is missing, the game simply stays silent."""
 
-    def __init__(self, path):
-        self.backend = None
+    def __init__(self, folder):
+        self.folder = folder
+        self.tracks = {}            # name -> (rate, channels, sample width, pcm bytes) or None if unusable
+        self.sounds = {}            # pygame Sound objects
+        self.tmps = {}              # afplay: name -> temp multi-loop file
+        self.current = None
         self.playing = False
         self.proc = None
         self.thread = None
         self.stop_evt = threading.Event()
-        self.sound = None
-        self.tmp = None
-        try:
-            with wave.open(path) as w:
-                self.rate, self.ch, self.width = w.getframerate(), w.getnchannels(), w.getsampwidth()
-                self.pcm = w.readframes(w.getnframes())
-        except (OSError, EOFError, wave.Error):
-            return
-        self.path = path
+        self.player = None
         self.backend = self._pick()
 
     def _pick(self):
@@ -200,7 +200,6 @@ class Music:
         try:
             import pygame
             pygame.mixer.init()
-            self.sound = pygame.mixer.Sound(self.path)
             return "pygame"
         except Exception:
             pass
@@ -210,82 +209,128 @@ class Music:
                 return "winsound"
             except ImportError:
                 pass
-        fmt = {1: ("u8", "U8", "unsigned-integer"), 2: ("s16le", "S16_LE", "signed-integer")}.get(self.width)
-        if fmt:
-            players = [
-                ["paplay", "--raw", f"--rate={self.rate}", f"--channels={self.ch}", f"--format={fmt[0]}"],
-                ["aplay", "-q", "-t", "raw", "-f", fmt[1], "-r", str(self.rate), "-c", str(self.ch)],
-                ["play", "-q", "-t", "raw", "-r", str(self.rate), "-e", fmt[2], "-b", str(8 * self.width),
-                 "-c", str(self.ch), "-"],
-            ]
-            for cmd in players:
-                if shutil.which(cmd[0]):
-                    self.cmd = cmd
-                    return "pipe"
+        for player in ("paplay", "aplay", "play"):
+            if shutil.which(player):
+                self.player = player
+                return "pipe"
         if shutil.which("afplay"):
             return "afplay"
         return None
 
-    def play(self):
-        if not self.backend or self.playing:
+    def _load(self, name):
+        if name not in self.tracks:
+            try:
+                with wave.open(os.path.join(self.folder, name)) as w:
+                    info = (w.getframerate(), w.getnchannels(), w.getsampwidth(), w.readframes(w.getnframes()))
+                self.tracks[name] = info if info[2] in (1, 2) else None
+            except (OSError, EOFError, wave.Error):
+                self.tracks[name] = None
+        return self.tracks[name]
+
+    def _cmd(self, rate, ch, width):
+        pa, al, sx = {1: ("u8", "U8", "unsigned-integer"), 2: ("s16le", "S16_LE", "signed-integer")}[width]
+        return {
+            "paplay": ["paplay", "--raw", f"--rate={rate}", f"--channels={ch}", f"--format={pa}"],
+            "aplay": ["aplay", "-q", "-t", "raw", "-f", al, "-r", str(rate), "-c", str(ch)],
+            "play": ["play", "-q", "-t", "raw", "-r", str(rate), "-e", sx, "-b", str(8 * width), "-c", str(ch), "-"],
+        }[self.player]
+
+    def play(self, name):
+        """Loop the track `name` (a file in the music folder). Calling it again with the same name does
+        nothing, so it can be called every frame. A different name switches tracks."""
+        if not self.backend or (self.playing and self.current == name):
             return
-        self.playing = True
-        self.stop_evt.clear()
+        self.stop()
+        track = self._load(name)
+        if not track:
+            return
+        self.current, self.playing = name, True
+        self.stop_evt = threading.Event()             # a fresh event per playback, so old threads stay stopped
+        path = os.path.join(self.folder, name)
         if self.backend == "pygame":
-            self.sound.play(loops=-1)
+            import pygame
+            try:
+                if name not in self.sounds:
+                    self.sounds[name] = pygame.mixer.Sound(path)
+                self.sounds[name].play(loops=-1)
+            except Exception:
+                self.playing = False
         elif self.backend == "winsound":
             import winsound
-            winsound.PlaySound(self.path, winsound.SND_FILENAME | winsound.SND_ASYNC |
+            winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC |
                                winsound.SND_LOOP | winsound.SND_NODEFAULT)
         else:
             target = self._stream if self.backend == "pipe" else self._afplay
-            self.thread = threading.Thread(target=target, daemon=True)
+            self.thread = threading.Thread(target=target, args=(name, track, self.stop_evt), daemon=True)
             self.thread.start()
 
-    def _stream(self):
+    def _stream(self, name, track, stop_evt):
         """Feed the loop into the player's stdin forever; the pipe paces us in real time."""
+        rate, ch, width, pcm = track
         try:
-            self.proc = subprocess.Popen(self.cmd, stdin=subprocess.PIPE,
-                                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            proc = subprocess.Popen(self._cmd(rate, ch, width), stdin=subprocess.PIPE,
+                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except OSError:
             return
-        data = memoryview(self.pcm)
-        chunk = (self.rate // 10) * self.ch * self.width          # 100 ms of audio per write
+        self.proc = proc
+        data = memoryview(pcm)
+        chunk = (rate // 10) * ch * width                 # 100 ms of audio per write
         pos = 0
         try:
-            while not self.stop_evt.is_set():
-                self.proc.stdin.write(data[pos:pos + chunk])
+            while not stop_evt.is_set():
+                proc.stdin.write(data[pos:pos + chunk])
                 pos += chunk
                 if pos >= len(data):
-                    pos = 0                                       # wrap around: the next byte is the loop start
+                    pos = 0                               # wrap around: the next byte is the loop start
         except (OSError, ValueError):
             pass
+        finally:
+            self._kill(proc)                              # never leave a player running in the background
 
-    def _afplay(self):
-        if not self.tmp:                                          # ~5 minutes of back-to-back loops
-            loops = max(1, int(300 * self.rate * self.ch * self.width / max(1, len(self.pcm))))
-            fd, self.tmp = tempfile.mkstemp(suffix=".wav")
+    def _afplay(self, name, track, stop_evt):
+        rate, ch, width, pcm = track
+        if name not in self.tmps:                         # ~5 minutes of back-to-back loops
+            loops = max(1, int(300 * rate * ch * width / max(1, len(pcm))))
+            fd, tmp = tempfile.mkstemp(suffix=".wav")
             os.close(fd)
-            with wave.open(self.tmp, "wb") as w:
-                w.setnchannels(self.ch)
-                w.setsampwidth(self.width)
-                w.setframerate(self.rate)
+            with wave.open(tmp, "wb") as w:
+                w.setnchannels(ch)
+                w.setsampwidth(width)
+                w.setframerate(rate)
                 for _ in range(loops):
-                    w.writeframes(self.pcm)
+                    w.writeframes(pcm)
+            self.tmps[name] = tmp
         quick_fails = 0
-        while not self.stop_evt.is_set() and quick_fails < 3:
+        while not stop_evt.is_set() and quick_fails < 3:
             started = time.time()
             try:
-                self.proc = subprocess.Popen(["afplay", self.tmp], stdout=subprocess.DEVNULL,
-                                             stderr=subprocess.DEVNULL)
-                self.proc.wait()
+                proc = subprocess.Popen(["afplay", self.tmps[name]], stdout=subprocess.DEVNULL,
+                                        stderr=subprocess.DEVNULL)
             except OSError:
                 return
+            self.proc = proc
+            if stop_evt.is_set():                     # stopped while we were starting it
+                self._kill(proc)
+                return
+            proc.wait()
             if time.time() - started < 1.0:          # player died right away (no audio device?):
                 quick_fails += 1                      # back off, and give up after 3 tries
-                self.stop_evt.wait(1.0)
+                stop_evt.wait(1.0)
             else:
                 quick_fails = 0
+
+    @staticmethod
+    def _kill(proc):
+        try:
+            if proc.stdin:
+                proc.stdin.close()
+        except OSError:
+            pass
+        try:
+            proc.kill()
+            proc.wait(timeout=1)
+        except Exception:
+            pass
 
     def stop(self):
         if not self.playing:
@@ -293,16 +338,14 @@ class Music:
         self.playing = False
         self.stop_evt.set()
         if self.backend == "pygame":
-            self.sound.stop()
+            snd = self.sounds.get(self.current)
+            if snd:
+                snd.stop()
         elif self.backend == "winsound":
             import winsound
             winsound.PlaySound(None, 0)
         if self.proc:
-            try:
-                self.proc.kill()
-                self.proc.wait(timeout=1)
-            except Exception:
-                pass
+            self._kill(self.proc)
             self.proc = None
         if self.thread:
             self.thread.join(timeout=1)
@@ -310,12 +353,12 @@ class Music:
 
     def close(self):
         self.stop()
-        if self.tmp:
+        for tmp in self.tmps.values():
             try:
-                os.remove(self.tmp)
+                os.remove(tmp)
             except OSError:
                 pass
-            self.tmp = None
+        self.tmps = {}
 
 
 # ------------------------------------------------------------------ save data
@@ -1306,9 +1349,15 @@ class App:
 
     def update(self, dt):
         self.anim += dt
-        if self.music:                     # menu music: only on the menu screens, never during a run
-            if self.state in MENU_STATES and self.meta.get("music", True):
-                self.music.play()
+        if self.music:                     # menu theme on menu screens, level N's theme during level N
+            track = None
+            if self.meta.get("music", True):
+                if self.state in MENU_STATES:
+                    track = MENU_TRACK
+                elif self.state == "run" and self.run:
+                    track = LEVEL_TRACKS[(self.run.level - 1) % len(LEVEL_TRACKS)]
+            if track:
+                self.music.play(track)
             else:
                 self.music.stop()
         if self.state == "run":
@@ -1788,7 +1837,7 @@ def main(scr, music=None):
 
 if __name__ == "__main__":
     os.environ.setdefault("ESCDELAY", "25")   # make ESC react instantly
-    music = None if "--mute" in sys.argv else Music(MUSIC_FILE)
+    music = None if "--mute" in sys.argv else Music(MUSIC_DIR)
     try:
         curses.wrapper(main, music)
     except KeyboardInterrupt:

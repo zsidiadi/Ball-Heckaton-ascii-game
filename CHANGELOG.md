@@ -8,9 +8,36 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-13
+
+`keep.py` 1798 → 1847 lines
+
+### Added
+- **Level music.** Five new tracks, one per level: Level 1 plays `level1_loop.wav`, Level 2 plays
+  `level2_loop.wav`, and so on up to Level 5. From level 6 the tracks repeat (6 → 1, 7 → 2, …), like the bosses.
+  The track switches when the next level starts. Back in the menu, the menu theme returns.
+- **Seamless loops for all five.** Each source track (`assets/source/Level_N.ogg`) is exactly 16 bars at
+  132 BPM, but none was cut to loop. Levels 1 and 3 faded out at the end (a dropout), and levels 3, 4 and 5
+  ended far from their first sample (a click at every repeat; level 4's jump was 0.47 of full scale).
+  Each one got the same treatment as the menu theme: the end is rebuilt from its own lead-in to a bar that
+  sounds like bar 1 (donor bar 5 for levels 1-4, bar 11 for level 5), and the start is blended in.
+
+### Changed
+- `tools/make_menu_loop.py` became **`tools/make_loops.py`**, which rebuilds all six loops from a `TRACKS` table.
+- Crossfades are now **loudness-preserving** (the gain is normalised by the two signals' correlation).
+  The old equal-power blend made the downbeat up to ~30% louder when the two pieces were similar, as they
+  are in the level tracks. The menu loop was regenerated with the new blend. Every loop point now stays
+  within 2.4 dB of the track's natural bar transition (the unfixed files were off by up to 12 dB).
+- `Music` plays any track by name and switches between them (`Music(folder).play("level3_loop.wav")`).
+  Each playback has its own stop signal and kills its own player when it ends, so rapid switching never
+  leaves a player running (tested: 60 switches, 0 leftovers).
+- `M` / `--mute` now silence all music, not just the menu.
+- Constants: `MUSIC_FILE` was replaced by `MUSIC_DIR`, `MENU_TRACK` and `LEVEL_TRACKS`.
+
 ## [0.8.0] - 2026-10-13
 
-`keep.py` 1617 → 1798 lines
+Commit [`aef90c3`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/aef90c37e87d31126ac0e7c2022620e49d43097a)
+· `keep.py` 1617 → 1798 lines
 
 ### Added
 - **Menu music.** The medieval theme plays on the main menu, Upgrades and Premium screens only. It keeps
@@ -275,7 +302,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.5.0...v0.6.0
