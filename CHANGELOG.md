@@ -8,9 +8,17 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+### Changed
+- **README refreshed** to match the game as of 0.11.0: new main-menu and in-run screenshots (a boss fight with
+  every kind of tower, building and trap), a blessings table with every effect, a merged "Music and sound"
+  section (music, death sounds, voice lines, and how each OS plays them), Premium store quick keys, sound cues
+  in "How the code works", an audio workflow in Contributing, an updated roadmap (sound effects are done),
+  and the commit hash for 0.11.0 in the history table.
+
 ## [0.11.0] - 2026-10-13
 
-`keep.py` 1920 → 1980 lines
+Commit [`f23ef8f`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f23ef8fa6db0a3874ae37584763f288609d84f69)
+· `keep.py` 1920 → 1980 lines
 
 ### Added
 - **Level complete voice lines.** When the LEVEL N COMPLETE screen appears (levels 1-5), that level's

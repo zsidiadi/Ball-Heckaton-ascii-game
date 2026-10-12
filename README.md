@@ -1,44 +1,78 @@
 # cool tower defense game.exe
 
-> A roguelike tower defense game that runs in your terminal. It was made for the **B.A.L.L.S hackathon**.
+> A roguelike tower defense game that runs in your terminal, with music, voice lines and no dependencies.
+> Made for the **B.A.L.L.S hackathon** by Ádám Zsidákovits and Cristian-Mihai Radu.
 
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
 ![Version](https://img.shields.io/badge/version-0.11.0-orange)
 
-Enemies march down randomly generated paths toward your castle. Build structures, mount weapons on
-them, and survive as many levels as you can. Every level ends with a **big boss** and the next one
-opens **one more path** to your castle.
-When the castle falls you keep your **gems** and spend them on permanent upgrades for the next run.
+Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
+on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
+**5 big bosses**, and every new level opens **one more path** to your castle. When the castle falls you
+keep your **gems** and spend them on permanent upgrades for the next run.
+
+**Main menu**
 
 ```
- cool tower defense game.exe   level 1   wave 1/5   kills 0   gem bank 0
-+------------------------------------------------------------------------+ LEVEL 1  wave 1/5
-|    .      '   .    .      '   .    .      '   .    .      '   .    .   | WAVE ACTIVE - 7 left
-|     '   .    .      '   .    .      '   .    .      '   .    .      '  | CASTLE ######## 20/20
-|   .    .      '   .    .      . . .    .      '   .    .      '   .    | GOLD 87     GEMS 0
-|  .      '   .    .      '   . . . . .   '   .    .      '   .    .     | boss: GOBLIN KING
-|   '   .    .      '  :::::::::::::: . .    .      '   .    .      '   .| Lightning lv 1 4x 75%
-| .    .      '   .    ::   . . .Z1:: . .     '   .    .      '   .    . | dmg 4.0 rng 3.5 1.0/s
-|.      '   .    .     ::A1G1 .G1 .~~ . .   .    .      '   .    .   /^^\|   weapon  $  dmg rng  /s
-| '   .    .      '   .::  .  . . .~~ .    .      '   .    .      '::|[]|| B struct 10
-|    .      '   .    . ::::::   . .::.      '   .    .      '   .  ::|__|| 1 Bow    25  3.0 3.5 1.4
-|     '   .    .      '   .::  .   :: '   .    .      '   .    .   :: '  | 2 Gun    40  1.0 3.0 5.6
-|   .    .      '   .    . ::   '  ::    .      '   .    .      '  ::    | 3 Cannon 60  7.0 4.0 0.6
-|  .      '   .    .      ':: .    ::     '   .    .      '   .    ::    | 4 Frost  45  0.6 3.0 2.0
-|   '   .    .      '   .  ::.     ::   .    .      '   .    .     ::   .| 5 Flamer 50  0.9 2.0 4.0
-| .    .      '   .    .   :: '   .::  .      '   .    .      '   .::  . | 6 Poison 50  0.5 3.5 1.1
-|.      '   .    .      '  ::    . ::   '   .    .      '   .    . ::   '| 7 Sniper 70 22.0 7.0 0.4
-| '   .    .      '   .    ::     ':: .    .      '   .    .      ':: .  | 8 Lightn 65  4.0 3.5 1.0
-|    .      '   .    .     ::   .  ::.      '   .    .      '   .  ::.   | G GoldMn 60 +12/wave
-|    $1   .    .      '   .::  .   ::::**:::::::::::::::::::::::::::: '  | M Mine   25 dmg 24
-|o:::o:o:::o:o:::o:o:::::::::   '   .    .      '   .    .      '   .    | T Tar    30 slow 50%
-|  .      '   .    .      '   .    .      '   .    .      '   .    .     | U up 48g   X sell +37g
-|   '   .    .      '   .    .      '   .    .      '   .    .      '   .|
-| .    .      '   .    .      '   .    .      '   .    .      '   .    . | N wave F speed P pause
-+------------------------------------------------------------------------+ K cash out    Q quit
- Level 1, wave 1/5 incoming! (7 enemies)
+  cool tower defense game.exe                                      [_] [#] [X]
+|                                                                             |
+|                                _   _                                        |
+|                    __ ___  ___| | | |_ _____ __ _____ _ _                   |
+|                   / _/ _ \/ _ \ | |  _/ _ \ V  V / -_) '_|                  |
+|                   \__\___/\___/_|  \__\___/\_/\_/\___|_|                    |
+|                                                                             |
+|         _      __                                                           |
+|      __| |___ / _|___ _ _  ___ ___   __ _ __ _ _ __  ___   _____ _____      |
+|     / _` / -_)  _/ -_) ' \(_-</ -_) / _` / _` | '  \/ -_)_/ -_) \ / -_)     |
+|     \__,_\___|_| \___|_||_/__/\___| \__, \__,_|_|_|_\___(_)___/_\_\___|     |
+|                                     |___/                                   |
+|                                                                             |
+|                 GEMS 42    best: level 3, wave 14    runs 7                 |
+|                                                                             |
+|                          >  [    START GAME    ]  <                         |
+|                             [     UPGRADES     ]                            |
+|                             [     PREMIUM      ]                            |
+|                             [       QUIT       ]                            |
+|                                                                             |
+|       arrows + ENTER or click   U upgrades  P premium  M sound  Q quit      |
+|                                                                             |
+|                                                                             |
++- [M] sound: ON --------------------------------------------------- v0.11.0 -+
+```
+
+**In a run:** level 1's boss, the Goblin King, summoning goblins. Towers `A` `G` `C` `S` `P` `F` `L` `Z`, a
+gold mine `$1`, a mine `**` and tar `~~` are on the map, and the side panel shows the boss bar and every
+weapon's stats.
+
+```
+ cool tower defense game.exe   level 1   wave 5/5   kills 15   gem bank 0
++------------------------------------------------------------------------+ LEVEL 1  wave 5/5
+|    .      '   .    .      '   .    .      '   .    .      '   .    .   | WAVE ACTIVE - 4 left
+|     '   .    .      '   .    .      '   .    .      '   .    .      '  | CASTLE #######- 73/80
+|   .    .      '   .    .      '   .    .      '   .    .      '   .    | GOLD 193    GEMS 0
+|  .      '   .    .      '   .    .      '   .    .      '   .    .     | GOBLIN KING
+|   '   .    .      '   .    .      '   .    .      '   .    .      '   .| BOSS   ###----- 122
+| .    .      '   .    .      '   .    .      '   .    .      '   .    . | Lightning lv 1 4x 75%
+|.      '   .    .      '   .    .      '   .    .      '   .    .   /^^\| dmg 4.0 rng 3.5 1.0/s
+| '   .    .      '   .    .     ::::::::::::::::::::::::::::::::::::|[]||   weapon  $  dmg rng  /s
+|    .      '   .    .      '   .::  .      '   .    .      '   .    |__|| B struct 10
+|     '   .    .      '   .    . **   '   .    .      '   .    .      '  | 1 Bow    25  3.0 3.5 1.4
+|   .    .      '   .    .      ':: .    .      '   .    .      '   .    | 2 Gun    40  1.0 3.0 5.6
+|  .      '   .    .      '   .  ::.      '   .    .      '   .    .     | 3 Cannon 60  7.0 4.0 0.6
+|   '   .    .      '   .    .   :: '   .    .      '   .    .      '   .| 4 Frost  45  0.6 3.0 2.0
+| .    .      '   .    .      '  ::    .      '   .    .      '   .    . | 5 Flamer 50  0.9 2.0 4.0
+|.      '   .    .      '   .    ::     '   .    .      '   .    .      '| 6 Poison 50  0.5 3.5 1.1
+| '   .    .      '   .    .     ::   .    .      '   .    .      '   .  | 7 Sniper 70 22.0 7.0 0.4
+|$1  A1     'G1 .    .      '   .::::::::::::::::::::::::~~:::: .    .   | 8 Lightn 65  4.0 3.5 1.0
+|>>::::::::::::::     '   .    .      '   .    .      '   .  ::.      '  | G GoldMn 60 +12/wave
+|   .    .    .:: . .    .      '   .    .      '   .    .   :: '   .    | M Mine   25 dmg 59
+|  .      ' . .:: . .  C1 '   .S1  .   P\^^/  .F1  .   L1 '  ::    .     | T Tar    30 slow 50%
+|   '   . . . .:::::::::::::::::::::::::(oo):::o:::o ::::::::::     '   .| U up 48g   X sell +37g
+| .    .  . . .Z1 . . ..      '   .    .      '   .    .      '   .    . |
++------------------------------------------------------------------------+ N wave F speed P pause
+ GOBLIN KING summons goblins!
 ```
 
 ## Table of contents
@@ -48,6 +82,7 @@ When the castle falls you keep your **gems** and spend them on permanent upgrade
 - [How to play](#how-to-play)
 - [Controls](#controls)
 - [Game reference](#game-reference)
+- [Music and sound](#music-and-sound)
 - [Tuning the game](#tuning-the-game)
 - [Project structure](#project-structure)
 - [How the code works](#how-the-code-works)
@@ -61,40 +96,40 @@ When the castle falls you keep your **gems** and spend them on permanent upgrade
 
 - **Roguelike runs.** Every run has a new random map, and after every wave you choose 1 of 3 random blessings.
 - **Levels that grow.** A level is 5 waves, and each new level adds another enemy path to your castle.
-- **5 big bosses.** One of them ends every level: Goblin King, Iron Golem, Swamp Hydra, Shadow Wraith
-  and Bone Dragon, each with its own ability. After the 5th they come back stronger (II, III, …).
-- **8 weapons.** First build a structure, then mount a weapon on it: Bow, Gun, Cannon, Frost, Flamer,
-  Poison, Sniper or Lightning. Weapons upgrade up to level 5, and their stats are shown live in the side panel.
-- **Economy and traps.** Gold Mines earn gold after every wave. Mines explode on the path, and Tar slows
-  enemies down.
+- **5 big bosses.** One ends every level: Goblin King, Iron Golem, Swamp Hydra, Shadow Wraith and Bone Dragon,
+  each with its own ability. After the 5th they come back stronger (*II*, *III*, …).
+- **8 weapons.** Build a structure, then mount a Bow, Gun, Cannon, Frost, Flamer, Poison, Sniper or Lightning
+  tower on it. Upgrade it up to level 5. The side panel shows every weapon's live stats.
+- **Economy and traps.** Gold Mines earn gold after every wave. Mines explode on the path, and Tar slows enemies.
 - **Meta progression.** Gems survive death and buy permanent upgrades and weapon unlocks.
 - **Cash out on purpose.** Blow up your own castle to keep your gems and turn leftover gold into bonus gems.
-- **Full-screen layout.** The map takes every column of your terminal except a slim 24-column panel
-  on the right, which holds all the info, build options and weapon stats. You can use the mouse or the keyboard.
+- **Music and voice.** A menu theme and a theme for each of the 5 levels, all looping seamlessly. Grunts,
+  runners and brutes each have a voiced death sound, every level from 1 to 5 has a "level complete" voice
+  line, and a special thanks from the creator plays when you reach level 6.
+- **Full-screen layout.** The map takes every column of your terminal except a slim 24-column side panel.
+  You can play with the keyboard or the mouse.
 - **Retro menu.** A window-style main menu with START GAME, UPGRADES, PREMIUM and QUIT buttons.
-- **Premium store (preview).** A real-money shop for the Nuke, gem packs and more. It's a preview:
-  payments aren't connected yet, so nothing can actually be bought.
-- **Music and sound.** A menu theme and a different theme for each of the 5 levels, all looping seamlessly,
-  plus voiced death sounds for grunts, runners and brutes, a "level complete" voice line for levels 1-5, and a
-  special thanks from the creator when you reach level 6.
-- **Zero dependencies.** It's a single Python file that uses only the standard library.
+- **Premium store (preview).** A real-money shop for a Nuke, gem packs and more. Payments aren't connected yet,
+  so nothing can actually be bought.
+- **Zero dependencies.** One Python file using only the standard library. The music and sound play with
+  what your OS already has.
 
 ## Getting started
 
 ### Requirements
 
 - Python **3.8+**
-- A terminal of at least **70×22** characters. Bigger is better, because the map fills the window
-  next to the side panel (80 columns gives a 26-tile-wide map, 200 columns gives 86).
+- A terminal of at least **70×22** characters. Bigger is better: the map fills the window next to the side
+  panel (80 columns gives a 26-tile-wide map, 200 columns gives 86).
 - Windows only: `pip install windows-curses`
-- Music and sound play with what your OS already has (see [Music](#music)). Use `python3 keep.py --mute` to turn them off.
+- Sound: nothing to install on Windows, macOS or most Linux systems (see [How the sound plays](#how-the-sound-plays)).
 
 ### Install and run
 
 ```bash
 git clone https://github.com/zsidiadi/Ball-Heckaton-ascii-game.git
 cd Ball-Heckaton-ascii-game
-python3 keep.py
+python3 keep.py            # or: python3 keep.py --mute   (no music or sound effects)
 ```
 
 > **Tip:** maximise or full-screen the terminal **before** starting a run. The map size is fixed
@@ -109,9 +144,8 @@ python3 keep.py
    press **M** for a Mine or **T** for Tar. None of these need a structure.
 4. **Fight.** Press **N** to send the next wave. Kills give gold.
 5. **Choose a blessing.** After each wave, pick 1 of 3 random bonuses.
-6. **Beat the boss.** Wave 5 of every level ends with a big boss. Its name and HP bar appear in
-   the side panel.
-7. **Level up.** Clear all 5 waves of a level and you get a reward. The next level opens a new path,
+6. **Beat the boss.** Wave 5 of every level ends with a big boss. Its name and HP bar appear in the side panel.
+7. **Level up.** Clear all 5 waves and you get a reward plus a voice line. The next level opens a new path,
    which blinks red. If the new path runs over a tower, you get that tower's full cost back.
 8. **Lose well.** When the castle falls you keep the run's gems. Press **K** at any time to blow up the
    castle yourself; every 25 leftover gold becomes 1 extra gem. Quitting with **Q** forfeits the run's gems.
@@ -123,18 +157,19 @@ python3 keep.py
 
 | Key | Action |
 | --- | --- |
-| Up / Down (or `w` / `s`) | Move between buttons / upgrades |
-| `Enter` / `Space` | Press the selected button / buy the selected upgrade |
-| `U` | Open the Upgrades screen from the main menu |
-| `P` | Open the Premium store from the main menu |
-| `M` | All sound (music + effects) on / off (saved). You can also click `[M] sound` in the bottom-left corner |
-| `Y` / `N` | Confirm / cancel a purchase in the Premium store |
-| `1`–`9`, `0` | Quick-buy one of the first ten upgrades (Upgrades screen) |
+| Up / Down (or `w` / `s`) | Move between buttons / items |
+| `Enter` / `Space` | Press the selected button / buy the selected item |
+| `U` | Open the Upgrades screen |
+| `P` | Open the Premium store |
+| `M` | All sound (music, effects, voice) on / off, saved. You can also click `[M] sound` in the bottom-left corner |
+| `1`–`9`, `0` | Upgrades screen: quick-buy one of the first ten upgrades |
+| `1`–`6` | Premium store: pick an item to buy (opens the confirm dialog) |
+| `Y` / `N` | Premium store: confirm / cancel a purchase |
 | `Esc` / `Backspace` / `B` | Back to the main menu |
 | `Q` | Quit (main menu) |
-| Mouse click | Click any button, upgrade row or `[ BUY ]`. `[X]` in the title bar closes the screen |
+| Mouse click | Any button, upgrade row or `[ BUY ]`. `[X]` in the title bar closes the screen |
 
-### In game
+### In a run
 
 | Key | Action |
 | --- | --- |
@@ -147,7 +182,7 @@ python3 keep.py
 | `M` | Place a Mine (enemy path) |
 | `T` | Place Tar (enemy path) |
 | `U` | Upgrade weapon or Gold Mine |
-| `X` | Sell (50% refund), also removes Mines and Tar |
+| `X` | Sell (50% refund); also removes Mines and Tar |
 | `N` | Start next wave |
 | `F` | Game speed x1 / x2 / x3 |
 | `P` | Pause |
@@ -170,8 +205,11 @@ python3 keep.py
 | 7 | Sniper | `S` | 70g | 22.0 | 7.0 | 0.4 | huge range, shoots the enemy with the **most HP** | 12 gems |
 | 8 | Lightning | `Z` | 65g | 4.0 | 3.5 | 1.0 | chains to 4 enemies; each jump deals **75%** of the previous hit (100% → 75% → 56% → 42%), +1 jump every 2 levels | 15 gems |
 
-Locked weapons are unlocked permanently with gems on the Upgrades screen, or for one run with the
-**Armory** blessing.
+- Each upgrade level gives +40% damage, +0.3 range and fires 8% faster, up to level 5. An upgrade costs
+  75% of the weapon's base price × its current level. The number on a tower (`A2`, `G3`, …) is its level.
+- Locked weapons are unlocked permanently with gems on the Upgrades screen, or for one run with the
+  **Armory** blessing.
+- Hovering a tower shows its range on the map and its current stats in the side panel.
 
 ### Buildings and traps
 
@@ -184,10 +222,6 @@ Placed directly with one key (no structure needed). All of them are gem unlocks.
 | T | Tar | `~~` | on the enemy path | 30g | enemies on it move at half speed. Deals no damage and lasts forever (the Shadow Wraith ignores it) | 5 gems |
 
 Only one Mine or Tar fits on each path tile. `X` removes it for half its price.
-
-Each upgrade level gives +40% damage, +0.3 range and fires 8% faster, up to level 5.
-An upgrade costs 75% of the weapon's base price × its current level.
-The number on a tower (`A2`, `G3`, …) is its level.
 
 ### Enemies
 
@@ -204,7 +238,7 @@ and a poisoned one turns magenta.
 ### Bosses
 
 One big boss closes every level: it's the last enemy of wave 5, 10, 15, … Bosses are drawn 2 rows tall,
-and their HP bar appears in the side panel.
+are announced when they appear, and get a name and HP bar in the side panel.
 
 | Level | Boss | Sprite | Base HP | Speed | Castle damage | Reward | Ability |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -215,7 +249,7 @@ and their HP bar appears in the side panel.
 | 5 | Bone Dragon | `/\/\` `<DD>` | 220 | 0.55 | 20 | 100g, 8 gems | enrages below 50% HP: double speed |
 | 6+ | the same five again | | | | | | named *II*, *III*, … with HP for that wave |
 
-### Levels
+### Levels and rewards
 
 | Level | Waves | Open paths | New path starts at |
 | --- | --- | --- | --- |
@@ -231,10 +265,19 @@ and their HP bar appears in the side panel.
 
 ### Blessings (pick 1 of 3 after each wave)
 
-Gold Rush, Mason, Fletcher, Gunsmith, Black Powder, Deep Freeze, Pyromaniac, Toxicology, Deadeye,
-Overcharge (Lightning +2 jumps), Armory (unlocks a random locked weapon or building for this run),
-Eagle Eye, Heavy Mud (new enemies 10% slower), Bounty,
-Cheap Bricks, Gem Shard, Whetstone. Blessings for weapons you haven't unlocked never show up.
+| Blessing | Effect | | Blessing | Effect |
+| --- | --- | --- | --- | --- |
+| Gold Rush | +40 gold right now | | Overcharge | Lightning +2 jumps |
+| Mason | repair castle +15, max HP +5 | | Armory | unlock a random locked weapon or building for this run |
+| Fletcher | Bows +30% damage | | Eagle Eye | all weapons +0.5 range |
+| Gunsmith | Guns fire 25% faster | | Heavy Mud | new enemies move 10% slower |
+| Black Powder | Cannons +30% damage, bigger blast | | Bounty | +1 gold per kill |
+| Deep Freeze | Frost +50% damage, slows longer | | Cheap Bricks | structures cost half |
+| Pyromaniac | Flamers +40% damage | | Gem Shard | +2 gems right now |
+| Toxicology | Poison +50% damage | | Whetstone | all weapons +10% damage |
+| Deadeye | Snipers +35% damage | | | |
+
+Blessings for weapons you haven't unlocked never show up.
 
 ### Upgrades (permanent, bought with gems)
 
@@ -256,7 +299,8 @@ All upgrades live behind the **UPGRADES** button in the main menu.
 | Unlock Sniper | Sniper can be built | 1 | 12 |
 | Unlock Lightning | Lightning can be built | 1 | 15 |
 
-Progress is saved in `keep_save.json` next to `keep.py`. Delete that file to reset.
+Progress (gems, upgrades, best level and wave, sound setting) is saved in `keep_save.json` next to `keep.py`.
+Delete that file to reset.
 
 ### Premium store (preview: payments not connected)
 
@@ -277,78 +321,65 @@ Prices are shown as `EUR` instead of `€` because the euro sign doesn't display
 To sell these for real, the game needs a payment provider (for example Stripe). Then set
 `PAYMENTS_ENABLED = True` and grant the item in `App.purchase()` after a successful payment.
 
+## Music and sound
+
+`M` in the main menu (or `--mute` on the command line) turns all of it on or off.
+
 ### Music
 
-Every screen has its own seamless loop, and all of them are in `assets/`:
+Every screen has its own seamless loop:
 
-| When | Track | Loop file |
+| When | Track | File |
 | --- | --- | --- |
-| Main menu, Upgrades, Premium | menu theme | `menu_loop.wav` |
-| Level 1 | Level 1 | `level1_loop.wav` |
-| Level 2 | Level 2 | `level2_loop.wav` |
-| Level 3 | Level 3 | `level3_loop.wav` |
-| Level 4 | Level 4 | `level4_loop.wav` |
-| Level 5 | Level 5 | `level5_loop.wav` |
+| Main menu, Upgrades, Premium | menu theme | `assets/menu_loop.wav` |
+| Level 1 … 5 | that level's theme | `assets/level1_loop.wav` … `level5_loop.wav` |
 | Level 6, 7, … | Level 1, 2, … again (like the bosses) | |
+| LEVEL COMPLETE screen (levels 1-5) | silence, so the voice line is heard | |
 
 The menu theme keeps playing while you move between menu screens. When a run starts, the level's track
-takes over, and it switches when you start the next level. Back in the menu, the menu theme returns.
-`M` in the main menu mutes all music, and the setting is saved.
+takes over and switches when you start the next level. Back in the menu, the menu theme returns.
 
-**Seamless loops.** Every original track (`assets/source/`) is exactly 16 bars at 132 BPM, so its length
-is a perfect loop, but the ends weren't made to loop. Some faded to near-silence in the last ~45 ms
-(a dropout at every repeat), and others end far from where they start (a click). `tools/make_loops.py` fixes
-each one the same way: the last 75 ms are replaced by the track's own lead-in to a bar that sounds like
-bar 1 (the "donor" bar: 11 for the menu and Level 5, 5 for Levels 1-4), and the first 25 ms are blended so
-the last sample runs straight into the first. Blends are loudness-preserving, so a downbeat doesn't get
-louder at the loop point. The length is unchanged, so the beat stays on time. Measured at every loop point,
-the volume stays within 2.4 dB of the track's own natural bar transitions (the unfixed files were off by
-up to 12 dB). The script needs `numpy` and `ffmpeg`; the game doesn't.
+**Seamless loops.** Every original track (`assets/source/`) is exactly 16 bars at 132 BPM, so its length is a
+perfect loop, but the ends weren't made to loop. Some faded to near-silence in the last ~45 ms (a dropout at
+every repeat), and others ended far from where they start (a click). `tools/make_loops.py` fixes each one:
+the last 75 ms are replaced by the track's own lead-in to a bar that sounds like bar 1 (bar 11 for the menu
+and Level 5, bar 5 for Levels 1-4), and the first 25 ms are blended so the last sample runs straight into the
+first. Blends are loudness-preserving, and the length is unchanged, so the beat stays on time. At every loop
+point the volume stays within 2.4 dB of the track's own bar transitions (the unfixed files were off by up to 12 dB).
 
-### Sound effects
-
-When a **grunt**, **runner** or **brute** dies, its own death sound plays once, on top of the music.
-Bosses and enemies that reach your castle make no death sound. If several enemies of the same kind die
-in the same instant (a cannon blast, a mine), you hear one shout instead of a pile of identical copies.
-At most 4 effects play at the same time.
-
-| Enemy | Sound file | Cut from |
-| --- | --- | --- |
-| Grunt `o` | `assets/sfx/grunt_death.wav` | take 2 of `assets/source/Grunt.m4a` |
-| Runner `r` | `assets/sfx/runner_death.wav` | take 2 of `assets/source/Runner.m4a` |
-| Brute `B` | `assets/sfx/brute_death.wav` | take 3 of `assets/source/Brute.m4a` |
-
-Each recording has three takes. `tools/make_sfx.py` finds them, keeps the one in its `SOUNDS` table (the
-strongest, complete take), trims it tightly, removes rumble, adds tiny fades so it can't click, and levels
-all three to the same loudness. To use a different take, change the number in `SOUNDS` and run the script again.
-
-### Voice lines
+### Sound effects and voice lines
 
 | When | Sound | File |
 | --- | --- | --- |
-| the **LEVEL 1 COMPLETE** screen appears | "Level 1 complete" recording | `assets/voice/level1_complete.wav` |
-| … LEVEL 2 … 5 COMPLETE | the matching recording | `assets/voice/level2_complete.wav` … `level5_complete.wav` |
-| a player **starts level 6** (the first level past the five) | special thanks from the creator | `assets/special/special_thanks_from_the_creator.wav` |
+| a grunt `o` dies | grunt death shout | `assets/sfx/grunt_death.wav` |
+| a runner `r` dies | runner death shout | `assets/sfx/runner_death.wav` |
+| a brute `B` dies | brute death shout | `assets/sfx/brute_death.wav` |
+| the LEVEL 1 … 5 COMPLETE screen appears | "Level N complete" | `assets/voice/level1_complete.wav` … `level5_complete.wav` |
+| a player starts **level 6** (once per run) | special thanks from the creator | `assets/special/special_thanks_from_the_creator.wav` |
 
-- On the Level Complete screen of levels 1-5, the level music pauses so the voice line plays on its own.
-  The next level's music starts when you press Enter. Levels 6+ have no voice line, so their music keeps going.
+- Death sounds play once per death, on top of the music. Several enemies of the same kind dying in the same
+  instant (a cannon blast, a mine) give one shout instead of a pile of copies, and at most 4 effects play at once.
+  Bosses and enemies that reach the castle make no death sound.
+- On a Level Complete screen the music pauses so the voice line plays on its own. Levels 6+ have no voice
+  line, so their music keeps going.
 - When level 6 starts, the special thanks plays first and level 6's music begins as soon as it ends.
-  It plays once per run (not again at level 7, 8, …).
-- The special thanks is kept as its own asset (`assets/special/`, constant `SPECIAL_THANKS`), separate
-  from the level sounds.
+  It is its own asset (`assets/special/`, constant `SPECIAL_THANKS`).
 - Quitting to the menu stops any voice line that is still speaking.
-- `tools/make_sfx.py` makes these too: it keeps each whole recording from the first to the last spoken word
-  (skipping breaths and clicks before and after), de-clicks it, and levels it a little louder than the death
-  sounds.
+- `tools/make_sfx.py` makes all of these from the recordings in `assets/source/`. Each death recording has three
+  takes: Grunt and Runner use take 2 and Brute uses take 3, and you can change this in its `SOUNDS` table. Voice
+  lines keep the whole recording from the first to the last spoken word. Every sound is trimmed, de-clicked and
+  loudness-matched.
 
-**How it plays** (`Music` class, first one available wins):
+### How the sound plays
 
-| Player | Where | Loop |
-| --- | --- | --- |
-| `pygame` (if installed) | any OS | seamless |
-| `winsound` | Windows, built in | seamless |
-| `paplay` / `aplay` / `sox` | Linux (usually preinstalled); `sox` also on macOS via Homebrew | seamless (audio is streamed without pauses) |
-| `afplay` | macOS, built in | a tiny restart gap once every ~5 minutes |
+The `Music` class uses the first player it finds:
+
+| Player | Where | Music | Effects and voice |
+| --- | --- | --- | --- |
+| `pygame` (if installed) | any OS | seamless | mixed on spare channels |
+| `winsound` + MCI | Windows, built in | seamless | through Windows MCI, mixed with the music |
+| `paplay` / `aplay` / `sox` | Linux (usually preinstalled); `sox` also on macOS via Homebrew | seamless (streamed without pauses) | a short player per sound |
+| `afplay` | macOS, built in | a tiny restart gap once every ~5 minutes | a short player per sound |
 
 If none of these exist, the game just stays silent. For a perfect loop on macOS, run
 `pip install pygame` or `brew install sox`.
@@ -360,8 +391,8 @@ All balance numbers live at the top of `keep.py`:
 | Constant | What it controls |
 | --- | --- |
 | `WEAPONS` | cost, damage, range, cooldown, specials and gem unlock price of each weapon |
-| `ENEMIES` | HP, speed, castle damage and gold of each normal enemy |
 | `BUILDINGS` | Gold Mine income, Mine damage/radius, costs and unlock prices of the placeables |
+| `ENEMIES` | HP, speed, castle damage and gold of each normal enemy |
 | `BOSSES` | name, sprite, HP, speed, damage, rewards and ability of the 5 bosses |
 | `HP_GROWTH` | how fast enemies get tougher each wave (default `1.25`) |
 | `WAVES_PER_LEVEL` | waves per level (default `5`) |
@@ -369,11 +400,11 @@ All balance numbers live at the top of `keep.py`:
 | `META_UPGRADES` | items and prices on the Upgrades screen |
 | `PERKS` | the blessing pool |
 | `EDGES` | the order in which new paths enter the map |
-| `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
 | `PREMIUM`, `PAYMENTS_ENABLED` | premium store items and euro prices; payments switch (off) |
-| `MUSIC_DIR`, `MENU_TRACK`, `LEVEL_TRACKS`, `MENU_STATES` | where the music lives, which track plays on the menu screens and in each level |
-| `DEATH_SOUNDS`, `SFX_MAX_AT_ONCE`, `SFX_MIN_GAP` | which sound each enemy makes when it dies, and how many effects may overlap |
-| `LEVEL_COMPLETE_SOUNDS`, `SPECIAL_THANKS`, `SPECIAL_THANKS_LEVEL` | voice line for each level's Level Complete screen; the creator's thanks and the level that triggers it |
+| `MUSIC_DIR`, `MENU_TRACK`, `LEVEL_TRACKS`, `MENU_STATES` | where the audio lives, which track plays on the menu screens and in each level |
+| `DEATH_SOUNDS`, `SFX_MAX_AT_ONCE`, `SFX_MIN_GAP` | each enemy's death sound, and how many effects may overlap |
+| `LEVEL_COMPLETE_SOUNDS`, `SPECIAL_THANKS`, `SPECIAL_THANKS_LEVEL` | the Level Complete voice lines; the creator's thanks and the level that triggers it |
+| `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
 | `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and width of the side panel (24) |
 | `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 150×70) |
 
@@ -381,21 +412,21 @@ All balance numbers live at the top of `keep.py`:
 
 ```
 .
-├── keep.py          # the whole game: a single file, standard library only
+├── keep.py                        # the whole game: a single file, standard library only
 ├── assets/
-│   ├── menu_loop.wav              # seamless loops made by the tool below
+│   ├── menu_loop.wav              # seamless music loops (made by tools/make_loops.py)
 │   ├── level1_loop.wav … level5_loop.wav
 │   ├── sfx/                       # grunt_death.wav, runner_death.wav, brute_death.wav
 │   ├── voice/                     # level1_complete.wav … level5_complete.wav
 │   ├── special/                   # special_thanks_from_the_creator.wav
 │   └── source/                    # originals: music .ogg files and all .m4a voice recordings
 ├── tools/
-│   ├── make_loops.py              # rebuilds all music loops from the originals (numpy + ffmpeg)
+│   ├── make_loops.py              # rebuilds the music loops from the originals (numpy + ffmpeg)
 │   └── make_sfx.py                # makes the death sounds and voice lines from the recordings (numpy + ffmpeg)
-├── README.md        # this file
-├── CHANGELOG.md     # version history: what changed and when
-├── .gitignore       # ignores __pycache__ and the save file
-└── keep_save.json   # created on first run (git-ignored)
+├── README.md                      # this file
+├── CHANGELOG.md                   # version history: what changed and when
+├── .gitignore                     # ignores __pycache__ and the save file
+└── keep_save.json                 # created on first run (git-ignored)
 ```
 
 ## How the code works
@@ -404,13 +435,13 @@ All balance numbers live at the top of `keep.py`:
 
 | Section | Responsibility |
 | --- | --- |
-| Constants | balance data (`WEAPONS`, `ENEMIES`, `BOSSES`, `META_UPGRADES`, `PERKS`, …) |
-| `Music` | music and sound effects: picks a player (pygame, winsound + MCI, paplay/aplay/sox, afplay), loops a track, switches tracks, and plays one-shot effects on top (`effect()`). `App.update()` picks the menu or level track and plays death sounds from `Run.events` |
+| Constants | balance and content data (`WEAPONS`, `BUILDINGS`, `ENEMIES`, `BOSSES`, `META_UPGRADES`, `PERKS`, `PREMIUM`, sound tables, …) |
+| `Music` | all audio: picks a player (pygame, winsound + MCI, paplay/aplay/sox, afplay), loops a track (`play`), switches tracks, plays one-shot sounds on top (`effect`), and stops them (`stop_effects`) |
 | `load_meta` / `save_meta` | read and write the JSON save file |
 | `Enemy` | an enemy walking along **its own path** (`pos` = how many cells it has walked). Bosses carry their ability state (armor, timer, enraged) |
-| `Tower` | a structure on a tile, with an optional weapon (`kind`, `level`, `invested`) |
-| `Run` | one playthrough: map, paths, towers, enemies, waves, levels and the run state machine |
-| `App` | main menu, Upgrades screen, Premium store (with confirm dialog), clickable buttons, input routing, mouse, and **all drawing** (map, boss sprites, side panel, overlays) |
+| `Tower` | a structure, weapon or Gold Mine on a tile (`kind`, `level`, `invested`) |
+| `Run` | one playthrough: map, paths, towers, traps, enemies, waves, levels, the run state machine, and sound cues in `Run.events` |
+| `App` | main menu, Upgrades screen, Premium store, clickable buttons, input and mouse, music choice (`sync_music`), sound cues (`play_cues`), and **all drawing** |
 | `main()` | curses setup, colours, then a fixed **30 FPS** loop: input → update → draw |
 
 **Run state machine**
@@ -423,24 +454,27 @@ build ──N──▶ wave ──all enemies gone──▶ perk ──1/2/3─�
               over ◀──Y── confirm ◀──K/Q── (any playing state)
 ```
 
-**Path generation** (`place_castle`, `gen_path`, `score_path`, `add_path`): the castle sits on the
-right edge with several entry tiles around it. Each new path starts on the next map edge (west, then
-north, then south). It is built from random waypoints joined by straight segments, and any loops are cut out.
-The generator makes 250 candidate paths and scores each one. It avoids paths that run over towers,
-overlap other paths, touch themselves or run alongside other paths, and it prefers paths of a good length.
-The best-scoring candidate wins.
+**Path generation** (`place_castle`, `gen_path`, `score_path`, `add_path`): the castle sits on the right edge
+with several entry tiles around it. Each new path starts on the next map edge (west, then north, then south).
+It is built from random waypoints joined by straight segments, and any loops are cut out. The generator makes
+250 candidate paths and scores each one. It avoids paths that run over towers, overlap other paths, touch
+themselves or run alongside other paths, and it prefers paths of a good length. The best-scoring candidate wins.
 
-**Combat** (`update`, `fire`, `hit`, `boss_ability`): every frame, each weapon whose cooldown is ready
-looks at the enemies in range. Most weapons target the enemy with the fewest tiles left to the castle,
-the Sniper targets the one with the most HP, and the Flamer hits all of them. Cannons damage everything
-in their splash radius, Frost slows, Poison applies damage over time, and Lightning chains to nearby
-enemies (each jump multiplies the damage by `falloff`, 0.75). All direct hits go through `hit()`, which
-applies boss armor. Poison damage skips it.
+**Combat** (`update`, `fire`, `hit`, `boss_ability`): every frame, each weapon whose cooldown is ready looks at
+the enemies in range. Most weapons target the enemy with the fewest tiles left to the castle, the Sniper
+targets the one with the most HP, and the Flamer hits all of them. Cannons damage everything in their splash
+radius, Frost slows, Poison applies damage over time, and Lightning chains to nearby enemies (each jump
+multiplies the damage by `falloff`, 0.75). All direct hits go through `hit()`, which applies boss armor.
+Poison damage skips it.
 
 **Buildings and traps** (`place_building`, `explode`, `income`): Gold Mines live in `Run.towers` next to the
-weapons (they can be upgraded and sold) and pay out in `wave_cleared()`. Mines and Tar live in `Run.traps`,
-a map of path tiles. Each frame, enemies standing on Tar get slowed, and any Mine with an enemy on its tile
-calls `explode()`, which damages everything in the blast radius and removes the mine.
+weapons (they can be upgraded and sold) and pay out in `wave_cleared()`. Mines and Tar live in `Run.traps`, a
+map of path tiles. Each frame, enemies standing on Tar get slowed, and any Mine with an enemy on its tile
+calls `explode()`.
+
+**Sound cues** (`Run.events` → `App.play_cues`): the game logic never touches audio. It only records cues,
+`("death", kind)`, `("level_complete", n)` and `("level_start", n)`, and the App turns them into sounds once
+per frame. `App.sync_music()` picks the track for the current screen, or silence.
 
 ## Project history
 
@@ -460,7 +494,7 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.8.0](CHANGELOG.md#080---2026-10-13) | 2026-10-13 | `aef90c3` | Seamless looping menu music (menu screens only), `M` to mute | 1798 lines |
 | [0.9.0](CHANGELOG.md#090---2026-10-13) | 2026-10-13 | `5d878c2` | Level 1-5 music (seamless loops), track switching per level | 1847 lines |
 | [0.10.0](CHANGELOG.md#0100---2026-10-13) | 2026-10-13 | `45fc505` | Death sounds for grunts, runners and brutes | 1920 lines |
-| [0.11.0](CHANGELOG.md#0110---2026-10-13) | 2026-10-13 | tag `v0.11.0` | Level complete voice lines (1-5), special thanks at level 6 | 1980 lines |
+| [0.11.0](CHANGELOG.md#0110---2026-10-13) | 2026-10-13 | `f23ef8f` | Level complete voice lines (1-5), special thanks at level 6 | 1980 lines |
 
 ## Contributing
 
@@ -468,14 +502,16 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
   branch) and merge into `main` once it works.
 - **Changelog:** every change that players or developers would notice gets a line under
   `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md), grouped as *Added*, *Changed*, *Fixed* or *Removed*.
-- **Releases:** when you release, rename `Unreleased` to the new version and date, bump the version
-  badge in this README, and tag the commit:
+- **Releases:** when you release, rename `Unreleased` to the new version and date, bump `VERSION` in
+  `keep.py` and the version badge in this README, and tag the commit:
   ```bash
-  git tag -a v0.3.0 -m "v0.3.0"
-  git push origin v0.3.0
+  git tag -a v0.12.0 -m "v0.12.0"
+  git push origin v0.12.0
   ```
-  Versions follow [SemVer](https://semver.org/): new features bump the minor version (0.**3**.0),
-  and fixes bump the patch version (0.3.**1**).
+  Versions follow [SemVer](https://semver.org/): new features bump the minor version (0.**12**.0),
+  and fixes bump the patch version (0.12.**1**).
+- **Audio:** put new recordings in `assets/source/`, add them to the table in `tools/make_loops.py` (music) or
+  `tools/make_sfx.py` (effects and voice), and run the script. Both need `numpy` and `ffmpeg`.
 - **Commits:** use short imperative summaries, e.g. `Add flying enemies` or `Fix cursor on small terminals`.
 - **Before pushing:** run `python3 -m py_compile keep.py`, then play at least one wave.
 
@@ -484,7 +520,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 These are ideas, not promises:
 
 - [ ] Flying enemies that ignore the path
-- [ ] Sound effects (terminal bell)
+- [ ] Sound effects for weapons and bosses
+- [ ] An in-game mute key (in a run, `M` places mines)
 - [ ] Local high-score table
 - [ ] Automated smoke tests in CI
 - [ ] Connect a payment provider and make the Premium items work
