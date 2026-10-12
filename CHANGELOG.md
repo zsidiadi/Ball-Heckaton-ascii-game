@@ -27,7 +27,7 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ### Changed
 - **Renamed the game from "ASCII KEEP" to "cool tower defense game.exe"** in the game (new big
-  title art, title bar, header) and on GitHub (README title and repository description).
+  title art, title bar, header) and in the README title.
 - **The map now uses the full terminal width.** The side panel was removed, and its information moved to:
   - a header row: level, wave, phase, castle HP bar, gold, gems, paths, speed;
   - a 3-row HUD under the map: build bar with prices, selected-tile info with controls, and messages.
