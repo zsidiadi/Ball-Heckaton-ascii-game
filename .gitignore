@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
 keep_save.json
+.venv/
+.DS_Store

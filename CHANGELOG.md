@@ -4,13 +4,53 @@ All notable changes to **cool tower defense game.exe** (formerly *ASCII KEEP*) a
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-Every version links to its Git tag, so you can see exactly how the code changed between versions.
+Every version links to its exact changes on GitHub (a comparison with the release before it).
 
 ## [Unreleased]
 
-## [0.20.0] - 2026-10-14
+## [1.0.0] - 2026-10-14
 
 `cool tower defense game.exe.py`: 2487 lines
+
+**First stable release.** The game is complete: nothing in the gameplay changed since 0.20.0, and this release
+makes the project itself ready to share. It adds tests and CI, checks the documentation against the code, and
+fixes every broken link.
+
+### Added
+- **Automated tests** in `tests/`: 45 tests, standard library only, no terminal or sound card needed. They
+  cover the game rules (paths, weapons, buildings, blessings, bosses, saving, whole runs played by a bot),
+  every screen at every supported size (menus, the menu castle, buttons by mouse and key, the side panel's
+  24-column limit, the Premium store never charging), the sound files and cue timing, and the documentation.
+  Every number in the README's game reference tables, the version, the lists of blessings, upgrades and
+  premium items, and every link inside the repo must match the code. Run them with
+  `python3 -m unittest discover -s tests -v`.
+- **GitHub Actions** (`.github/workflows/tests.yml`) runs the tests on every push and pull request on Linux
+  (Python 3.8 and 3.13), macOS and Windows. The README shows its status badge.
+- `CONTRIBUTING.md`: setup, tests, branch and changelog workflow, the release checklist, and the sound tools.
+- `tools/requirements.txt`: the `numpy` the sound tools need (the game itself still needs nothing).
+
+### Changed
+- **Version 1.0.0**, the first stable release (SemVer).
+- **README checked line by line against the code.** Every table value matched; these spots were outdated or
+  imprecise and are fixed:
+  - the feature list now mentions the boss death sounds;
+  - a weapon upgrade gives "an 8% shorter reload" (it said "fires 8% faster");
+  - enemy speeds are tiles per second, and every enemy walks up to 60% faster on big maps (not mentioned
+    before);
+  - the Volume screen plays the menu theme too;
+  - the Volume screen dump and both screenshots are retaken from 1.0.0;
+  - the project tree lists `tests/`, the CI workflow, `CONTRIBUTING.md` and `tools/requirements.txt`;
+  - the Contributing section now points to `CONTRIBUTING.md`, and the roadmap is updated.
+- **Version links point at commits.** Release tags were never pushed to GitHub, so every `compare/vX...vY` link
+  in this file was broken. They now compare commits and all work. The README's history notes that dates are
+  the authors' local dates (UTC+3).
+- Python 3.8 support confirmed by running the game and all tests on Python 3.8.20.
+- `.gitignore` also ignores `.venv/` and `.DS_Store`.
+
+## [0.20.0] - 2026-10-14
+
+Commit [`6aacb0a`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/6aacb0a3039a2ec01f0875f5e520b1fda656c4fa)
+· `cool tower defense game.exe.py`: 2487 lines
 
 ### Added
 - **Boss death sounds.** The Goblin King, Iron Golem, Swamp Hydra, Shadow Wraith and Bone Dragon each have
@@ -601,28 +641,29 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.20.0...HEAD
-[0.20.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.19.0...v0.20.0
-[0.19.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.18.0...v0.19.0
-[0.18.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.17.0...v0.18.0
-[0.17.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.16.0...v0.17.0
-[0.16.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.15.1...v0.16.0
-[0.15.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.15.0...v0.15.1
-[0.15.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.1...v0.15.0
-[0.14.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.0...v0.14.1
-[0.14.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.1...v0.14.0
-[0.13.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.0...v0.13.1
-[0.13.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.12.0...v0.13.0
-[0.12.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.11.0...v0.12.0
-[0.11.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.10.0...v0.11.0
-[0.10.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.9.0...v0.10.0
-[0.9.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.8.0...v0.9.0
-[0.8.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.7.0...v0.8.0
-[0.7.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.6.0...v0.7.0
-[0.6.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/f9ef6a2...v0.1.0
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/main...HEAD
+[1.0.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/6aacb0a...main
+[0.20.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/f3675b5...6aacb0a
+[0.19.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/e67d9ac...f3675b5
+[0.18.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/1856752...e67d9ac
+[0.17.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/626a1c8...1856752
+[0.16.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/f7c08a8...626a1c8
+[0.15.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/8e1e4ae...f7c08a8
+[0.15.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/ab53c85...8e1e4ae
+[0.14.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/a773bc8...ab53c85
+[0.14.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/26f9e2f...a773bc8
+[0.13.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/80fc4ec...26f9e2f
+[0.13.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/8d963d9...80fc4ec
+[0.12.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/f23ef8f...8d963d9
+[0.11.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/45fc505...f23ef8f
+[0.10.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/5d878c2...45fc505
+[0.9.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/aef90c3...5d878c2
+[0.8.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/d3e9b48...aef90c3
+[0.7.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/4468936...d3e9b48
+[0.6.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/60add35...4468936
+[0.5.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/b3344c7...60add35
+[0.4.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/e973e43...b3344c7
+[0.3.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/cc20d54...e973e43
+[0.2.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/d2ddb55...cc20d54
+[0.1.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/f9ef6a2...d2ddb55
 [0.0.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f9ef6a228a87bdbaf17ee5fcb89c06409e78d5bc

@@ -6,7 +6,8 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.20.0-orange)
+![Version](https://img.shields.io/badge/version-1.0.0-orange)
+[![Tests](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/actions/workflows/tests.yml/badge.svg)](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/actions/workflows/tests.yml)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
@@ -54,9 +55,9 @@ wave is running).
 - **Meta progression.** Gems survive death and buy permanent upgrades and weapon unlocks.
 - **Cash out on purpose.** Blow up your own castle to keep your gems and turn leftover gold into bonus gems.
 - **Music and voice.** A menu theme and a theme for each of the 5 levels, all looping seamlessly. Grunts,
-  runners and brutes each have a voiced death sound, every level from 1 to 5 has a "level complete" voice
-  line, and a special thanks from the creator plays when you reach level 6. Music, death sounds and the
-  announcer each have their own volume slider.
+  runners, brutes and all 5 bosses each have their own death sound, every level from 1 to 5 has a "level
+  complete" voice line, and a special thanks from the creator plays when you reach level 6. Music, death
+  sounds and the announcer each have their own volume slider.
 - **Full-screen layout.** The map takes every column of your terminal except a slim 24-column side panel.
   You can play with the keyboard or the mouse.
 - **Real buttons.** The side panel has coloured buttons for upgrade, sell, next wave, speed, pause, cash out
@@ -172,10 +173,11 @@ python3 "cool tower defense game.exe.py" --mute   # no music or sound effects
 | 7 | Sniper | `S` | 70g | 22.0 | 7.0 | 0.4 | huge range, shoots the enemy with the **most HP** | 12 gems |
 | 8 | Lightning | `L` | 65g | 4.0 | 3.5 | 1.0 | chains to 4 enemies; each jump deals **75%** of the previous hit (100% → 75% → 56% → 42%), +1 jump every 2 levels | 15 gems |
 
-- Each upgrade level gives +40% damage, +0.3 range and fires 8% faster, up to level 5. An upgrade costs
-  75% of the weapon's base price × its current level. On the map a tower shows the first letter of its weapon's name and its level: `B2` is a level-2 Bow,
-  `I1` a level-1 Ice. (A brute enemy is also `B`, but it walks on the path as a red `B:`; towers are coloured
-  blocks on grass.)
+- Each upgrade level gives +40% damage, +0.3 range and an 8% shorter reload, up to level 5. An upgrade costs
+  75% of the weapon's base price × its current level.
+- On the map a tower shows the first letter of its weapon's name and its level: `B2` is a level-2 Bow, `I1` a
+  level-1 Ice. (A brute enemy is also `B`, but it walks on the path as a red `B:`; towers are coloured blocks
+  on grass.)
 - Locked weapons are unlocked permanently with gems on the Upgrades screen, or for one run with the
   **Armory** blessing.
 - Hovering a tower shows its range on the map and its current stats in the side panel.
@@ -200,6 +202,7 @@ Only one Mine or Tar fits on each path tile. `X` removes it for half its price.
 | `r` | Runner | 5 | 2.8 | 1 | 3 | from wave 2 |
 | `B` | Brute | 32 | 0.85 | 3 | 8 | from wave 4 (10% chance to drop a gem) |
 
+Speeds are in tiles per second. Bigger maps have longer paths, so there every enemy walks up to 60% faster.
 Enemy HP grows ×1.25 every wave. The mark after an enemy's letter shows its health:
 `:` means healthy, `.` means hurt, and nothing means almost dead. A slowed enemy turns blue,
 and a poisoned one turns magenta.
@@ -310,7 +313,7 @@ Every screen has its own seamless loop:
 
 | When | Track | File |
 | --- | --- | --- |
-| Main menu, Upgrades, Premium | menu theme | `assets/menu_loop.wav` |
+| Main menu, Upgrades, Premium, Volume | menu theme | `assets/menu_loop.wav` |
 | Level 1 … 5 | that level's theme | `assets/level1_loop.wav` … `level5_loop.wav` |
 | Level 6, 7, … | Level 1, 2, … again (like the bosses) | |
 | LEVEL COMPLETE screen (levels 1-5) | silence, so the voice line is heard | |
@@ -389,7 +392,7 @@ The **VOLUME** button in the main menu (or `V`) opens three sliders, from 0 to 1
 |                                                                             |
 |                                                                             |
 |                                                                             |
-+- [M] sound: ON --------------------------------------------------- v0.12.0 -+
++- [M] sound: ON ---------------------------------------------------- v1.0.0 -+
 ```
 
 | Slider | Controls |
@@ -465,10 +468,19 @@ All balance numbers live at the top of `cool tower defense game.exe.py`:
 │   └── game.png                   # in-game screenshot used in this README
 ├── tools/
 │   ├── make_loops.py              # rebuilds the music loops from the originals (numpy + ffmpeg)
-│   └── make_sfx.py                # makes the death sounds and voice lines from the recordings (numpy + ffmpeg)
+│   ├── make_sfx.py                # makes the death sounds, boss sounds and voice lines (numpy + ffmpeg)
+│   └── requirements.txt           # numpy, for the two scripts above (the game itself needs nothing)
+├── tests/                         # automated tests, standard library only (see CONTRIBUTING.md)
+│   ├── test_gameplay.py           # game rules, bosses, saving, whole runs played by a bot
+│   ├── test_screens.py            # every screen at every size, buttons, side panel
+│   ├── test_sound.py              # sound files and sound cues
+│   ├── test_docs.py               # README numbers and links match the code
+│   └── helpers.py                 # loads the game, fake screen, bot
+├── .github/workflows/tests.yml    # runs the tests on Linux, macOS and Windows for every push
 ├── README.md                      # this file
 ├── CHANGELOG.md                   # version history: what changed and when
-├── .gitignore                     # ignores __pycache__ and the save file
+├── CONTRIBUTING.md                # how to run the tests, work on the game and make a release
+├── .gitignore                     # ignores __pycache__, the save file, .venv
 └── keep_save.json                 # created on first run (git-ignored)
 ```
 
@@ -543,8 +555,9 @@ the current screen, or silence.
 
 ## Project history
 
-Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git, so
-`git diff v0.1.0 v0.2.0` shows exactly what changed.
+Full details are in [CHANGELOG.md](CHANGELOG.md), where every version links to the exact changes on GitHub.
+Every version below is one commit, so for example `git diff d2ddb55 cc20d54` shows what 0.2.0 changed. Dates
+are the authors' local dates (UTC+3).
 
 | Version | Date | Commit | Highlights | game file size |
 | --- | --- | --- | --- | --- |
@@ -571,36 +584,28 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.17.0](CHANGELOG.md#0170---2026-10-13) | 2026-10-13 | `1856752` | Balance: each Gold Mine you own makes the next one 50% more expensive | 2406 lines |
 | [0.18.0](CHANGELOG.md#0180---2026-10-13) | 2026-10-13 | `e67d9ac` | Frost renamed to Ice; towers show their weapon's first letter on the map | 2409 lines |
 | [0.19.0](CHANGELOG.md#0190---2026-10-13) | 2026-10-13 | `f3675b5` | New blessings: Haggler (a random weapon costs half) and Royal Gift (next one is free) | 2455 lines |
-| [0.20.0](CHANGELOG.md#0200---2026-10-14) | 2026-10-14 | tag `v0.20.0` | Boss death sounds for all 5 bosses | 2487 lines |
+| [0.20.0](CHANGELOG.md#0200---2026-10-14) | 2026-10-14 | `6aacb0a` | Boss death sounds for all 5 bosses | 2487 lines |
+| [1.0.0](CHANGELOG.md#100---2026-10-14) | 2026-10-14 | — | **First stable release.** Test suite + CI, CONTRIBUTING guide, README checked against the code | 2487 lines |
 
 ## Contributing
 
-- **Branches:** `main` is the stable, playable version. Try new things on `test` (or a feature
-  branch) and merge into `main` once it works.
-- **Changelog:** every change that players or developers would notice gets a line under
-  `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md), grouped as *Added*, *Changed*, *Fixed* or *Removed*.
-- **Releases:** when you release, rename `Unreleased` to the new version and date, bump `VERSION` in
-  `cool tower defense game.exe.py` and the version badge in this README, and tag the commit:
-  ```bash
-  git tag -a v0.12.0 -m "v0.12.0"
-  git push origin v0.12.0
-  ```
-  Versions follow [SemVer](https://semver.org/): new features bump the minor version (0.**12**.0),
-  and fixes bump the patch version (0.12.**1**).
-- **Audio:** put new recordings in `assets/source/`, add them to the table in `tools/make_loops.py` (music) or
-  `tools/make_sfx.py` (effects and voice), and run the script. Both need `numpy` and `ffmpeg`.
-- **Commits:** use short imperative summaries, e.g. `Add flying enemies` or `Fix cursor on small terminals`.
-- **Before pushing:** run `python3 -m py_compile "cool tower defense game.exe.py"`, then play at least one wave.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the details. In short:
+
+- Work on `test` (or a feature branch) and merge into `main` once everything works.
+- Run the tests before you push: `python3 -m unittest discover -s tests -v`. GitHub Actions runs them on every
+  push and pull request on Linux, macOS and Windows.
+- Log every noticeable change under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md). Versions follow
+  [SemVer](https://semver.org/).
 
 ## Roadmap
 
 These are ideas, not promises:
 
 - [ ] Flying enemies that ignore the path
-- [ ] Sound effects for weapons and bosses
+- [ ] Sound effects for weapons and boss abilities
 - [ ] An in-game mute key (in a run, `M` places mines)
 - [ ] Local high-score table
-- [ ] Automated smoke tests in CI
+- [x] Automated tests in CI (done in 1.0.0)
 - [ ] Connect a payment provider and make the Premium items work
 
 ## Authors
