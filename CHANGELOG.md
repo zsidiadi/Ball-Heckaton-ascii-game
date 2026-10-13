@@ -8,9 +8,25 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-10-13
+
+`cool tower defense game.exe.py`: 2409 lines
+
+### Changed
+- **The Frost weapon is now called Ice.** Same key (`4`), stats, colour and price. The side panel, Upgrades
+  screen (Unlock Ice), messages and the Deep Freeze blessing all say Ice. Its internal id stays `frost`, so
+  saves that unlocked Frost have Ice unlocked.
+- **Towers on the map show the first letter of their weapon's name**, followed by their level: Bow `B`, Gun `G`,
+  Cannon `C`, Ice `I`, Flamer `F`, Poison `P`, Sniper `S`, Lightning `L` (were `A`, `G`, `C`, `F`, `L`, `P`, `S`,
+  `Z`). The letter comes from the name itself, so renaming a weapon updates its map letter too. Gold Mines
+  (`$`), Mines (`*`) and Tar (`~`) keep their symbols.
+- README: weapon names, the map column of the weapons table, blessing and upgrade names, and the in-game
+  screenshot updated.
+
 ## [0.17.0] - 2026-10-13
 
-`cool tower defense game.exe.py`: 2406 lines
+Commit [`1856752`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/1856752ea77b48589b7e4b2f22357546d1a072bd)
+· `cool tower defense game.exe.py`: 2406 lines
 
 ### Changed
 - **Balance: Gold Mines get more expensive the more you have.** Each Gold Mine you own makes the next one
@@ -533,7 +549,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.15.0...v0.15.1

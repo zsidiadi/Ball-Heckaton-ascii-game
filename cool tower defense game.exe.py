@@ -36,7 +36,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.17.0"
+VERSION = "0.18.0"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens
@@ -94,24 +94,27 @@ EDGE_NAMES = {"left": "WEST", "top": "NORTH", "bottom": "SOUTH"}
 
 # unlock = gems needed to unlock it permanently in the Upgrades menu (0 = available from the start)
 WEAPONS = {
-    "bow":    dict(key="1", name="Bow",    ch="A", cost=25, dmg=3.0,  rng=3.5, cd=0.70, color=C_BOW,    unlock=0,
+    "bow":    dict(key="1", name="Bow",    cost=25, dmg=3.0,  rng=3.5, cd=0.70, color=C_BOW,    unlock=0,
                    info="steady single-target"),
-    "gun":    dict(key="2", name="Gun",    ch="G", cost=40, dmg=1.0,  rng=3.0, cd=0.18, color=C_GUN,    unlock=0,
+    "gun":    dict(key="2", name="Gun",    cost=40, dmg=1.0,  rng=3.0, cd=0.18, color=C_GUN,    unlock=0,
                    info="very fast, short range"),
-    "cannon": dict(key="3", name="Cannon", ch="C", cost=60, dmg=7.0,  rng=4.0, cd=1.80, color=C_CANNON, unlock=8,
+    "cannon": dict(key="3", name="Cannon", cost=60, dmg=7.0,  rng=4.0, cd=1.80, color=C_CANNON, unlock=8,
                    splash=1.3, info="slow, splash damage"),
-    "frost":  dict(key="4", name="Frost",  ch="F", cost=45, dmg=0.6,  rng=3.0, cd=0.50, color=C_FROST,  unlock=10,
+    "frost":  dict(key="4", name="Ice",    cost=45, dmg=0.6,  rng=3.0, cd=0.50, color=C_FROST,  unlock=10,
                    slow=1.2, info="slows enemies"),
-    "flame":  dict(key="5", name="Flamer", ch="L", cost=50, dmg=0.9,  rng=2.0, cd=0.25, color=GOLD,     unlock=6,
+    "flame":  dict(key="5", name="Flamer", cost=50, dmg=0.9,  rng=2.0, cd=0.25, color=GOLD,     unlock=6,
                    aoe=True, info="burns ALL enemies in range"),
-    "poison": dict(key="6", name="Poison", ch="P", cost=50, dmg=0.5,  rng=3.5, cd=0.90, color=MAG,      unlock=10,
+    "poison": dict(key="6", name="Poison", cost=50, dmg=0.5,  rng=3.5, cd=0.90, color=MAG,      unlock=10,
                    poison=(2.0, 3.0), info="poison cloud, ignores armor"),
-    "sniper": dict(key="7", name="Sniper", ch="S", cost=70, dmg=22.0, rng=7.0, cd=2.60, color=STRUCT,   unlock=12,
+    "sniper": dict(key="7", name="Sniper", cost=70, dmg=22.0, rng=7.0, cd=2.60, color=STRUCT,   unlock=12,
                    strong=True, info="huge range, hits the toughest"),
-    "lightning": dict(key="8", name="Lightning", short="Lightn", ch="Z", cost=65, dmg=4.0, rng=3.5, cd=1.00,
+    "lightning": dict(key="8", name="Lightning", short="Lightn", cost=65, dmg=4.0, rng=3.5, cd=1.00,
                       color=C_GUN, unlock=15, chain=4, falloff=0.75,
                       info="chains to 4 enemies, 75% dmg per jump"),
 }
+# on the map a placed weapon shows the first letter of its name plus its level (B1, G2, I1, ...)
+for _w in WEAPONS.values():
+    _w["ch"] = _w["name"][0].upper()
 WEAPON_ORDER = ["bow", "gun", "cannon", "frost", "flame", "poison", "sniper", "lightning"]
 
 # things you place without a structure. "where" = grass or path. Keys are letters.
@@ -750,7 +753,7 @@ PERKS = [
     ("Fletcher",     "Bows deal +30% damage",           p_bow,    "bow"),
     ("Gunsmith",     "Guns fire 25% faster",            p_gun,    "gun"),
     ("Black Powder", "Cannons +30% dmg, bigger blast",  p_cannon, "cannon"),
-    ("Deep Freeze",  "Frost +50% dmg, slows longer",    p_frost,  "frost"),
+    ("Deep Freeze",  "Ice +50% dmg, slows longer",      p_frost,  "frost"),
     ("Pyromaniac",   "Flamers +40% damage",             p_flame,  "flame"),
     ("Toxicology",   "Poison +50% damage",              p_poison, "poison"),
     ("Deadeye",      "Snipers +35% damage",             p_sniper, "sniper"),

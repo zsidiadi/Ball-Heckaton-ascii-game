@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.17.0-orange)
+![Version](https://img.shields.io/badge/version-0.18.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
@@ -47,7 +47,7 @@ wave is running).
 - **Levels that grow.** A level is 5 waves, and each new level adds another enemy path to your castle.
 - **5 big bosses.** One ends every level: Goblin King, Iron Golem, Swamp Hydra, Shadow Wraith and Bone Dragon,
   each with its own ability. After the 5th they come back stronger (*II*, *III*, …).
-- **8 weapons.** Build a structure, then mount a Bow, Gun, Cannon, Frost, Flamer, Poison, Sniper or Lightning
+- **8 weapons.** Build a structure, then mount a Bow, Gun, Cannon, Ice, Flamer, Poison, Sniper or Lightning
   tower on it. Upgrade it up to level 5. The side panel shows every weapon's live stats.
 - **Economy and traps.** Gold Mines earn gold after every wave, and each one you own makes the next 50% dearer.
   Mines explode on the path, and Tar slows enemies.
@@ -144,7 +144,7 @@ python3 "cool tower defense game.exe.py" --mute   # no music or sound effects
 | `W` `A` `S` `D` (Shift) | Move cursor 5 tiles |
 | Mouse click | Move cursor to the clicked tile, or press a side-panel button |
 | `B` | Build structure |
-| `1`–`8` | Mount Bow / Gun / Cannon / Frost / Flamer / Poison / Sniper / Lightning |
+| `1`–`8` | Mount Bow / Gun / Cannon / Ice / Flamer / Poison / Sniper / Lightning |
 | `G` | Place a Gold Mine (grass) |
 | `M` | Place a Mine (enemy path) |
 | `T` | Place Tar (enemy path) |
@@ -163,17 +163,19 @@ python3 "cool tower defense game.exe.py" --mute   # no music or sound effects
 
 | Key | Weapon | Map | Cost | Damage | Range | Shots/s | Special | Unlock |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Bow | `A` | 25g | 3.0 | 3.5 | 1.4 | steady single target | free |
+| 1 | Bow | `B` | 25g | 3.0 | 3.5 | 1.4 | steady single target | free |
 | 2 | Gun | `G` | 40g | 1.0 | 3.0 | 5.6 | very high fire rate | free |
 | 3 | Cannon | `C` | 60g | 7.0 | 4.0 | 0.6 | splash radius 1.3 | 8 gems |
-| 4 | Frost | `F` | 45g | 0.6 | 3.0 | 2.0 | halves enemy speed for 1.2 s | 10 gems |
-| 5 | Flamer | `L` | 50g | 0.9 | 2.0 | 4.0 | burns **every** enemy in range | 6 gems |
+| 4 | Ice | `I` | 45g | 0.6 | 3.0 | 2.0 | halves enemy speed for 1.2 s | 10 gems |
+| 5 | Flamer | `F` | 50g | 0.9 | 2.0 | 4.0 | burns **every** enemy in range | 6 gems |
 | 6 | Poison | `P` | 50g | 0.5 | 3.5 | 1.1 | poison: 2 dmg/s for 3 s, **ignores armor** | 10 gems |
 | 7 | Sniper | `S` | 70g | 22.0 | 7.0 | 0.4 | huge range, shoots the enemy with the **most HP** | 12 gems |
-| 8 | Lightning | `Z` | 65g | 4.0 | 3.5 | 1.0 | chains to 4 enemies; each jump deals **75%** of the previous hit (100% → 75% → 56% → 42%), +1 jump every 2 levels | 15 gems |
+| 8 | Lightning | `L` | 65g | 4.0 | 3.5 | 1.0 | chains to 4 enemies; each jump deals **75%** of the previous hit (100% → 75% → 56% → 42%), +1 jump every 2 levels | 15 gems |
 
 - Each upgrade level gives +40% damage, +0.3 range and fires 8% faster, up to level 5. An upgrade costs
-  75% of the weapon's base price × its current level. The number on a tower (`A2`, `G3`, …) is its level.
+  75% of the weapon's base price × its current level. On the map a tower shows the first letter of its weapon's name and its level: `B2` is a level-2 Bow,
+  `I1` a level-1 Ice. (A brute enemy is also `B`, but it walks on the path as a red `B:`; towers are coloured
+  blocks on grass.)
 - Locked weapons are unlocked permanently with gems on the Upgrades screen, or for one run with the
   **Armory** blessing.
 - Hovering a tower shows its range on the map and its current stats in the side panel.
@@ -239,7 +241,7 @@ are announced when they appear, and get a name and HP bar in the side panel.
 | Fletcher | Bows +30% damage | | Eagle Eye | all weapons +0.5 range |
 | Gunsmith | Guns fire 25% faster | | Heavy Mud | new enemies move 10% slower |
 | Black Powder | Cannons +30% damage, bigger blast | | Bounty | +1 gold per kill |
-| Deep Freeze | Frost +50% damage, slows longer | | Cheap Bricks | structures cost half |
+| Deep Freeze | Ice +50% damage, slows longer | | Cheap Bricks | structures cost half |
 | Pyromaniac | Flamers +40% damage | | Gem Shard | +2 gems right now |
 | Toxicology | Poison +50% damage | | Whetstone | all weapons +10% damage |
 | Deadeye | Snipers +35% damage | | | |
@@ -261,7 +263,7 @@ All upgrades live behind the **UPGRADES** button in the main menu.
 | Unlock Mine | Mines can be placed | 1 | 6 |
 | Unlock Cannon | Cannon can be built | 1 | 8 |
 | Unlock Gold Mine | Gold Mines can be placed | 1 | 8 |
-| Unlock Frost | Frost can be built | 1 | 10 |
+| Unlock Ice | Ice can be built | 1 | 10 |
 | Unlock Poison | Poison can be built | 1 | 10 |
 | Unlock Sniper | Sniper can be built | 1 | 12 |
 | Unlock Lightning | Lightning can be built | 1 | 15 |
@@ -483,7 +485,7 @@ themselves or run alongside other paths, and it prefers paths of a good length. 
 **Combat** (`update`, `fire`, `hit`, `boss_ability`): every frame, each weapon whose cooldown is ready looks at
 the enemies in range. Most weapons target the enemy with the fewest tiles left to the castle, the Sniper
 targets the one with the most HP, and the Flamer hits all of them. Cannons damage everything in their splash
-radius, Frost slows, Poison applies damage over time, and Lightning chains to nearby enemies (each jump
+radius, Ice slows, Poison applies damage over time, and Lightning chains to nearby enemies (each jump
 multiplies the damage by `falloff`, 0.75). All direct hits go through `hit()`, which applies boss armor.
 Poison damage skips it.
 
@@ -538,7 +540,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.15.0](CHANGELOG.md#0150---2026-10-13) | 2026-10-13 | `8e1e4ae` | Coloured, clickable buttons in the side panel | 2392 lines |
 | [0.15.1](CHANGELOG.md#0151---2026-10-13) | 2026-10-13 | `f7c08a8` | Menu title centred again, castle right next to it | 2393 lines |
 | [0.16.0](CHANGELOG.md#0160---2026-10-13) | 2026-10-13 | `626a1c8` | Balance: Mine costs 50 (was 25), its damage grows half as fast | 2394 lines |
-| [0.17.0](CHANGELOG.md#0170---2026-10-13) | 2026-10-13 | tag `v0.17.0` | Balance: each Gold Mine you own makes the next one 50% more expensive | 2406 lines |
+| [0.17.0](CHANGELOG.md#0170---2026-10-13) | 2026-10-13 | `1856752` | Balance: each Gold Mine you own makes the next one 50% more expensive | 2406 lines |
+| [0.18.0](CHANGELOG.md#0180---2026-10-13) | 2026-10-13 | tag `v0.18.0` | Frost renamed to Ice; towers show their weapon's first letter on the map | 2409 lines |
 
 ## Contributing
 
