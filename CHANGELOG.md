@@ -8,9 +8,32 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-10-13
+
+`cool tower defense game.exe.py`: 2455 lines
+
+### Added
+- **New blessing: Haggler** ("a random weapon costs half"). One random weapon that you can use in this run and
+  that isn't half price yet costs half from now on, and so do its upgrades. The message says which one, e.g.
+  "Gun now costs 20g (was 40g)". A weapon can only be halved once. Gold Mines, Mines and Tar are never halved.
+  When every usable weapon is already half price, Haggler isn't offered any more.
+- **New blessing: Royal Gift** ("next weapon/building is free"). The next weapon you mount, or the next Gold
+  Mine, Mine or Tar you place, costs nothing. After that everything costs what it did before. Structures and
+  upgrades don't use the gift up, and neither does a placement that fails. Taking it twice gives two free
+  ones. While a gift is waiting, the side panel shows `FREE x1: next one 0g` and every price as 0. A free item
+  refunds nothing when sold, and a free Gold Mine still counts toward the next Gold Mine's price.
+- `Run.price(kind)` and `Run.pay(kind)`: one place that works out and charges what a weapon or building costs
+  (Royal Gift, Haggler, Gold Mine price growth). Mounting, placing, the side panel and the "Not enough gold"
+  messages all use it.
+
+### Fixed
+- A strong Poison tower's info line ("Poison lv 5 poison 11.8/s") was one column too wide for the side panel.
+  From 10 damage per second up, it now shows no decimal ("poison 12/s").
+
 ## [0.18.0] - 2026-10-13
 
-`cool tower defense game.exe.py`: 2409 lines
+Commit [`e67d9ac`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/e67d9ac840e7a6b5be94f53208de415fa7628699)
+· `cool tower defense game.exe.py`: 2409 lines
 
 ### Changed
 - **The Frost weapon is now called Ice.** Same key (`4`), stats, colour and price. The side panel, Upgrades
@@ -549,7 +572,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.15.1...v0.16.0

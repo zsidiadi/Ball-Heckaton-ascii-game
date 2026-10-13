@@ -36,7 +36,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.18.0"
+VERSION = "0.19.0"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens
@@ -745,8 +745,24 @@ def p_armory(r):
     return f"Blessing: Armory - the {w['name']} ({w['key'].upper()}) is unlocked for this run!"
 
 
+def p_haggle(r):
+    """Haggler: one random weapon (unlocked this run, not already halved) costs half from now on, upgrades too.
+    Each weapon can only be halved once; Gold Mines, Mines and Tar never are."""
+    k = random.choice(r.halvable())
+    r.mods["half"].add(k)
+    w = WEAPONS[k]
+    return f"Blessing: Haggler - {w['name']} now costs {w['cost'] // 2}g (was {w['cost']}g), upgrades half price too!"
+
+
+def p_gift(r):
+    """Royal Gift: the next weapon or building you put down is free. Taking it twice gives two free ones."""
+    r.mods["free"] += 1
+    n = r.mods["free"]
+    return "Blessing: Royal Gift - your next weapon or building is FREE!" + (f" ({n} free ones waiting)" if n > 1 else "")
+
+
 # name, description, function, requirement (None = always, weapon id = must be unlocked,
-# "locked" = at least one weapon still locked)
+# "locked" = at least one weapon still locked, "halvable" = a weapon that isn't half price yet)
 PERKS = [
     ("Gold Rush",    "+40 gold right now",              p_gold,   None),
     ("Mason",        "repair castle +15, max HP +5",    p_repair, None),
@@ -765,6 +781,8 @@ PERKS = [
     ("Cheap Bricks", "structures cost half",            p_bricks, None),
     ("Gem Shard",    "+2 gems right now",               p_gems,   None),
     ("Whetstone",    "all weapons +10% damage",         p_steel,  None),
+    ("Haggler",      "a random weapon costs half",      p_haggle, "halvable"),
+    ("Royal Gift",   "next weapon/building is free",    p_gift,   None),
 ]
 
 
@@ -776,8 +794,8 @@ def special_text(kind, s):
         return f"slow {s['slow']:.1f}s"
     if w.get("aoe"):
         return "hits all"
-    if "poison" in w:
-        return f"poison {s['poison']:.1f}/s"
+    if "poison" in w:                       # no decimal from 10/s up, so "Poison lv 5 poison 12/s" fits the panel
+        return f"poison {s['poison']:.1f}/s" if s["poison"] < 10 else f"poison {s['poison']:.0f}/s"
     if w.get("strong"):
         return "toughest"
     if "chain" in w:
@@ -839,7 +857,9 @@ class Run:
         self.unlocked = {k for k, w in ITEMS.items() if not w["unlock"] or up.get(k)}
         self.mods = dict(enemy_speed=1.0, range=0.0, struct_cost=STRUCT_COST, bounty=0,
                          splash=0.0, slow=0.0, chain=0,
-                         wdmg={k: 1.0 for k in WEAPONS}, wcd={k: 1.0 for k in WEAPONS})
+                         wdmg={k: 1.0 for k in WEAPONS}, wcd={k: 1.0 for k in WEAPONS},
+                         half=set(),       # Haggler: weapons that cost half (price and upgrades)
+                         free=0)           # Royal Gift: how many weapons/buildings are free
         # bigger maps have longer paths, so enemies walk a bit faster there
         self.map_speed = min(1.6, max(1.0, ((W + H) / 44.0) ** 0.5))
         self.level = 1
@@ -1022,7 +1042,30 @@ class Run:
         return self.stats_for(t.kind, t.level)
 
     def upgrade_cost(self, t):
-        return int(ITEMS[t.kind]["cost"] * 0.75 * t.level)
+        cost = int(ITEMS[t.kind]["cost"] * 0.75 * t.level)
+        return cost // 2 if t.kind in self.mods["half"] else cost
+
+    def halvable(self):
+        """Weapons the Haggler blessing can still pick: unlocked this run and not half price yet."""
+        return [k for k in WEAPON_ORDER if k in self.unlocked and k not in self.mods["half"]]
+
+    def price(self, kind):
+        """What putting down the next weapon/building of this kind costs right now: 0 while a Royal Gift is
+        waiting, half for a Haggler weapon, and Gold Mines get dearer for every one you own."""
+        if self.mods["free"]:
+            return 0
+        if kind in WEAPONS:
+            cost = WEAPONS[kind]["cost"]
+            return cost // 2 if kind in self.mods["half"] else cost
+        return self.building_cost(kind)
+
+    def pay(self, kind):
+        """Pay for a weapon/building (see price) and use up a Royal Gift if one is waiting. Returns what was paid."""
+        cost = self.price(kind)
+        self.gold -= cost
+        if self.mods["free"]:
+            self.mods["free"] -= 1
+        return cost
 
     def income(self, t):
         b = BUILDINGS["goldmine"]
@@ -1096,7 +1139,8 @@ class Run:
         self.gems_raw += g
         self.cleared = self.wave
         has_locked = any(k not in self.unlocked for k in ITEMS)
-        pool = [p for p in PERKS if p[3] is None or p[3] in self.unlocked or (p[3] == "locked" and has_locked)]
+        pool = [p for p in PERKS if p[3] is None or p[3] in self.unlocked or (p[3] == "locked" and has_locked)
+                or (p[3] == "halvable" and self.halvable())]
         self.offer = random.sample(pool, 3)
         self.wave_msg = (f"LEVEL {self.level} - WAVE {self.wave_in_level()}/{WAVES_PER_LEVEL} CLEARED!"
                          f"   +{bonus} gold" + (f" ({mines} from gold mines)" if mines else "") +
@@ -1423,13 +1467,13 @@ class Run:
             self.msg = f"Build a structure first (B, {self.mods['struct_cost']}g), then add the {w['name']}."
         elif t.kind:
             self.msg = "This tile already has something on it. U to upgrade, X to sell."
-        elif self.gold < w["cost"]:
-            self.msg = f"Not enough gold for a {w['name']} (need {w['cost']})."
+        elif self.gold < self.price(kind):
+            self.msg = f"Not enough gold for a {w['name']} (need {self.price(kind)})."
         else:
-            self.gold -= w["cost"]
+            paid = self.pay(kind)
             t.kind, t.level, t.cd = kind, 1, 0.0
-            t.invested += w["cost"]
-            self.msg = f"{w['name']} mounted - {w['info']}."
+            t.invested += paid                 # selling refunds half of what was really paid
+            self.msg = f"{w['name']} mounted - {w['info']}." + ("" if paid else " FREE, thanks to the Royal Gift!")
 
     def place_building(self, kind):
         c = tuple(self.cursor)
@@ -1442,18 +1486,17 @@ class Run:
             self.msg = "There's already something on this path tile. X to sell it."
         elif b["where"] == "grass" and not self.free(c):
             self.msg = f"The {b['name']} needs an empty grass tile."
-        elif self.gold < self.building_cost(kind):
-            self.msg = f"Not enough gold for a {b['name']} (need {self.building_cost(kind)})."
+        elif self.gold < self.price(kind):
+            self.msg = f"Not enough gold for a {b['name']} (need {self.price(kind)})."
         else:
-            cost = self.building_cost(kind)
-            self.gold -= cost
+            paid = self.pay(kind)
             if b["where"] == "path":
                 self.traps[c] = kind
             else:
-                t = Tower(cost)                    # invested = what was paid, so selling refunds half of it
+                t = Tower(paid)                    # invested = what was paid, so selling refunds half of it
                 t.kind, t.level = kind, 1
                 self.towers[c] = t
-            self.msg = f"{b['name']} placed - {b['info']}."
+            self.msg = f"{b['name']} placed - {b['info']}." + ("" if paid else " FREE, thanks to the Royal Gift!")
 
     def upgrade(self):
         t = self.towers.get(tuple(self.cursor))
@@ -2203,7 +2246,10 @@ class App:
             add([], drop=3)
 
         # build menu with weapon stats:  "3 Cannon 60  7.0 4.0 0.6"
-        add([("  weapon  $  dmg rng  /s", dim, 0)], drop=2)
+        if r.mods["free"]:                     # Royal Gift waiting: every price below shows 0
+            add([(f"  FREE x{r.mods['free']}: next one 0g", gold_c | bold, 0)], drop=2)
+        else:
+            add([("  weapon  $  dmg rng  /s", dim, 0)], drop=2)
         sc = r.mods["struct_cost"]
         ok = r.gold >= sc and r.free(cur)
         add([("B struct", 0 if ok else dim, 0), (str(sc).rjust(2), gold_c if ok else dim, 9)])
@@ -2214,10 +2260,10 @@ class App:
                 add([(line, dim, 0), ("locked", dim, 9)])
                 continue
             st = r.stats_for(kind)
-            ok = bool(t) and not t.kind and r.gold >= w["cost"]
+            ok = bool(t) and not t.kind and r.gold >= r.price(kind)
             here = bool(t) and t.kind == kind
             attr = self.color(w["color"]) | bold if (ok or here) else 0
-            add([(line, attr, 0), (str(w["cost"]).rjust(2), gold_c if ok else dim, 9),
+            add([(line, attr, 0), (str(r.price(kind)).rjust(2), gold_c if ok else dim, 9),
                  (f"{num(st['dmg'], 4)} {num(st['rng'], 3)} {num(1 / st['cd'], 3)}", 0 if ok else dim, 12)])
         # placeable buildings: gold mine (grass), mine + tar (path)
         effects = {"goldmine": f"+{BUILDINGS['goldmine']['income']}/wave",
@@ -2229,8 +2275,8 @@ class App:
                 add([(line, dim, 0), ("locked", dim, 9)])
                 continue
             spot = r.free(cur) if b["where"] == "grass" else (cur in r.path_set and cur not in r.traps)
-            price = str(r.building_cost(kind)).rjust(2)
-            ok = spot and r.gold >= r.building_cost(kind)
+            price = str(r.price(kind)).rjust(2)
+            ok = spot and r.gold >= r.price(kind)
             attr = self.color(b["color"]) | bold if ok else 0
             add([(line, attr, 0), (price, gold_c if ok else dim, 9),
                  (effects[kind], 0 if ok else dim, 10 + len(price))])

@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.18.0-orange)
+![Version](https://img.shields.io/badge/version-0.19.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
@@ -244,9 +244,18 @@ are announced when they appear, and get a name and HP bar in the side panel.
 | Deep Freeze | Ice +50% damage, slows longer | | Cheap Bricks | structures cost half |
 | Pyromaniac | Flamers +40% damage | | Gem Shard | +2 gems right now |
 | Toxicology | Poison +50% damage | | Whetstone | all weapons +10% damage |
-| Deadeye | Snipers +35% damage | | | |
+| Deadeye | Snipers +35% damage | | Haggler | a random weapon costs half from now on, its upgrades too |
+| Royal Gift | your next weapon or building is free | | | |
 
 Blessings for weapons you haven't unlocked never show up.
+
+- **Haggler** picks one of the weapons you can use in this run that isn't half price yet. Each weapon can
+  only be halved once (25g → 12g, upgrades 18g → 9g, …). Gold Mines, Mines and Tar are never halved. Once
+  every usable weapon is half price, Haggler stops showing up.
+- **Royal Gift** makes the next weapon you mount or the next building you place (Gold Mine, Mine, Tar) cost
+  nothing. Structures and upgrades don't use it up. After that, prices are back to normal. While a gift is
+  waiting, the side panel says `FREE x1` and shows every price as 0. Taking it twice gives two free ones. A free
+  item refunds nothing when sold, and a free Gold Mine still counts toward the next Gold Mine's price.
 
 ### Upgrades (permanent, bought with gems)
 
@@ -489,6 +498,11 @@ radius, Ice slows, Poison applies damage over time, and Lightning chains to near
 multiplies the damage by `falloff`, 0.75). All direct hits go through `hit()`, which applies boss armor.
 Poison damage skips it.
 
+**Prices** (`Run.price`, `pay`, `upgrade_cost`, `building_cost`): everything that puts a weapon or building
+down asks `price(kind)`. That's 0 while a Royal Gift is waiting, half for a Haggler weapon, and grows with
+every Gold Mine you own. `pay` takes the gold and uses up the gift. A tower's `invested` is what was really
+paid, so selling always refunds half of that.
+
 **Buildings and traps** (`place_building`, `explode`, `income`): Gold Mines live in `Run.towers` next to the
 weapons (they can be upgraded and sold) and pay out in `wave_cleared()`. Mines and Tar live in `Run.traps`, a
 map of path tiles. Each frame, enemies standing on Tar get slowed, and any Mine with an enemy on its tile
@@ -541,7 +555,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.15.1](CHANGELOG.md#0151---2026-10-13) | 2026-10-13 | `f7c08a8` | Menu title centred again, castle right next to it | 2393 lines |
 | [0.16.0](CHANGELOG.md#0160---2026-10-13) | 2026-10-13 | `626a1c8` | Balance: Mine costs 50 (was 25), its damage grows half as fast | 2394 lines |
 | [0.17.0](CHANGELOG.md#0170---2026-10-13) | 2026-10-13 | `1856752` | Balance: each Gold Mine you own makes the next one 50% more expensive | 2406 lines |
-| [0.18.0](CHANGELOG.md#0180---2026-10-13) | 2026-10-13 | tag `v0.18.0` | Frost renamed to Ice; towers show their weapon's first letter on the map | 2409 lines |
+| [0.18.0](CHANGELOG.md#0180---2026-10-13) | 2026-10-13 | `e67d9ac` | Frost renamed to Ice; towers show their weapon's first letter on the map | 2409 lines |
+| [0.19.0](CHANGELOG.md#0190---2026-10-13) | 2026-10-13 | tag `v0.19.0` | New blessings: Haggler (a random weapon costs half) and Royal Gift (next one is free) | 2455 lines |
 
 ## Contributing
 
