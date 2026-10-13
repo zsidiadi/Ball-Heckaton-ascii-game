@@ -593,7 +593,7 @@ are the authors' local dates (UTC+3).
 | [0.20.0](CHANGELOG.md#0200---2026-10-14) | 2026-10-14 | `6aacb0a` | Boss death sounds for all 5 bosses | 2487 lines |
 | [1.0.0](CHANGELOG.md#100---2026-10-14) | 2026-10-14 | `10cdf76` | **First stable release.** Test suite + CI, CONTRIBUTING guide, README checked against the code | 2487 lines |
 | [1.0.1](CHANGELOG.md#101---2026-10-14) | 2026-10-14 | `aaca536` | Fix: one mouse click could press two buttons (e.g. BACK on the Volume screen, then a menu) | 2508 lines |
-| [1.1.0](CHANGELOG.md#110---2026-10-14) | 2026-10-14 | — | The music pauses with the game and carries on from the same spot | 2598 lines |
+| [1.1.0](CHANGELOG.md#110---2026-10-14) | 2026-10-14 | `96f54b3` | The music pauses with the game and carries on from the same spot | 2598 lines |
 
 ## Contributing
 

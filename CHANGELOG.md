@@ -10,7 +10,8 @@ Every version links to its exact changes on GitHub (a comparison with the releas
 
 ## [1.1.0] - 2026-10-14
 
-`cool tower defense game.exe.py`: 2598 lines
+Commit [`96f54b3`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/96f54b3ae82ca2f629bfaf8048333e0c6a50568f)
+· `cool tower defense game.exe.py`: 2598 lines
 
 ### Added
 - **The music pauses with the game.** Pressing `P` (or the `||` button) during a run pauses the level's theme
@@ -680,8 +681,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/main...HEAD
-[1.1.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/aaca536...main
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/96f54b3...HEAD
+[1.1.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/aaca536...96f54b3
 [1.0.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/10cdf76...aaca536
 [1.0.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/6aacb0a...10cdf76
 [0.20.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/f3675b5...6aacb0a
