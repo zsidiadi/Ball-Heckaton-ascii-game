@@ -8,9 +8,27 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-10-13
+
+`cool tower defense game.exe.py`: 2406 lines
+
+### Changed
+- **Balance: Gold Mines get more expensive the more you have.** Each Gold Mine you own makes the next one
+  **50% dearer**: 60, 90, 135, 203, 304, … gold (new `cost_growth` value in `BUILDINGS["goldmine"]`, worked out
+  by `Run.building_cost`).
+  - Gold per wave is unchanged: +12, +8 per upgrade level.
+  - Upgrade costs are unchanged and the same for every mine, whatever it cost: 45, 90, … gold.
+  - Selling a Gold Mine refunds half of what you paid for it (plus half of its upgrades), and the next one
+    gets cheaper again.
+  - The side panel shows the price of your next Gold Mine. Prices of 3 or more digits push the income text
+    to the right instead of running into it. The "Not enough gold" message shows the real price too.
+- Upgrades screen: Unlock Gold Mine shows "60g, +50% each". The line also fits a 70-column window now.
+- README: Gold Mine row, features list, tuning table and in-game screenshot updated.
+
 ## [0.16.0] - 2026-10-13
 
-`cool tower defense game.exe.py`: 2394 lines
+Commit [`626a1c8`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/626a1c882119eca5d2d32f2a64eb3de58b9131f9)
+· `cool tower defense game.exe.py`: 2394 lines
 
 ### Changed
 - **Balance: the Mine was too strong.**
@@ -515,7 +533,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.1...v0.15.0

@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.16.0-orange)
+![Version](https://img.shields.io/badge/version-0.17.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
@@ -49,7 +49,8 @@ wave is running).
   each with its own ability. After the 5th they come back stronger (*II*, *III*, …).
 - **8 weapons.** Build a structure, then mount a Bow, Gun, Cannon, Frost, Flamer, Poison, Sniper or Lightning
   tower on it. Upgrade it up to level 5. The side panel shows every weapon's live stats.
-- **Economy and traps.** Gold Mines earn gold after every wave. Mines explode on the path, and Tar slows enemies.
+- **Economy and traps.** Gold Mines earn gold after every wave, and each one you own makes the next 50% dearer.
+  Mines explode on the path, and Tar slows enemies.
 - **Meta progression.** Gems survive death and buy permanent upgrades and weapon unlocks.
 - **Cash out on purpose.** Blow up your own castle to keep your gems and turn leftover gold into bonus gems.
 - **Music and voice.** A menu theme and a theme for each of the 5 levels, all looping seamlessly. Grunts,
@@ -183,7 +184,7 @@ Placed directly with one key (no structure needed). All of them are gem unlocks.
 
 | Key | Item | Map | Where | Cost | Effect | Unlock |
 | --- | --- | --- | --- | --- | --- | --- |
-| G | Gold Mine | `$1` | any empty grass tile | 60g | +12 gold after every wave (+8 per upgrade level, max level 5). Deals no damage | 8 gems |
+| G | Gold Mine | `$1` | any empty grass tile | 60g, +50% for each one you own (60, 90, 135, 203, …) | +12 gold after every wave (+8 per upgrade level, max level 5). Deals no damage. Upgrades cost the same for every mine (45g, 90g, …), and selling one refunds half of what it cost and makes the next one cheaper again | 8 gems |
 | M | Mine | `**` | on the enemy path | 50g | explodes once when an enemy steps on it, damaging every enemy within 1.5 tiles. Then it's gone. 24 dmg on wave 1, +12.5% per wave (half as fast as enemy HP grows) | 6 gems |
 | T | Tar | `~~` | on the enemy path | 30g | enemies on it move at half speed. Deals no damage and lasts forever (the Shadow Wraith ignores it) | 5 gems |
 
@@ -404,7 +405,7 @@ All balance numbers live at the top of `cool tower defense game.exe.py`:
 | Constant | What it controls |
 | --- | --- |
 | `WEAPONS` | cost, damage, range, cooldown, specials and gem unlock price of each weapon |
-| `BUILDINGS` | Gold Mine income, Mine damage/growth per wave/radius, costs and unlock prices of the placeables |
+| `BUILDINGS` | Gold Mine income and price growth per mine owned (`cost_growth`), Mine damage/growth per wave/radius, costs and unlock prices of the placeables |
 | `ENEMIES` | HP, speed, castle damage and gold of each normal enemy |
 | `BOSSES` | name, sprite, HP, speed, damage, rewards and ability of the 5 bosses |
 | `HP_GROWTH` | how fast enemies get tougher each wave (default `1.25`) |
@@ -536,7 +537,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.14.1](CHANGELOG.md#0141---2026-10-13) | 2026-10-13 | `ab53c85` | Castle and title moved a bit to the left | 2279 lines |
 | [0.15.0](CHANGELOG.md#0150---2026-10-13) | 2026-10-13 | `8e1e4ae` | Coloured, clickable buttons in the side panel | 2392 lines |
 | [0.15.1](CHANGELOG.md#0151---2026-10-13) | 2026-10-13 | `f7c08a8` | Menu title centred again, castle right next to it | 2393 lines |
-| [0.16.0](CHANGELOG.md#0160---2026-10-13) | 2026-10-13 | tag `v0.16.0` | Balance: Mine costs 50 (was 25), its damage grows half as fast | 2394 lines |
+| [0.16.0](CHANGELOG.md#0160---2026-10-13) | 2026-10-13 | `626a1c8` | Balance: Mine costs 50 (was 25), its damage grows half as fast | 2394 lines |
+| [0.17.0](CHANGELOG.md#0170---2026-10-13) | 2026-10-13 | tag `v0.17.0` | Balance: each Gold Mine you own makes the next one 50% more expensive | 2406 lines |
 
 ## Contributing
 

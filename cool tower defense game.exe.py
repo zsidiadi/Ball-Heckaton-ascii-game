@@ -36,7 +36,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.16.0"
+VERSION = "0.17.0"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens
@@ -116,7 +116,7 @@ WEAPON_ORDER = ["bow", "gun", "cannon", "frost", "flame", "poison", "sniper", "l
 
 # things you place without a structure. "where" = grass or path. Keys are letters.
 BUILDINGS = {
-    "goldmine": dict(key="g", name="Gold Mine", short="GoldMn", ch="$", cost=60, color=GOLD, unlock=8,
+    "goldmine": dict(key="g", name="Gold Mine", short="GoldMn", ch="$", cost=60, cost_growth=1.5, color=GOLD, unlock=8,
                      where="grass", income=12, income_lv=8, info="+gold after every wave, no damage"),
     "mine":     dict(key="m", name="Mine", short="Mine", ch="*", cost=50, color=RED, unlock=6,
                      where="path", dmg=24, dmg_growth=1.125, radius=1.5, info="on the path, explodes once"),
@@ -1025,6 +1025,13 @@ class Run:
         b = BUILDINGS["goldmine"]
         return b["income"] + b["income_lv"] * (t.level - 1)
 
+    def building_cost(self, kind):
+        """Price of the next building of this kind. With cost_growth (Gold Mines: 1.5) every one you own makes the
+        next one that much dearer: 60, 90, 135, 203, ... Selling one brings the price back down."""
+        b = BUILDINGS[kind]
+        owned = sum(1 for t in self.towers.values() if t.kind == kind) if b.get("cost_growth") else 0
+        return int(b["cost"] * b.get("cost_growth", 1) ** owned + 0.5)
+
     def mine_damage(self, wave=None):
         wave = wave or max(1, self.wave + (1 if self.state != "wave" else 0))
         b = BUILDINGS["mine"]                  # +12.5% damage per wave: half the enemies' +25% HP per wave
@@ -1432,14 +1439,15 @@ class Run:
             self.msg = "There's already something on this path tile. X to sell it."
         elif b["where"] == "grass" and not self.free(c):
             self.msg = f"The {b['name']} needs an empty grass tile."
-        elif self.gold < b["cost"]:
-            self.msg = f"Not enough gold for a {b['name']} (need {b['cost']})."
+        elif self.gold < self.building_cost(kind):
+            self.msg = f"Not enough gold for a {b['name']} (need {self.building_cost(kind)})."
         else:
-            self.gold -= b["cost"]
+            cost = self.building_cost(kind)
+            self.gold -= cost
             if b["where"] == "path":
                 self.traps[c] = kind
             else:
-                t = Tower(b["cost"])
+                t = Tower(cost)                    # invested = what was paid, so selling refunds half of it
                 t.kind, t.level = kind, 1
                 self.towers[c] = t
             self.msg = f"{b['name']} placed - {b['info']}."
@@ -1905,7 +1913,10 @@ class App:
             wd = WEAPONS[uid]
             detail += f" ({wd['cost']}g  dmg {wd['dmg']:g}  rng {wd['rng']:g}  {1 / wd['cd']:.1f}/s)"
         elif uid in BUILDINGS:
-            detail += f" ({BUILDINGS[uid]['cost']}g, key {BUILDINGS[uid]['key'].upper()})"
+            bd = BUILDINGS[uid]
+            more = f", +{round((bd['cost_growth'] - 1) * 100)}% each" if bd.get("cost_growth") else ""
+            key = f", key {bd['key'].upper()}" if len(detail) + len(more) + 14 <= self.scr.getmaxyx()[1] - 2 else ""
+            detail += f" ({bd['cost']}g{more}{key})"
         elif lv < mx:
             detail += f"  -  next costs {meta_cost(base, lv)} gems"
         self.center(y, detail)
@@ -2215,10 +2226,11 @@ class App:
                 add([(line, dim, 0), ("locked", dim, 9)])
                 continue
             spot = r.free(cur) if b["where"] == "grass" else (cur in r.path_set and cur not in r.traps)
-            ok = spot and r.gold >= b["cost"]
+            price = str(r.building_cost(kind)).rjust(2)
+            ok = spot and r.gold >= r.building_cost(kind)
             attr = self.color(b["color"]) | bold if ok else 0
-            add([(line, attr, 0), (str(b["cost"]).rjust(2), gold_c if ok else dim, 9),
-                 (effects[kind], 0 if ok else dim, 12)])
+            add([(line, attr, 0), (price, gold_c if ok else dim, 9),
+                 (effects[kind], 0 if ok else dim, 10 + len(price))])
         # buttons: upgrade/sell the selected tile, next wave/speed/pause, cash out/quit. On short terminals the
         # gaps between them go first and the cash out/quit row late; the first two rows always stay.
         specs = self.button_specs()
