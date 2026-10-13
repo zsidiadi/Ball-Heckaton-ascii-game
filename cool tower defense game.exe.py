@@ -36,7 +36,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.19.0"
+VERSION = "0.20.0"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens
@@ -45,6 +45,11 @@ LEVEL_TRACKS = ["level1_loop.wav", "level2_loop.wav", "level3_loop.wav", "level4
 # one-shot sounds (paths inside assets/)
 # played once when a small enemy dies; bosses have none
 DEATH_SOUNDS = {"grunt": "sfx/grunt_death.wav", "runner": "sfx/runner_death.wav", "brute": "sfx/brute_death.wav"}
+# each boss's death sound: plays only when the boss is killed (not when it reaches the castle or the run ends).
+# It's a death sound, so the "Death sounds" volume slider sets its level.
+BOSS_DEATH_SOUNDS = {"GOBLIN KING": "sfx/boss_goblin_king.wav", "IRON GOLEM": "sfx/boss_iron_golem.wav",
+                     "SWAMP HYDRA": "sfx/boss_swamp_hydra.wav", "SHADOW WRAITH": "sfx/boss_shadow_wraith.wav",
+                     "BONE DRAGON": "sfx/boss_bone_dragon.wav"}
 # voice line when the "LEVEL N COMPLETE" screen appears (levels 1-5; the level music pauses for it)
 LEVEL_COMPLETE_SOUNDS = ["voice/level1_complete.wav", "voice/level2_complete.wav", "voice/level3_complete.wav",
                          "voice/level4_complete.wav", "voice/level5_complete.wav"]
@@ -591,9 +596,10 @@ class Music:
             self.thread.join(timeout=1)
             self.thread = None
 
-    def effect(self, name):
+    def effect(self, name, priority=False):
         """Play a one-shot sound on top of the music. `name` is a path inside the assets folder,
-        e.g. "sfx/grunt_death.wav" or "voice/level1_complete.wav"."""
+        e.g. "sfx/grunt_death.wav" or "voice/level1_complete.wav". A priority sound (boss death, announcer) is
+        never dropped: when SFX_MAX_AT_ONCE effects are already playing it stops the oldest one instead."""
         if not self.backend:
             return
         now = time.time()
@@ -611,7 +617,10 @@ class Music:
                 if key not in self.sounds:
                     self.sounds[key] = pygame.mixer.Sound(path)
                 self.sounds[key].set_volume(gain)
-                self.sounds[key].play()
+                if priority:                          # take the longest-playing channel if none is free
+                    pygame.mixer.find_channel(True).play(self.sounds[key])
+                else:
+                    self.sounds[key].play()
                 return
             if not self._load(name):
                 return
@@ -621,7 +630,9 @@ class Music:
             else:
                 self.sfx_procs = [p for p in self.sfx_procs if p.poll() is None]
                 if len(self.sfx_procs) >= SFX_MAX_AT_ONCE:
-                    return
+                    if not priority:
+                        return
+                    self._kill(self.sfx_procs.pop(0))    # make room: stop the oldest effect
                 cmd = {"paplay": ["paplay", path], "aplay": ["aplay", "-q", path], "play": ["play", "-q", path],
                        None: ["afplay", path]}[self.player if self.backend == "pipe" else None]
                 self.sfx_procs.append(subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
@@ -867,7 +878,8 @@ class Run:
         self.cleared = 0
         self.kills = 0
         self.gems_raw = 0.0
-        self.events = []          # sound cues for the App: ("death", kind), ("level_complete", n), ("level_start", n)
+        self.events = []          # sound cues for the App: ("death", kind), ("boss_death", boss name),
+                                  # ("level_complete", n), ("level_start", n)
         self.towers = {}          # grass tiles: structures, weapons and gold mines
         self.traps = {}           # path tiles: "mine" or "tar"
         self.enemies = []
@@ -1213,6 +1225,8 @@ class Run:
             if e.poison_t > 0:
                 e.hp -= e.poison_dps * dt
                 e.poison_t -= dt
+            if e.hp <= 0:                   # dead (poison, or a hit last frame): no regen back to life, no walking
+                continue                    # into the castle - it's counted as killed below
             if e.boss:
                 summoned += self.boss_ability(e, dt)
             e.pos += e.spd * (0.5 if slowed else 1.0) * dt
@@ -1259,7 +1273,9 @@ class Run:
                 alive.append(e)
             elif not e.leaked:
                 self.kills += 1
-                if e.kind in DEATH_SOUNDS:
+                if e.boss:                                   # killed, not leaked: the boss really died
+                    self.events.append(("boss_death", e.boss["name"]))
+                elif e.kind in DEATH_SOUNDS:
                     self.events.append(("death", e.kind))
                 self.gold += e.gold + self.mods["bounty"]
                 if e.boss:
@@ -1563,6 +1579,8 @@ class App:
         self.zones = []            # clickable areas: (y, x0, x1, action)
         self.anim = 0.0
         self.btn_flash = {}           # panel button key -> self.anim time until which it is drawn lit
+        self.boss_sound_until = 0.0   # time.time() when the last boss death sound ends
+        self.delayed = []             # (time.time(), sound) effects waiting to play, see play_cues
         self.music_hold_until = 0.0   # level music waits until a voice line (special thanks) has finished
         self.vol_sel = 0              # VOLUME screen: selected slider (len(VOLUME_SLIDERS) = the BACK button)
         self.apply_volumes()
@@ -1698,6 +1716,7 @@ class App:
             self.state = "menu"
             self.run = None
             self.music_hold_until = 0.0
+            self.delayed = []
             if self.music:
                 self.music.stop_effects()     # don't let a voice line keep talking over the menu
 
@@ -1804,17 +1823,30 @@ class App:
 
     def play_cues(self):
         """Turn the run's sound cues into sounds. Each cue plays once; several enemies of the same kind
-        dying in the same frame give one death sound."""
+        dying in the same frame give one death sound. A "level complete" line that comes while a boss's death
+        sound is still playing waits until the roar is over, so the announcer doesn't talk over it."""
         events, self.run.events = self.run.events, []
         if not (self.music and self.meta.get("music", True)):
+            self.delayed = []
             return
+        now = time.time()
+        due = [name for at, name in self.delayed if at <= now]
+        self.delayed = [(at, name) for at, name in self.delayed if at > now]
+        for name in due:
+            self.music.effect(name, priority=True)
         for cue, value in dict.fromkeys(events):
             if cue == "death":
                 self.music.effect(DEATH_SOUNDS[value])
+            elif cue == "boss_death" and value in BOSS_DEATH_SOUNDS:
+                self.music.effect(BOSS_DEATH_SOUNDS[value], priority=True)
+                self.boss_sound_until = now + self.music.duration(BOSS_DEATH_SOUNDS[value])
             elif cue == "level_complete" and value <= len(LEVEL_COMPLETE_SOUNDS):
-                self.music.effect(LEVEL_COMPLETE_SOUNDS[value - 1])
+                if now < self.boss_sound_until:
+                    self.delayed.append((self.boss_sound_until + 0.2, LEVEL_COMPLETE_SOUNDS[value - 1]))
+                else:
+                    self.music.effect(LEVEL_COMPLETE_SOUNDS[value - 1], priority=True)
             elif cue == "level_start" and value == SPECIAL_THANKS_LEVEL:
-                self.music.effect(SPECIAL_THANKS)
+                self.music.effect(SPECIAL_THANKS, priority=True)
                 self.music_hold_until = time.time() + self.music.duration(SPECIAL_THANKS)
 
     def sync_music(self):

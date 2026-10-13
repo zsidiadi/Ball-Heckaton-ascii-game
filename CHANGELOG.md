@@ -8,9 +8,38 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-10-14
+
+`cool tower defense game.exe.py`: 2487 lines
+
+### Added
+- **Boss death sounds.** The Goblin King, Iron Golem, Swamp Hydra, Shadow Wraith and Bone Dragon each have
+  their own death sound (`assets/sfx/boss_*.wav`, constant `BOSS_DEATH_SOUNDS`). It plays **only when the boss is
+  actually killed**. It stays silent when the boss reaches the castle, or when the run ends (castle destroyed,
+  cash out, quit) with the boss still alive. Comes-back bosses (II, III, …) use the same sound. The Death sounds
+  volume slider controls it.
+- New recordings in `assets/source/`: `Goblin_king.m4a`, `Iron_golem.m4a`, `Swamp_Hydra.m4a`,
+  `Shadow_wraith.m4a`, `Bone_dragon.mp3`.
+- `tools/make_sfx.py` makes the boss sounds. Each keeps its whole sound (the hydra and wraith ones have short
+  pauses inside), skips breaths and clicks before it, and keeps its fade-out tail down to 40 dB below the peak.
+  They're levelled to -13 dBFS, a bit louder than the small enemies' -16 dBFS. Rebuilding leaves every existing
+  sound byte-for-byte the same.
+
+### Changed
+- If you pick your blessing while a boss is still roaring, the "Level N complete" line waits until the roar has
+  finished instead of talking over it.
+- Boss deaths and announcer lines (level complete, special thanks) are never dropped. When 4 effects are already
+  playing, the oldest one stops to make room. With pygame they take the longest-playing channel.
+
+### Fixed
+- An enemy killed by poison could still act in that same moment. A Swamp Hydra could regenerate back to life,
+  and an enemy poisoned to death right at the castle still walked in and damaged it. Dead enemies now do
+  nothing more and count as killed.
+
 ## [0.19.0] - 2026-10-13
 
-`cool tower defense game.exe.py`: 2455 lines
+Commit [`f3675b5`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f3675b518e4743fbf35fe7dfd6a15548ff16c8be)
+· `cool tower defense game.exe.py`: 2455 lines
 
 ### Added
 - **New blessing: Haggler** ("a random weapon costs half"). One random weapon that you can use in this run and
@@ -572,7 +601,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.19.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.16.0...v0.17.0

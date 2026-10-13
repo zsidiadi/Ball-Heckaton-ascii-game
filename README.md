@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.19.0-orange)
+![Version](https://img.shields.io/badge/version-0.20.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
@@ -333,12 +333,23 @@ point the volume stays within 2.4 dB of the track's own bar transitions (the unf
 | a grunt `o` dies | grunt death shout | `assets/sfx/grunt_death.wav` |
 | a runner `r` dies | runner death shout | `assets/sfx/runner_death.wav` |
 | a brute `B` dies | brute death shout | `assets/sfx/brute_death.wav` |
+| the **Goblin King** is killed | Goblin King's death | `assets/sfx/boss_goblin_king.wav` |
+| the **Iron Golem** is killed | Iron Golem's death | `assets/sfx/boss_iron_golem.wav` |
+| the **Swamp Hydra** is killed | Swamp Hydra's death | `assets/sfx/boss_swamp_hydra.wav` |
+| the **Shadow Wraith** is killed | Shadow Wraith's death | `assets/sfx/boss_shadow_wraith.wav` |
+| the **Bone Dragon** is killed | Bone Dragon's death | `assets/sfx/boss_bone_dragon.wav` |
 | the LEVEL 1 … 5 COMPLETE screen appears | "Level N complete" | `assets/voice/level1_complete.wav` … `level5_complete.wav` |
 | a player starts **level 6** (once per run) | special thanks from the creator | `assets/special/special_thanks_from_the_creator.wav` |
 
 - Death sounds play once per death, on top of the music. Several enemies of the same kind dying in the same
   instant (a cannon blast, a mine) give one shout instead of a pile of copies, and at most 4 effects play at once.
-  Bosses and enemies that reach the castle make no death sound.
+  Enemies that reach the castle make no death sound.
+- A boss's death sound plays only when the boss is really killed. It stays silent if the boss reaches the castle,
+  or if the run ends (castle destroyed, cash out, quit) with the boss still alive. Comes-back bosses (*II*, *III*,
+  …) use the same sound. Boss deaths and voice lines never get dropped: if 4 effects are already playing, the
+  oldest one stops to make room.
+- If you pick your blessing while a boss is still roaring, the "Level N complete" line waits until the roar
+  has finished, so the announcer doesn't talk over it.
 - On a Level Complete screen the music pauses so the voice line plays on its own. Levels 6+ have no voice
   line, so their music keeps going.
 - When level 6 starts, the special thanks plays first and level 6's music begins as soon as it ends.
@@ -346,7 +357,8 @@ point the volume stays within 2.4 dB of the track's own bar transitions (the unf
 - Quitting to the menu stops any voice line that is still speaking.
 - `tools/make_sfx.py` makes all of these from the recordings in `assets/source/`. Each death recording has three
   takes: Grunt and Runner use take 2 and Brute uses take 3, and you can change this in its `SOUNDS` table. Voice
-  lines keep the whole recording from the first to the last spoken word. Every sound is trimmed, de-clicked and
+  lines keep the whole recording from the first to the last spoken word. Boss sounds keep the whole roar, including
+  its fade-out, and are levelled a bit louder than the small enemies' shouts. Every sound is trimmed, de-clicked and
   loudness-matched.
 
 ### Volume
@@ -383,7 +395,7 @@ The **VOLUME** button in the main menu (or `V`) opens three sliders, from 0 to 1
 | Slider | Controls |
 | --- | --- |
 | Music | the menu theme and the level themes. It changes live while the menu theme plays |
-| Death sounds | the grunt, runner and brute death shouts. Changing it plays a grunt so you can hear the level |
+| Death sounds | the grunt, runner and brute death shouts and the 5 boss deaths. Changing it plays a grunt so you can hear the level |
 | Announcer | the "level complete" lines and the special thanks. Changing it plays the level 1 line |
 
 - Use up/down to pick a slider and left/right to change it, or click: a segment of the bar sets that level,
@@ -427,7 +439,7 @@ All balance numbers live at the top of `cool tower defense game.exe.py`:
 | `EDGES` | the order in which new paths enter the map |
 | `PREMIUM`, `PAYMENTS_ENABLED` | premium store items and euro prices; payments switch (off) |
 | `MUSIC_DIR`, `MENU_TRACK`, `LEVEL_TRACKS`, `MENU_STATES` | where the audio lives, which track plays on the menu screens and in each level |
-| `DEATH_SOUNDS`, `SFX_MAX_AT_ONCE`, `SFX_MIN_GAP` | each enemy's death sound, and how many effects may overlap |
+| `DEATH_SOUNDS`, `BOSS_DEATH_SOUNDS`, `SFX_MAX_AT_ONCE`, `SFX_MIN_GAP` | each enemy's and each boss's death sound, and how many effects may overlap |
 | `VOLUME_SLIDERS`, `volume_gain()` | the sliders on the Volume screen and how a slider level turns into loudness |
 | `LEVEL_COMPLETE_SOUNDS`, `SPECIAL_THANKS`, `SPECIAL_THANKS_LEVEL` | the Level Complete voice lines; the creator's thanks and the level that triggers it |
 | `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
@@ -444,10 +456,10 @@ All balance numbers live at the top of `cool tower defense game.exe.py`:
 ├── assets/
 │   ├── menu_loop.wav              # seamless music loops (made by tools/make_loops.py)
 │   ├── level1_loop.wav … level5_loop.wav
-│   ├── sfx/                       # grunt_death.wav, runner_death.wav, brute_death.wav
+│   ├── sfx/                       # grunt/runner/brute_death.wav, boss_<name>.wav for the 5 bosses
 │   ├── voice/                     # level1_complete.wav … level5_complete.wav
 │   ├── special/                   # special_thanks_from_the_creator.wav
-│   └── source/                    # originals: music .ogg files and all .m4a voice recordings
+│   └── source/                    # originals: music .ogg files, all voice recordings, boss sounds (.m4a/.mp3)
 ├── docs/
 │   ├── menu.png                   # main menu screenshot used in this README
 │   └── game.png                   # in-game screenshot used in this README
@@ -524,8 +536,10 @@ uses the bright colours directly on 16-colour terminals or through bold on 8-col
 is only drawn when the window has room for it and the terminal can show block characters.
 
 **Sound cues** (`Run.events` → `App.play_cues`): the game logic never touches audio. It only records cues,
-`("death", kind)`, `("level_complete", n)` and `("level_start", n)`, and the App turns them into sounds once
-per frame. `App.sync_music()` picks the track for the current screen, or silence.
+`("death", kind)`, `("boss_death", name)` (only for a boss that was killed, never one that leaked),
+`("level_complete", n)` and `("level_start", n)`. The App turns them into sounds once per frame, holding a level
+complete line back while a boss death is still playing (`App.delayed`). `App.sync_music()` picks the track for
+the current screen, or silence.
 
 ## Project history
 
@@ -556,7 +570,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.16.0](CHANGELOG.md#0160---2026-10-13) | 2026-10-13 | `626a1c8` | Balance: Mine costs 50 (was 25), its damage grows half as fast | 2394 lines |
 | [0.17.0](CHANGELOG.md#0170---2026-10-13) | 2026-10-13 | `1856752` | Balance: each Gold Mine you own makes the next one 50% more expensive | 2406 lines |
 | [0.18.0](CHANGELOG.md#0180---2026-10-13) | 2026-10-13 | `e67d9ac` | Frost renamed to Ice; towers show their weapon's first letter on the map | 2409 lines |
-| [0.19.0](CHANGELOG.md#0190---2026-10-13) | 2026-10-13 | tag `v0.19.0` | New blessings: Haggler (a random weapon costs half) and Royal Gift (next one is free) | 2455 lines |
+| [0.19.0](CHANGELOG.md#0190---2026-10-13) | 2026-10-13 | `f3675b5` | New blessings: Haggler (a random weapon costs half) and Royal Gift (next one is free) | 2455 lines |
+| [0.20.0](CHANGELOG.md#0200---2026-10-14) | 2026-10-14 | tag `v0.20.0` | Boss death sounds for all 5 bosses | 2487 lines |
 
 ## Contributing
 
