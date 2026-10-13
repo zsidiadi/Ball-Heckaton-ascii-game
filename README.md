@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-1.0.1-orange)
+![Version](https://img.shields.io/badge/version-1.1.0-orange)
 [![Tests](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/actions/workflows/tests.yml/badge.svg)](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/actions/workflows/tests.yml)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
@@ -153,7 +153,7 @@ python3 "cool tower defense game.exe.py" --mute   # no music or sound effects
 | `X` | Sell (50% refund); also removes Mines and Tar (button **SELL**, shows the refund) |
 | `N` | Start next wave (button **NEXT WAVE**) |
 | `F` | Game speed x1 / x2 / x3 (button shows the current speed) |
-| `P` | Pause / resume (button `\|\|`, `>` while paused) |
+| `P` | Pause / resume, music included (button `\|\|`, `>` while paused) |
 | `K` | Destroy your own castle (button **CASH OUT**) |
 | `Q` | Quit run, gems lost (button **QUIT**) |
 | `Enter` | Continue (level complete, game over) |
@@ -317,6 +317,7 @@ Every screen has its own seamless loop:
 | Level 1 … 5 | that level's theme | `assets/level1_loop.wav` … `level5_loop.wav` |
 | Level 6, 7, … | Level 1, 2, … again (like the bosses) | |
 | LEVEL COMPLETE screen (levels 1-5) | silence, so the voice line is heard | |
+| Game paused (`P`) | the level's theme pauses too and carries on from the same spot | |
 
 The menu theme keeps playing while you move between menu screens. When a run starts, the level's track
 takes over and switches when you start the next level. Back in the menu, the menu theme returns.
@@ -424,6 +425,11 @@ The `Music` class uses the first player it finds:
 If none of these exist, the game just stays silent. For a perfect loop on macOS, run
 `pip install pygame` or `brew install sox`.
 
+**Pausing** (`Music.pause` / `resume`): pygame pauses the music's channel, the Linux and macOS players are
+frozen in place (`SIGSTOP` / `SIGCONT`), and on Windows, where `winsound` can't pause, the loop is restarted
+from the moment it was paused. Every track is a seamless loop, so a copy that starts in the middle and wraps
+around sounds exactly the same.
+
 ## Tuning the game
 
 All balance numbers live at the top of `cool tower defense game.exe.py`:
@@ -473,7 +479,7 @@ All balance numbers live at the top of `cool tower defense game.exe.py`:
 ├── tests/                         # automated tests, standard library only (see CONTRIBUTING.md)
 │   ├── test_gameplay.py           # game rules, bosses, saving, whole runs played by a bot
 │   ├── test_screens.py            # every screen at every size, buttons, side panel
-│   ├── test_sound.py              # sound files and sound cues
+│   ├── test_sound.py              # sound files, sound cues, pausing the music on every player
 │   ├── test_docs.py               # README numbers and links match the code
 │   └── helpers.py                 # loads the game, fake screen, bot
 ├── .github/workflows/tests.yml    # runs the tests on Linux, macOS and Windows for every push
@@ -587,6 +593,7 @@ are the authors' local dates (UTC+3).
 | [0.20.0](CHANGELOG.md#0200---2026-10-14) | 2026-10-14 | `6aacb0a` | Boss death sounds for all 5 bosses | 2487 lines |
 | [1.0.0](CHANGELOG.md#100---2026-10-14) | 2026-10-14 | `10cdf76` | **First stable release.** Test suite + CI, CONTRIBUTING guide, README checked against the code | 2487 lines |
 | [1.0.1](CHANGELOG.md#101---2026-10-14) | 2026-10-14 | `aaca536` | Fix: one mouse click could press two buttons (e.g. BACK on the Volume screen, then a menu) | 2508 lines |
+| [1.1.0](CHANGELOG.md#110---2026-10-14) | 2026-10-14 | — | The music pauses with the game and carries on from the same spot | 2598 lines |
 
 ## Contributing
 

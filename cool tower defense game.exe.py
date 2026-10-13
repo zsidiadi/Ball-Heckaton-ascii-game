@@ -24,6 +24,7 @@ import locale
 import os
 import random
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -36,7 +37,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "1.0.1"
+VERSION = "1.1.0"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens
@@ -377,7 +378,12 @@ class Music:
                                  streamed into the player without pauses, so the loop is seamless
       afplay (macOS)           - built in; a long multi-loop copy is played, so the tiny restart gap
                                  only happens every ~5 minutes
-    If none is available, or a file is missing, the game simply stays silent."""
+    If none is available, or a file is missing, the game simply stays silent.
+
+    pause() / resume() hold the music where it is and carry on from the same spot (used when the game is
+    paused): pygame pauses its channel, the Linux/macOS players are frozen with SIGSTOP / SIGCONT, and Windows
+    (which can't pause) restarts the loop from the paused moment, which works because every track is a
+    seamless loop."""
 
     def __init__(self, folder):
         self.folder = folder
@@ -385,6 +391,10 @@ class Music:
         self.sounds = {}            # pygame Sound objects
         self.current = None
         self.playing = False
+        self.paused = False
+        self.channel = None         # pygame channel the music plays on
+        self.started_at = 0.0       # time.time() at which the current loop was at its start (for Windows resume)
+        self.rot_flip = False       # Windows resume: alternate between two temp files
         self.proc = None
         self.thread = None
         self.stop_evt = threading.Event()
@@ -491,7 +501,8 @@ class Music:
         track = self._load(name)
         if not track:
             return
-        self.current, self.playing = name, True
+        self.current, self.playing, self.paused = name, True, False
+        self.started_at = time.time()
         self.stop_evt = threading.Event()             # a fresh event per playback, so old threads stay stopped
         gain = self.gain["music"]
         if gain <= 0 and self.backend != "pygame":
@@ -503,7 +514,7 @@ class Music:
                 if name not in self.sounds:
                     self.sounds[name] = pygame.mixer.Sound(path)
                 self.sounds[name].set_volume(gain)
-                self.sounds[name].play(loops=-1)
+                self.channel = self.sounds[name].play(loops=-1)
             except Exception:
                 self.playing = False
         elif self.backend == "winsound":
@@ -524,6 +535,8 @@ class Music:
         except OSError:
             return
         self.proc = proc
+        if self.paused:
+            self._signal(proc, "SIGSTOP")                 # paused while the player was starting
         data = memoryview(pcm)
         chunk = (rate // 10) * ch * width                 # 100 ms of audio per write
         pos = 0
@@ -557,6 +570,8 @@ class Music:
             if stop_evt.is_set():                     # stopped while we were starting it
                 self._kill(proc)
                 return
+            if self.paused:
+                self._signal(proc, "SIGSTOP")
             proc.wait()
             if time.time() - started < 1.0:          # player died right away (no audio device?):
                 quick_fails += 1                      # back off, and give up after 3 tries
@@ -566,21 +581,91 @@ class Music:
 
     @staticmethod
     def _kill(proc):
-        try:
-            if proc.stdin:
-                proc.stdin.close()
-        except OSError:
-            pass
+        """Stop a player for good. Kill first, then close its input: a frozen (paused) player isn't reading,
+        so closing the pipe first would wait forever for the stuck write to finish."""
         try:
             proc.kill()
             proc.wait(timeout=1)
         except Exception:
             pass
+        try:
+            if proc.stdin:
+                proc.stdin.close()
+        except (OSError, ValueError):
+            pass
+
+    @staticmethod
+    def _signal(proc, name):
+        sig = getattr(signal, name, None)             # SIGSTOP / SIGCONT don't exist on Windows
+        if proc and sig is not None:
+            try:
+                os.kill(proc.pid, sig)
+            except OSError:
+                pass
+
+    def pause(self):
+        """Hold the music where it is (the game is paused). resume() carries on from the same spot."""
+        if not self.playing or self.paused:
+            return
+        self.paused = True
+        if self.backend == "pygame":
+            if self.channel:
+                self.channel.pause()
+        elif self.backend == "winsound":
+            import winsound
+            self.paused_at = time.time()              # resume() works out the position from this
+            winsound.PlaySound(None, 0)
+        else:
+            self._signal(self.proc, "SIGSTOP")        # freeze the player; its audio waits in the pipe
+
+    def resume(self):
+        if not self.paused:
+            return
+        self.paused = False
+        if self.backend == "pygame":
+            if self.channel:
+                self.channel.unpause()
+        elif self.backend == "winsound":
+            self._winsound_resume()
+        else:
+            self._signal(self.proc, "SIGCONT")
+
+    def _winsound_resume(self):
+        """winsound can't pause, so play the loop starting from where it was paused. Every track is a seamless
+        loop, so a copy that starts in the middle (and wraps around to the start) loops just as seamlessly."""
+        import winsound
+        track = self._load(self.current)
+        gain = self.gain["music"]
+        if not track or gain <= 0:
+            return
+        rate, ch, width, pcm = track
+        frames = len(pcm) // (ch * width)
+        played = self.paused_at - self.started_at
+        frame = int(round(played * rate)) % max(1, frames)
+        self.rot_flip = not self.rot_flip
+        if not self.tmpdir:
+            self.tmpdir = tempfile.mkdtemp(prefix="ctdg_sound_")
+        path = os.path.join(self.tmpdir, f"resume_{'a' if self.rot_flip else 'b'}.wav")
+        data = scale_pcm(pcm, width, gain)
+        cut = frame * ch * width
+        try:
+            with wave.open(path, "wb") as w:
+                w.setnchannels(ch)
+                w.setsampwidth(width)
+                w.setframerate(rate)
+                w.writeframes(data[cut:] + data[:cut])
+        except OSError:
+            path = self._scaled_path(self.current, gain)
+            frame = 0
+        self.started_at = time.time() - frame / float(rate)
+        winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_LOOP |
+                           winsound.SND_NODEFAULT)
 
     def stop(self):
         if not self.playing:
             return
         self.playing = False
+        self.paused = False
         self.stop_evt.set()
         if self.backend == "pygame":
             snd = self.sounds.get(self.current)
@@ -1872,9 +1957,14 @@ class App:
 
     def sync_music(self):
         """Menu theme on menu screens, level N's theme during level N. Silence on the LEVEL COMPLETE screen of
-        levels 1-5 (their voice line plays alone) and while the special thanks is speaking."""
+        levels 1-5 (their voice line plays alone) and while the special thanks is speaking. While the game is
+        paused the music is paused too, and it carries on from the same spot when the game does."""
         if not self.music:
             return
+        if self.meta.get("music", True) and self.state == "run" and self.run and self.run.state == "paused":
+            self.music.pause()                    # the music pauses with the game and goes on from there
+            return
+        self.music.resume()
         track = None
         if self.meta.get("music", True):
             if self.state in MENU_STATES:

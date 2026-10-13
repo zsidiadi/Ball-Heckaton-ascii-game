@@ -3,10 +3,11 @@
 The game is loaded once as the module `game`. Its save file is redirected to a temporary folder, so running
 the tests never touches your real progress, and colours are switched off so no real terminal is needed.
 """
+import os
+os.environ.setdefault("SDL_AUDIODRIVER", "dummy")      # if pygame is installed: no sound card needed, no warnings
 import curses
 import importlib.machinery
 import importlib.util
-import os
 import random
 import tempfile
 

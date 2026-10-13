@@ -8,6 +8,27 @@ Every version links to its exact changes on GitHub (a comparison with the releas
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-14
+
+`cool tower defense game.exe.py`: 2598 lines
+
+### Added
+- **The music pauses with the game.** Pressing `P` (or the `||` button) during a run pauses the level's theme
+  too, and resuming carries on from the same spot instead of starting the track again (`Music.pause` /
+  `Music.resume`). How each player does it:
+  - pygame: pauses the music's channel;
+  - Linux and macOS players (`paplay`, `aplay`, `sox`, `afplay`): the player is frozen with `SIGSTOP` and
+    continued with `SIGCONT`, so not a single sample is lost or repeated;
+  - Windows (`winsound` can't pause): the loop is restarted from the moment it was paused. Every track is a
+    seamless loop, so the copy that starts mid-track and wraps around loops just as seamlessly.
+- Tests for pausing on every player: a stand-in Linux/macOS player that records the stream (it stops while
+  paused, then goes on without restarting), a fake `winsound` (the resumed loop starts exactly where it was
+  paused), pygame's channel, and the game pausing and resuming the music with `P`. 53 tests in total.
+
+### Changed
+- A music or effect player is now killed before its input pipe is closed, so stopping the music while it's
+  paused (frozen player, nothing reading the pipe) can never hang the game.
+
 ## [1.0.1] - 2026-10-14
 
 Commit [`aaca536`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/aaca536e5c38e67a584452d0b406e5eb41a5fb56)
@@ -659,7 +680,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/aaca536...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/main...HEAD
+[1.1.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/aaca536...main
 [1.0.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/10cdf76...aaca536
 [1.0.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/6aacb0a...10cdf76
 [0.20.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/f3675b5...6aacb0a
