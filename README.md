@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-1.0.0-orange)
+![Version](https://img.shields.io/badge/version-1.0.1-orange)
 [![Tests](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/actions/workflows/tests.yml/badge.svg)](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/actions/workflows/tests.yml)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
@@ -586,6 +586,7 @@ are the authors' local dates (UTC+3).
 | [0.19.0](CHANGELOG.md#0190---2026-10-13) | 2026-10-13 | `f3675b5` | New blessings: Haggler (a random weapon costs half) and Royal Gift (next one is free) | 2455 lines |
 | [0.20.0](CHANGELOG.md#0200---2026-10-14) | 2026-10-14 | `6aacb0a` | Boss death sounds for all 5 bosses | 2487 lines |
 | [1.0.0](CHANGELOG.md#100---2026-10-14) | 2026-10-14 | `10cdf76` | **First stable release.** Test suite + CI, CONTRIBUTING guide, README checked against the code | 2487 lines |
+| [1.0.1](CHANGELOG.md#101---2026-10-14) | 2026-10-14 | — | Fix: one mouse click could press two buttons (e.g. BACK on the Volume screen, then a menu) | 2508 lines |
 
 ## Contributing
 

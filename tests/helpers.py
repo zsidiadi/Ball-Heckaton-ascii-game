@@ -72,8 +72,10 @@ def make_app(h=30, w=120, up=None, **meta):
     return scr, app
 
 
-def click(app, y, x):
-    curses.getmouse = lambda: (0, x, y, 0, 0)
+def click(app, y, x, bstate=None):
+    """One mouse event at row y, column x (a press of the left button unless `bstate` says otherwise)."""
+    bstate = curses.BUTTON1_PRESSED if bstate is None else bstate
+    curses.getmouse = lambda: (0, x, y, 0, bstate)
     app.key(curses.KEY_MOUSE)
 
 

@@ -8,6 +8,22 @@ Every version links to its exact changes on GitHub (a comparison with the releas
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-14
+
+`cool tower defense game.exe.py`: 2508 lines
+
+### Fixed
+- **One mouse click could press two buttons.** Windows and some other terminals report a click as two events
+  ("pressed", then "released" or "clicked"), and the game acted on both. Clicking **BACK** on the Volume screen
+  sent you straight into whatever menu button appeared under the mouse. In a run, one click on **UP** could
+  upgrade twice, and one click on pause could pause and unpause again. Now every click acts exactly once: on
+  the press, or on the "clicked" event in terminals that only send that (`App.one_click`).
+- Scrolling the mouse wheel or clicking the right button over a button no longer presses it.
+
+### Added
+- Tests that play out a Windows-style two-event click on every screen size, the wheel and right button, and
+  terminals that send only "clicked" events (48 tests in total).
+
 ## [1.0.0] - 2026-10-14
 
 Commit [`10cdf76`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/10cdf76a3c699726f2c9ae4bfd97fa26e1ef9ef1)
@@ -642,7 +658,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/10cdf76...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/main...HEAD
+[1.0.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/10cdf76...main
 [1.0.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/6aacb0a...10cdf76
 [0.20.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/f3675b5...6aacb0a
 [0.19.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/e67d9ac...f3675b5

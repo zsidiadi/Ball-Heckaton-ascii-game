@@ -46,6 +46,43 @@ class Menus(unittest.TestCase):
         click(app, y, x)
         self.assertEqual(app.state, "run")
 
+    def test_one_click_is_one_action(self):
+        """Windows reports a click as "pressed" + "released"/"clicked". The second half used to land on the screen
+        the first half had just opened: BACK on the Volume screen sent you straight into another menu."""
+        press, clicked, released = (game.curses.BUTTON1_PRESSED, game.curses.BUTTON1_CLICKED,
+                                    game.curses.BUTTON1_RELEASED)
+        for h, w in SIZES:
+            for second in (clicked, released):
+                scr, app = make_app(h, w)
+                app.key(ord("v"))
+                app.draw()
+                y, x = scr.find(" BACK ")
+                click(app, y, x + 2, press)
+                self.assertEqual(app.state, "menu")
+                app.draw()                                   # the menu is on screen before the release arrives
+                click(app, y, x + 2, second)
+                self.assertEqual(app.state, "menu", (h, w, second))
+                self.assertTrue(app.running)
+
+    def test_wheel_and_right_button_never_click(self):
+        scr, app = make_app()
+        app.draw()
+        y, x = scr.find("START GAME")
+        for bstate in (game.curses.BUTTON4_PRESSED, game.curses.BUTTON3_PRESSED, game.curses.BUTTON1_RELEASED, 0):
+            click(app, y, x, bstate)
+            self.assertEqual(app.state, "menu")
+
+    def test_terminals_that_only_send_clicked(self):
+        scr, app = make_app()
+        app.draw()
+        y, x = scr.find("UPGRADES")
+        click(app, y, x, game.curses.BUTTON1_CLICKED)
+        self.assertEqual(app.state, "upgrades")
+        app.state = "menu"
+        app.draw()
+        click(app, y, x, game.curses.BUTTON1_CLICKED)
+        self.assertEqual(app.state, "upgrades", "every lone 'clicked' event is a click")
+
     def test_buying_an_upgrade_spends_gems(self):
         scr, app = make_app(gems=10)
         app.key(ord("u"))
@@ -113,8 +150,13 @@ class RunScreen(unittest.TestCase):
                 y, x = next((z[0], z[1]) for z in app.zones if z[3] == ("key", ord(letter)))
                 click(app, y, x + dx)
 
+            r.gold = 1000                                    # enough for a second upgrade, so a double click would show
             press("u")
             self.assertEqual(r.towers[spot].level, 2)
+            app.draw()                                       # Windows: the same click's "clicked" half
+            y, x = next((z[0], z[1]) for z in app.zones if z[3] == ("key", ord("u")))
+            click(app, y, x + 1, game.curses.BUTTON1_CLICKED)
+            self.assertEqual(r.towers[spot].level, 2, "one click on UP is one upgrade")
             press("f")
             self.assertEqual(r.speed, 2)
             press("n")

@@ -36,7 +36,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens
@@ -1553,6 +1553,8 @@ class Run:
 
 # ------------------------------------------------------------------ app / drawing
 ENTER_KEYS = (10, 13, curses.KEY_ENTER, ord(" "))
+# mouse events that count as a click (besides BUTTON1_PRESSED); see App.one_click
+CLICK_EVENTS = curses.BUTTON1_CLICKED | curses.BUTTON1_DOUBLE_CLICKED | curses.BUTTON1_TRIPLE_CLICKED
 BACK_KEYS = (27, curses.KEY_BACKSPACE, 127, 8, ord("q"), ord("Q"), ord("b"), ord("B"))
 UP_KEYS = (curses.KEY_UP, ord("w"), ord("W"))
 DOWN_KEYS = (curses.KEY_DOWN, ord("s"), ord("S"))
@@ -1580,6 +1582,7 @@ class App:
         self.anim = 0.0
         self.btn_flash = {}           # panel button key -> self.anim time until which it is drawn lit
         self.boss_sound_until = 0.0   # time.time() when the last boss death sound ends
+        self.press_at = 0.0           # time.time() of the last mouse press, see one_click
         self.delayed = []             # (time.time(), sound) effects waiting to play, see play_cues
         self.music_hold_until = 0.0   # level music waits until a voice line (special thanks) has finished
         self.vol_sel = 0              # VOLUME screen: selected slider (len(VOLUME_SLIDERS) = the BACK button)
@@ -1627,11 +1630,29 @@ class App:
         return top, left, bw
 
     # -------------------------------------------------------------- input
+    def one_click(self, bstate):
+        """One click = one action. Many terminals (Windows, some macOS ones) report a single click as two
+        events: "pressed", then "released" or "clicked". Acting on both made one click press two buttons:
+        BACK on the Volume screen, then whatever menu button appeared under the mouse. Only the press counts
+        (or the "clicked" event on terminals that send no press). Releases, the mouse wheel and other buttons
+        are ignored."""
+        if bstate & curses.BUTTON1_PRESSED:
+            self.press_at = time.time()
+            return True
+        if not bstate & CLICK_EVENTS:
+            return False
+        if time.time() - self.press_at < 2.0:        # the end of a click whose press was already handled
+            self.press_at = 0.0
+            return False
+        return True
+
     def key(self, k):
         if k == curses.KEY_MOUSE:
             try:
-                _, mx, my, _, _ = curses.getmouse()
+                _, mx, my, _, bstate = curses.getmouse()
             except curses.error:
+                return
+            if not self.one_click(bstate):
                 return
             for y, x0, x1, action in self.zones:              # buttons (menus, and the panel in a run)
                 if my == y and x0 <= mx < x1:
