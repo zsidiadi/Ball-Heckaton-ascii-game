@@ -10,7 +10,8 @@ Every version links to its exact changes on GitHub (a comparison with the releas
 
 ## [1.0.1] - 2026-10-14
 
-`cool tower defense game.exe.py`: 2508 lines
+Commit [`aaca536`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/aaca536e5c38e67a584452d0b406e5eb41a5fb56)
+· `cool tower defense game.exe.py`: 2508 lines
 
 ### Fixed
 - **One mouse click could press two buttons.** Windows and some other terminals report a click as two events
@@ -658,8 +659,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/main...HEAD
-[1.0.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/10cdf76...main
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/aaca536...HEAD
+[1.0.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/10cdf76...aaca536
 [1.0.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/6aacb0a...10cdf76
 [0.20.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/f3675b5...6aacb0a
 [0.19.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/e67d9ac...f3675b5
