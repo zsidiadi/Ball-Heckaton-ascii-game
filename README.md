@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.15.0-orange)
+![Version](https://img.shields.io/badge/version-0.15.1-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
@@ -76,7 +76,9 @@ wave is running).
 - A terminal of at least **70×22** characters. Bigger is better: the map fills the window next to the side
   panel (80 columns gives a 26-tile-wide map, 200 columns gives 86).
 - The castle next to the menu title needs a window at least **105 columns** wide and a UTF-8 terminal (every
-  modern terminal, including Windows Terminal). In smaller windows the menu just shows the title.
+  modern terminal, including Windows Terminal). From **138 columns** the title is exactly centred with the
+  castle right beside it. In narrower windows the title moves right just enough to make room for the castle,
+  and below 105 columns the menu shows only the title.
 - Windows only: `pip install windows-curses`
 - Sound: nothing to install on Windows, macOS or most Linux systems (see [How the sound plays](#how-the-sound-plays)).
 
@@ -418,7 +420,7 @@ All balance numbers live at the top of `cool tower defense game.exe.py`:
 | `LEVEL_COMPLETE_SOUNDS`, `SPECIAL_THANKS`, `SPECIAL_THANKS_LEVEL` | the Level Complete voice lines; the creator's thanks and the level that triggers it |
 | `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
 | `PANEL_BUTTONS`, `BUTTON_ROWS`, `BTN_FLASH` | the side-panel buttons: colour of each, how they're grouped into rows, how long one lights up when pressed |
-| `MENU_CASTLE`, `ART_COLORS`, `ART_SHIFT` | the castle beside the menu title: pixel rows (one letter per pixel), the colour of each letter, and how far left of centre the castle + title sit |
+| `MENU_CASTLE`, `ART_COLORS`, `ART_GAP` | the castle beside the menu title: pixel rows (one letter per pixel), the colour of each letter, and the gap between castle and title |
 | `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and width of the side panel (24) |
 | `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 150×70) |
 
@@ -532,7 +534,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.13.1](CHANGELOG.md#0131---2026-10-13) | 2026-10-13 | `26f9e2f` | Game file is `cool tower defense game.exe.py`: the game's name, still a `.py` file | 2149 lines |
 | [0.14.0](CHANGELOG.md#0140---2026-10-13) | 2026-10-13 | `a773bc8` | Pixel-art castle on a hill next to the title on the main menu | 2277 lines |
 | [0.14.1](CHANGELOG.md#0141---2026-10-13) | 2026-10-13 | `ab53c85` | Castle and title moved a bit to the left | 2279 lines |
-| [0.15.0](CHANGELOG.md#0150---2026-10-13) | 2026-10-13 | tag `v0.15.0` | Coloured, clickable buttons in the side panel | 2392 lines |
+| [0.15.0](CHANGELOG.md#0150---2026-10-13) | 2026-10-13 | `8e1e4ae` | Coloured, clickable buttons in the side panel | 2392 lines |
+| [0.15.1](CHANGELOG.md#0151---2026-10-13) | 2026-10-13 | tag `v0.15.1` | Menu title centred again, castle right next to it | 2393 lines |
 
 ## Contributing
 
