@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.15.1-orange)
+![Version](https://img.shields.io/badge/version-0.16.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
@@ -184,7 +184,7 @@ Placed directly with one key (no structure needed). All of them are gem unlocks.
 | Key | Item | Map | Where | Cost | Effect | Unlock |
 | --- | --- | --- | --- | --- | --- | --- |
 | G | Gold Mine | `$1` | any empty grass tile | 60g | +12 gold after every wave (+8 per upgrade level, max level 5). Deals no damage | 8 gems |
-| M | Mine | `**` | on the enemy path | 25g | explodes once when an enemy steps on it, damaging every enemy within 1.5 tiles (24 dmg, grows with the wave like enemy HP). Then it's gone | 6 gems |
+| M | Mine | `**` | on the enemy path | 50g | explodes once when an enemy steps on it, damaging every enemy within 1.5 tiles. Then it's gone. 24 dmg on wave 1, +12.5% per wave (half as fast as enemy HP grows) | 6 gems |
 | T | Tar | `~~` | on the enemy path | 30g | enemies on it move at half speed. Deals no damage and lasts forever (the Shadow Wraith ignores it) | 5 gems |
 
 Only one Mine or Tar fits on each path tile. `X` removes it for half its price.
@@ -404,7 +404,7 @@ All balance numbers live at the top of `cool tower defense game.exe.py`:
 | Constant | What it controls |
 | --- | --- |
 | `WEAPONS` | cost, damage, range, cooldown, specials and gem unlock price of each weapon |
-| `BUILDINGS` | Gold Mine income, Mine damage/radius, costs and unlock prices of the placeables |
+| `BUILDINGS` | Gold Mine income, Mine damage/growth per wave/radius, costs and unlock prices of the placeables |
 | `ENEMIES` | HP, speed, castle damage and gold of each normal enemy |
 | `BOSSES` | name, sprite, HP, speed, damage, rewards and ability of the 5 bosses |
 | `HP_GROWTH` | how fast enemies get tougher each wave (default `1.25`) |
@@ -535,7 +535,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.14.0](CHANGELOG.md#0140---2026-10-13) | 2026-10-13 | `a773bc8` | Pixel-art castle on a hill next to the title on the main menu | 2277 lines |
 | [0.14.1](CHANGELOG.md#0141---2026-10-13) | 2026-10-13 | `ab53c85` | Castle and title moved a bit to the left | 2279 lines |
 | [0.15.0](CHANGELOG.md#0150---2026-10-13) | 2026-10-13 | `8e1e4ae` | Coloured, clickable buttons in the side panel | 2392 lines |
-| [0.15.1](CHANGELOG.md#0151---2026-10-13) | 2026-10-13 | tag `v0.15.1` | Menu title centred again, castle right next to it | 2393 lines |
+| [0.15.1](CHANGELOG.md#0151---2026-10-13) | 2026-10-13 | `f7c08a8` | Menu title centred again, castle right next to it | 2393 lines |
+| [0.16.0](CHANGELOG.md#0160---2026-10-13) | 2026-10-13 | tag `v0.16.0` | Balance: Mine costs 50 (was 25), its damage grows half as fast | 2394 lines |
 
 ## Contributing
 

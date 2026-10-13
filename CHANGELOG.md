@@ -8,9 +8,24 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-10-13
+
+`cool tower defense game.exe.py`: 2394 lines
+
+### Changed
+- **Balance: the Mine was too strong.**
+  - **Price doubled:** 50 gold (was 25). Selling one still refunds half, now 25.
+  - **Damage scaling halved:** the blast still does 24 on wave 1 but grows **+12.5% per wave** (was +25%,
+    the same rate as enemy HP), set by the new `dmg_growth` value in `BUILDINGS["mine"]`. Blast damage at
+    wave 5 / 10 / 15 / 20 is now 38 / 69 / 125 / 225 (was 59 / 179 / 546 / 1665). A mine still clears small
+    enemies early on, but late in a run it's a chunk of damage instead of an instant kill.
+  - The Sharpened Steel upgrade still raises mine damage too, as before.
+- README: Mine row in the buildings table, the tuning table and the in-game screenshot show the new numbers.
+
 ## [0.15.1] - 2026-10-13
 
-`cool tower defense game.exe.py`: 2393 lines
+Commit [`f7c08a8`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f7c08a85e3d819bdf0b6d6d2b31d3637488f78e8)
+· `cool tower defense game.exe.py`: 2393 lines
 
 ### Changed
 - **The menu title is centred again**, lined up with the buttons below it. The castle on its hill sits right
@@ -500,7 +515,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.15.1...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.1...v0.15.0
 [0.14.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.0...v0.14.1

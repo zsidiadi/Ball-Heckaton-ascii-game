@@ -36,7 +36,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.15.1"
+VERSION = "0.16.0"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens
@@ -118,8 +118,8 @@ WEAPON_ORDER = ["bow", "gun", "cannon", "frost", "flame", "poison", "sniper", "l
 BUILDINGS = {
     "goldmine": dict(key="g", name="Gold Mine", short="GoldMn", ch="$", cost=60, color=GOLD, unlock=8,
                      where="grass", income=12, income_lv=8, info="+gold after every wave, no damage"),
-    "mine":     dict(key="m", name="Mine", short="Mine", ch="*", cost=25, color=RED, unlock=6,
-                     where="path", dmg=24, radius=1.5, info="on the path, explodes once"),
+    "mine":     dict(key="m", name="Mine", short="Mine", ch="*", cost=50, color=RED, unlock=6,
+                     where="path", dmg=24, dmg_growth=1.125, radius=1.5, info="on the path, explodes once"),
     "tar":      dict(key="t", name="Tar", short="Tar", ch="~", cost=30, color=C_FROST, unlock=5,
                      where="path", info="on the path, slows enemies 50%"),
 }
@@ -1027,7 +1027,8 @@ class Run:
 
     def mine_damage(self, wave=None):
         wave = wave or max(1, self.wave + (1 if self.state != "wave" else 0))
-        return BUILDINGS["mine"]["dmg"] * HP_GROWTH ** (wave - 1) * self.dmg_mult
+        b = BUILDINGS["mine"]                  # +12.5% damage per wave: half the enemies' +25% HP per wave
+        return b["dmg"] * b["dmg_growth"] ** (wave - 1) * self.dmg_mult
 
     def wave_in_level(self):
         return (self.wave - 1) % WAVES_PER_LEVEL + 1 if self.wave else 0
