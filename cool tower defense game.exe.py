@@ -20,6 +20,7 @@ Run:  python3 "cool tower defense game.exe.py"          (Windows: py "cool tower
 import array
 import curses
 import json
+import locale
 import os
 import random
 import shutil
@@ -35,7 +36,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.13.1"
+VERSION = "0.14.0"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens
@@ -190,6 +191,111 @@ TITLE = [
         '                                |___/',
     ],
 ]
+
+# Main-menu art: the castle on its hill, drawn to the left of the title when the window is wide enough.
+# Pixel art with two pixels per terminal row (drawn with the half blocks U+2580 / U+2584 and the full block
+# U+2588). "." is empty, every other letter is a colour from ART_COLORS. The yellow line is the enemy path.
+MENU_CASTLE = [
+    "...............................",
+    "...............sRR.............",
+    "...............sR..............",
+    "...............s...............",
+    "........BBs.W.WsW.s..sBB.......",
+    ".........Bs.WWWWWWs..sB........",
+    "..........s.WWWWWWs..s.........",
+    "........W.W.WWWYWWsW.W.........",
+    "........WWWsWWWYWWsWWWs........",
+    "........WWWsWWWWWWsWWWs........",
+    "........W.WsWWWyWWsWW.s........",
+    "........WWWsWWyyyWsWWWs........",
+    "........WWWsWWyyyWsWWWs........",
+    "........WWWsWWyyyWsWWWsg.......",
+    "......GGWWWsWWyyyWsWWWsGggg....",
+    "....GGGGGGGGGGyyGGGGGGGGGGggg..",
+    "...GGGGGGGGyyyGGGGGGGGGGGGGggg.",
+    "..GGGGGGyyyGGGGGGGGGGGGGGGGGggg",
+    ".GGGGyyyGGGGGGGGGGGGGGGGGGGGGgg",
+    "yyyyyGGGGGGGGGGGGGGGGGGGGGGGGgg",
+]
+ART_COLORS = {                           # letter -> (curses colour, bright?)
+    "W": (curses.COLOR_WHITE, False),    # stone
+    "s": (curses.COLOR_BLACK, True),     # grey: wall shadows and flag poles
+    "R": (curses.COLOR_RED, True),       # banner
+    "B": (curses.COLOR_BLUE, True),      # flags
+    "Y": (curses.COLOR_YELLOW, True),    # lit window
+    "y": (curses.COLOR_YELLOW, False),   # wooden gate and the path
+    "G": (curses.COLOR_GREEN, True),     # hill
+    "g": (curses.COLOR_GREEN, False),    # hill in shadow
+}
+ART_GAP = 3                              # columns between the castle and the title
+ART_PAIR_BASE = 32                       # colour pairs for the art start here (the game's own use 1-13)
+ART_ATTRS = {}                           # (char, top, bottom) -> (char to draw, attribute); see init_art_colors
+
+
+def art_cells(art):
+    """Pixel rows -> terminal rows of (char, top colour, bottom colour). One cell shows two pixels."""
+    if len(art) % 2:
+        art = art + ["." * len(art[0])]
+    rows = []
+    for y in range(0, len(art), 2):
+        row = []
+        for t, b in zip(art[y], art[y + 1]):
+            t, b = (None if t == "." else t), (None if b == "." else b)
+            if t is None and b is None:
+                row.append((" ", None, None))
+            elif t == b:
+                row.append(("█", t, None))            # full block
+            elif t is None:
+                row.append(("▄", b, None))            # lower half
+            elif b is None:
+                row.append(("▀", t, None))            # upper half
+            else:
+                row.append(("▀", t, b))               # upper half, lower half shown by the background
+        rows.append(row)
+    return rows
+
+
+MENU_CASTLE_CELLS = art_cells(MENU_CASTLE)
+
+
+def init_art_colors(default_bg):
+    """Colour pairs for the menu art. Terminals with 16+ colours get the bright colours directly (also as
+    backgrounds). 8-colour terminals get them through A_BOLD, so a two-colour cell is flipped when needed to
+    keep its bright half in the foreground."""
+    rich = curses.COLORS >= 16
+    pairs = {}                                                  # (fg, bg) -> pair number
+
+    def col(key):
+        c, bright = ART_COLORS[key]
+        return c + 8 if bright and rich else c
+
+    for row in MENU_CASTLE_CELLS:
+        for cell in row:
+            ch, top, bottom = cell
+            if ch == " " or cell in ART_ATTRS:
+                continue
+            fg_key, bg_key = top, bottom
+            if bottom and not rich and ART_COLORS[bottom][1] and not ART_COLORS[top][1]:
+                ch, fg_key, bg_key = "▄", bottom, top     # draw the bright half as the foreground
+            attr = curses.A_BOLD if ART_COLORS[fg_key][1] and not rich else 0
+            fg, bg = col(fg_key), (col(bg_key) if bg_key else default_bg)
+            if (fg, bg) not in pairs:
+                pid = ART_PAIR_BASE + len(pairs)
+                if pid >= curses.COLOR_PAIRS:                   # out of colour pairs: plain silhouette
+                    ART_ATTRS[cell] = ("█" if bottom else cell[0], 0)
+                    continue
+                curses.init_pair(pid, fg, bg)
+                pairs[(fg, bg)] = pid
+            ART_ATTRS[cell] = (ch, curses.color_pair(pairs[(fg, bg)]) | attr)
+
+
+def can_draw_blocks(scr):
+    """True when the terminal's encoding has the block characters (any UTF-8 terminal, the Windows console)."""
+    try:
+        "▀▄█".encode(getattr(scr, "encoding", None) or "utf-8")
+        return True
+    except (LookupError, UnicodeError):
+        return False
 
 
 def dist2(a, b):
@@ -1341,6 +1447,7 @@ class App:
     def __init__(self, scr, music=None):
         self.scr = scr
         self.music = music
+        self.art_ok = can_draw_blocks(scr)   # block characters for the menu castle
         self.meta = load_meta()
         self.state = "menu"        # menu, upgrades, premium, run
         self.run = None
@@ -1661,9 +1768,18 @@ class App:
         step = 2 if roomy else 1
         total = sum(len(b) + 1 for b in TITLE) + (2 if roomy else 0) + 2 + len(MENU_ITEMS) * step + 2
         y = max(1, 1 + (h - 2 - total) // 2)
+        # the castle on its hill goes left of the title when it fits; the two are centred as one group
+        art = MENU_CASTLE_CELLS
+        aw = len(art[0])
+        tw = max(len(l) for b in TITLE for l in b)
+        show_art = self.art_ok and w >= aw + ART_GAP + tw + 4
+        tx = (w - (aw + ART_GAP + tw)) // 2 + aw + ART_GAP if show_art else 0
+        if show_art:
+            title_h = sum(len(b) + 1 for b in TITLE) - 1
+            self.draw_art(y + title_h - len(art), tx - ART_GAP - aw, art)
         for block in TITLE:
             bw = max(len(l) for l in block)
-            x = max(1, (w - bw) // 2)
+            x = tx + (tw - bw) // 2 if show_art else max(1, (w - bw) // 2)
             for line in block:
                 self.put(y, x, line, self.color(CASTLE) | curses.A_BOLD)
                 y += 1
@@ -1679,6 +1795,13 @@ class App:
             y += step
         y += 1
         self.center(y, "ENTER/click  U upgrades  P premium  V volume  M sound  Q quit", curses.A_DIM)
+
+    def draw_art(self, y, x, cells):
+        for r, row in enumerate(cells):
+            for c, cell in enumerate(row):
+                if cell[0] != " ":
+                    ch, attr = ART_ATTRS.get(cell, ("█" if cell[2] else cell[0], 0))   # no colours: silhouette
+                    self.put(y + r, x + c, ch, attr)
 
     def draw_upgrades(self):
         m = self.meta
@@ -2114,6 +2237,7 @@ def main(scr, music=None):
         }
         for pid, col in pairs.items():
             curses.init_pair(pid, col, bg)
+        init_art_colors(bg)
 
     h, w = scr.getmaxyx()
     if h < MIN_H or w < MIN_W:
@@ -2139,6 +2263,10 @@ def main(scr, music=None):
 
 if __name__ == "__main__":
     os.environ.setdefault("ESCDELAY", "25")   # make ESC react instantly
+    try:
+        locale.setlocale(locale.LC_CTYPE, "")  # let curses draw the block characters of the menu castle
+    except locale.Error:
+        pass
     music = None if "--mute" in sys.argv else Music(MUSIC_DIR)
     try:
         curses.wrapper(main, music)

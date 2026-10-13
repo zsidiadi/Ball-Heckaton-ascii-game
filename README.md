@@ -6,41 +6,16 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.13.1-orange)
+![Version](https://img.shields.io/badge/version-0.14.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
 **5 big bosses**, and every new level opens **one more path** to your castle. When the castle falls you
 keep your **gems** and spend them on permanent upgrades for the next run.
 
-**Main menu**
+**Main menu**: a pixel-art castle on a green hill sits next to the title, with the enemy path winding up to its gate.
 
-```
-  cool tower defense game.exe                                      [_] [#] [X]
-|                                                                             |
-|                                _   _                                        |
-|                    __ ___  ___| | | |_ _____ __ _____ _ _                   |
-|                   / _/ _ \/ _ \ | |  _/ _ \ V  V / -_) '_|                  |
-|                   \__\___/\___/_|  \__\___/\_/\_/\___|_|                    |
-|                                                                             |
-|         _      __                                                           |
-|      __| |___ / _|___ _ _  ___ ___   __ _ __ _ _ __  ___   _____ _____      |
-|     / _` / -_)  _/ -_) ' \(_-</ -_) / _` / _` | '  \/ -_)_/ -_) \ / -_)     |
-|     \__,_\___|_| \___|_||_/__/\___| \__, \__,_|_|_|_\___(_)___/_\_\___|     |
-|                                     |___/                                   |
-|                                                                             |
-|                 GEMS 42    best: level 3, wave 14    runs 7                 |
-|                                                                             |
-|                          >  [    START GAME    ]  <                         |
-|                             [     UPGRADES     ]                            |
-|                             [     PREMIUM      ]                            |
-|                             [      VOLUME      ]                            |
-|                             [       QUIT       ]                            |
-|                                                                             |
-|        ENTER/click  U upgrades  P premium  V volume  M sound  Q quit        |
-|                                                                             |
-+- [M] sound: ON --------------------------------------------------- v0.12.0 -+
-```
+![Main menu of cool tower defense game.exe: a pixel-art castle on a green hill next to the title](docs/menu.png)
 
 **In a run:** level 1's boss, the Goblin King, summoning goblins. Towers `A` `G` `C` `S` `P` `F` `L` `Z`, a
 gold mine `$1`, a mine `**` and tar `~~` are on the map, and the side panel shows the boss bar and every
@@ -109,7 +84,8 @@ weapon's stats.
   announcer each have their own volume slider.
 - **Full-screen layout.** The map takes every column of your terminal except a slim 24-column side panel.
   You can play with the keyboard or the mouse.
-- **Retro menu.** A window-style main menu with START GAME, UPGRADES, PREMIUM, VOLUME and QUIT buttons.
+- **Retro menu.** A window-style main menu with START GAME, UPGRADES, PREMIUM, VOLUME and QUIT buttons, and a
+  pixel-art castle on a hill next to the title, built from terminal block characters.
 - **Premium store (preview).** A real-money shop for a Nuke, gem packs and more. Payments aren't connected yet,
   so nothing can actually be bought.
 - **Zero dependencies.** One Python file using only the standard library. The music and sound play with
@@ -122,6 +98,8 @@ weapon's stats.
 - Python **3.8+**
 - A terminal of at least **70×22** characters. Bigger is better: the map fills the window next to the side
   panel (80 columns gives a 26-tile-wide map, 200 columns gives 86).
+- The castle next to the menu title needs a window at least **105 columns** wide and a UTF-8 terminal (every
+  modern terminal, including Windows Terminal). In smaller windows the menu just shows the title.
 - Windows only: `pip install windows-curses`
 - Sound: nothing to install on Windows, macOS or most Linux systems (see [How the sound plays](#how-the-sound-plays)).
 
@@ -462,6 +440,7 @@ All balance numbers live at the top of `cool tower defense game.exe.py`:
 | `VOLUME_SLIDERS`, `volume_gain()` | the sliders on the Volume screen and how a slider level turns into loudness |
 | `LEVEL_COMPLETE_SOUNDS`, `SPECIAL_THANKS`, `SPECIAL_THANKS_LEVEL` | the Level Complete voice lines; the creator's thanks and the level that triggers it |
 | `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
+| `MENU_CASTLE`, `ART_COLORS` | the castle beside the menu title: pixel rows (one letter per pixel) and the colour of each letter |
 | `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and width of the side panel (24) |
 | `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 150×70) |
 
@@ -477,6 +456,8 @@ All balance numbers live at the top of `cool tower defense game.exe.py`:
 │   ├── voice/                     # level1_complete.wav … level5_complete.wav
 │   ├── special/                   # special_thanks_from_the_creator.wav
 │   └── source/                    # originals: music .ogg files and all .m4a voice recordings
+├── docs/
+│   └── menu.png                   # main menu screenshot used in this README
 ├── tools/
 │   ├── make_loops.py              # rebuilds the music loops from the originals (numpy + ffmpeg)
 │   └── make_sfx.py                # makes the death sounds and voice lines from the recordings (numpy + ffmpeg)
@@ -529,6 +510,13 @@ weapons (they can be upgraded and sold) and pay out in `wave_cleared()`. Mines a
 map of path tiles. Each frame, enemies standing on Tar get slowed, and any Mine with an enemy on its tile
 calls `explode()`.
 
+**Menu art** (`MENU_CASTLE`, `art_cells`, `init_art_colors`, `App.draw_art`): the castle beside the title is
+pixel art stored as rows of letters, one letter per pixel. `art_cells` packs two pixel rows into one terminal
+row with the half blocks `▀` `▄` and the full block `█`. A cell whose two pixels differ uses the background
+colour for the lower one. `init_art_colors` makes a colour pair for each combination (13 in total) and
+uses the bright colours directly on 16-colour terminals or through bold on 8-colour ones. The castle
+is only drawn when the window has room for it and the terminal can show block characters.
+
 **Sound cues** (`Run.events` → `App.play_cues`): the game logic never touches audio. It only records cues,
 `("death", kind)`, `("level_complete", n)` and `("level_start", n)`, and the App turns them into sounds once
 per frame. `App.sync_music()` picks the track for the current screen, or silence.
@@ -554,7 +542,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.11.0](CHANGELOG.md#0110---2026-10-13) | 2026-10-13 | `f23ef8f` | Level complete voice lines (1-5), special thanks at level 6 | 1980 lines |
 | [0.12.0](CHANGELOG.md#0120---2026-10-13) | 2026-10-13 | `8d963d9` | VOLUME screen: separate sliders for music, death sounds and announcer; README refresh | 2148 lines |
 | [0.13.0](CHANGELOG.md#0130---2026-10-13) | 2026-10-13 | `80fc4ec` | Game file renamed from `keep.py` to `cool tower defense game.exe` | 2150 lines |
-| [0.13.1](CHANGELOG.md#0131---2026-10-13) | 2026-10-13 | tag `v0.13.1` | Game file is `cool tower defense game.exe.py`: the game's name, still a `.py` file | 2149 lines |
+| [0.13.1](CHANGELOG.md#0131---2026-10-13) | 2026-10-13 | `26f9e2f` | Game file is `cool tower defense game.exe.py`: the game's name, still a `.py` file | 2149 lines |
+| [0.14.0](CHANGELOG.md#0140---2026-10-13) | 2026-10-13 | tag `v0.14.0` | Pixel-art castle on a hill next to the title on the main menu | 2277 lines |
 
 ## Contributing
 

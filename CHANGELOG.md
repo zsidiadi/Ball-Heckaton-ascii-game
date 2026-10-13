@@ -8,9 +8,30 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-13
+
+`cool tower defense game.exe.py`: 2277 lines
+
+### Added
+- **A castle on a hill next to the title on the main menu.** It's pixel art drawn with terminal block
+  characters (`▀` `▄` `█`): a grey stone castle with a red banner, blue flags, a lit window and a wooden gate,
+  on a green hill with the yellow enemy path winding up to the gate. The castle and the title are centred
+  together.
+- The castle is shown when the window is at least 105 columns wide and the terminal can display block
+  characters (any UTF-8 terminal, including Windows Terminal). Otherwise the menu shows only the title, as
+  before. On 8-colour terminals the bright colours come from bold; with no colours it's drawn as a silhouette.
+- `docs/menu.png`: a screenshot of the new main menu, used at the top of the README.
+
+### Changed
+- The game sets the terminal's character encoding from your system language settings at start-up, so curses
+  can draw the block characters.
+- README: the main-menu screenshot is now an image (block art needs colour to read well), plus notes on the
+  window size the castle needs, the new `MENU_CASTLE` / `ART_COLORS` constants, and how the menu art is drawn.
+
 ## [0.13.1] - 2026-10-13
 
-`cool tower defense game.exe.py`: 2149 lines
+Commit [`26f9e2f`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/26f9e2f306a49ad1063e63f20cc933ac0ce03059)
+· `cool tower defense game.exe.py`: 2149 lines
 
 ### Fixed
 - **The game file is `cool tower defense game.exe.py`.** It has the game's name and keeps the `.py` format. 0.13.0
@@ -425,7 +446,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.1...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.11.0...v0.12.0
