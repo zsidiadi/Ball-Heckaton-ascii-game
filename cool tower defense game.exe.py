@@ -36,7 +36,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.14.1"
+VERSION = "0.15.0"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens
@@ -288,6 +288,53 @@ def init_art_colors(default_bg):
                 curses.init_pair(pid, fg, bg)
                 pairs[(fg, bg)] = pid
             ART_ATTRS[cell] = (ch, curses.color_pair(pairs[(fg, bg)]) | attr)
+
+
+# Buttons at the bottom of the side panel in a run. Each one is a white key cap with its letter, then a coloured
+# label. Press the key or click the button. key -> (label colour, bright?, text colour on the label)
+PANEL_BUTTONS = {
+    "u": (curses.COLOR_YELLOW, True, curses.COLOR_BLACK),     # upgrade
+    "x": (curses.COLOR_RED, False, curses.COLOR_WHITE),       # sell
+    "n": (curses.COLOR_GREEN, True, curses.COLOR_BLACK),      # next wave
+    "f": (curses.COLOR_CYAN, True, curses.COLOR_BLACK),       # speed
+    "p": (curses.COLOR_BLUE, True, curses.COLOR_WHITE),       # pause
+    "k": (curses.COLOR_MAGENTA, False, curses.COLOR_WHITE),   # cash out
+    "q": (curses.COLOR_WHITE, False, curses.COLOR_BLACK),     # quit
+}
+BUTTON_ROWS = [("u", "x"), ("n", "f", "p"), ("k", "q")]
+BTN_PAIR_BASE = 16                       # colour pairs for the buttons (16-25)
+BTN_FLASH = 0.15                         # seconds a button lights up after it is pressed
+BTN_ATTRS = {}                           # "cap", "off" and each key -> attribute; see init_button_colors
+
+
+def init_button_colors(default_bg):
+    """Colour pairs for the panel buttons. Without colours they fall back to reverse video (see App.button_attrs)."""
+    if BTN_PAIR_BASE + len(PANEL_BUTTONS) + 2 > curses.COLOR_PAIRS:
+        return
+    rich = curses.COLORS >= 16
+    white = 15 if rich else curses.COLOR_WHITE
+    pid = BTN_PAIR_BASE
+
+    def pair(fg, bg):
+        nonlocal pid
+        curses.init_pair(pid, fg, bg)
+        pid += 1
+        return curses.color_pair(pid - 1)
+
+    # black text is never bold: many terminals (Windows Terminal too) turn bold black into grey
+    BTN_ATTRS["cap"] = pair(curses.COLOR_BLACK, white)
+    for key, (col, bright, text) in PANEL_BUTTONS.items():
+        bg = col + 8 if bright and rich else col
+        if text == curses.COLOR_WHITE:
+            BTN_ATTRS[key] = pair(white, bg) | curses.A_BOLD
+        else:
+            BTN_ATTRS[key] = pair(curses.COLOR_BLACK, bg)
+    if curses.COLORS >= 256:
+        BTN_ATTRS["off"] = pair(245, 237)                      # greyed out: grey text on a dark grey button
+    elif rich:
+        BTN_ATTRS["off"] = pair(curses.COLOR_WHITE, 8)
+    else:
+        BTN_ATTRS["off"] = pair(curses.COLOR_WHITE, default_bg) | curses.A_DIM
 
 
 def can_draw_blocks(scr):
@@ -1461,6 +1508,7 @@ class App:
         self.prem_msg = ""
         self.zones = []            # clickable areas: (y, x0, x1, action)
         self.anim = 0.0
+        self.btn_flash = {}           # panel button key -> self.anim time until which it is drawn lit
         self.music_hold_until = 0.0   # level music waits until a voice line (special thanks) has finished
         self.vol_sel = 0              # VOLUME screen: selected slider (len(VOLUME_SLIDERS) = the BACK button)
         self.apply_volumes()
@@ -1513,14 +1561,13 @@ class App:
                 _, mx, my, _, _ = curses.getmouse()
             except curses.error:
                 return
-            if self.state == "run":
-                if mx >= MAP_X:
-                    self.run.click((mx - MAP_X) // 2, my - MAP_Y)
+            for y, x0, x1, action in self.zones:              # buttons (menus, and the panel in a run)
+                if my == y and x0 <= mx < x1:
+                    self.do(action)
+                    break
             else:
-                for y, x0, x1, action in self.zones:
-                    if my == y and x0 <= mx < x1:
-                        self.do(action)
-                        break
+                if self.state == "run" and mx >= MAP_X:
+                    self.run.click((mx - MAP_X) // 2, my - MAP_Y)
             return
         if self.state == "menu":
             n = len(MENU_ITEMS)
@@ -1585,13 +1632,20 @@ class App:
             elif k in BACK_KEYS:
                 self.do("back")
         else:
-            self.run.key(k)
-            if self.run.done:
-                self.state = "menu"
-                self.run = None
-                self.music_hold_until = 0.0
-                if self.music:
-                    self.music.stop_effects()     # don't let a voice line keep talking over the menu
+            self.run_key(k)
+
+    def run_key(self, k):
+        """A key in a run, typed or from clicking a panel button. Pressing a button's key lights it up."""
+        ch = chr(k).lower() if 0 <= k < 256 else ""
+        if ch in PANEL_BUTTONS and self.button_specs()[ch][1]:
+            self.btn_flash[ch] = self.anim + BTN_FLASH
+        self.run.key(k)
+        if self.run.done:
+            self.state = "menu"
+            self.run = None
+            self.music_hold_until = 0.0
+            if self.music:
+                self.music.stop_effects()     # don't let a voice line keep talking over the menu
 
     def do(self, action):
         if action == "start":
@@ -1636,6 +1690,8 @@ class App:
         elif action[0] == "buy":
             self.shop_sel = action[1]
             self.buy(action[1])
+        elif action[0] == "key" and self.state == "run":       # a clicked panel button
+            self.run_key(action[1])
 
     def buy(self, i):
         uid, name, desc, base, mx = META_UPGRADES[i]
@@ -2063,8 +2119,10 @@ class App:
         self.draw_overlay()
 
     def draw_panel(self, px, py):
-        """Info + build menu on the right, within PANEL_W (24) columns.
-        Rows marked with a drop rank are hidden (highest rank first) when the terminal is too short."""
+        """Info, build menu and buttons on the right, within PANEL_W (24) columns.
+        Rows marked with a drop rank are hidden (highest rank first) when the terminal is too short:
+        7 hints, 6/5 gaps around the buttons, 4 next boss, 3 second info line, 2 weapon header,
+        1 cash out/quit buttons, 0 boss name."""
         r = self.run
         bottom = py + r.H + 1                  # don't run into the message line
         rows = []                              # (list of (text, attr, x offset), drop rank or None)
@@ -2090,12 +2148,12 @@ class App:
         boss = r.boss_alive()
         if boss:
             bf = max(0, min(bar_w, int(bar_w * boss.hp / boss.maxhp + 0.99)))
-            add([(boss.name, self.color(RED if boss.enraged else MAG) | bold, 0)])
+            add([(boss.name, self.color(RED if boss.enraged else MAG) | bold, 0)], drop=0)
             add([("BOSS", bold, 0), ("#" * bf, self.color(MAG) | bold, 7),
                  ("-" * (bar_w - bf), dim, 7 + bf), (f"{int(boss.hp)}", 0, 8 + bar_w)])
         else:
             b, cycle = r.level_boss()
-            add([(f"boss: {b['name']}{ROMAN[min(cycle, 5)]}", dim, 0)], drop=3)
+            add([(f"boss: {b['name']}{ROMAN[min(cycle, 5)]}", dim, 0)], drop=4)
 
         # what's under the cursor
         cur = tuple(r.cursor)
@@ -2106,16 +2164,16 @@ class App:
             w = WEAPONS[t.kind]
             add([(f"{w['name']} lv {t.level}", self.color(w["color"]) | bold, 0),
                  (special_text(t.kind, st), dim, len(w["name"]) + 6)])
-            add([(f"dmg {st['dmg']:.1f} rng {st['rng']:.1f} {1 / st['cd']:.1f}/s", dim, 0)], drop=2)
+            add([(f"dmg {st['dmg']:.1f} rng {st['rng']:.1f} {1 / st['cd']:.1f}/s", dim, 0)], drop=3)
         elif t and t.kind == "goldmine":
             add([(f"Gold Mine lv {t.level}", gold_c | bold, 0)])
-            add([(f"+{r.income(t)} gold per wave", dim, 0)], drop=2)
+            add([(f"+{r.income(t)} gold per wave", dim, 0)], drop=3)
         elif trap == "mine":
             add([("Mine", self.color(RED) | bold, 0), (f"blast {r.mine_damage():.0f} dmg", dim, 5)])
-            add([("explodes once when hit", dim, 0)], drop=2)
+            add([("explodes once when hit", dim, 0)], drop=3)
         elif trap == "tar":
             add([("Tar", self.color(C_FROST) | bold, 0), ("slows enemies 50%", dim, 4)])
-            add([("stays forever", dim, 0)], drop=2)
+            add([("stays forever", dim, 0)], drop=3)
         else:
             if t:
                 label = "Structure: pick 1-8"
@@ -2126,10 +2184,10 @@ class App:
             else:
                 label = "Grass: buildable"
             add([(label, bold if t else dim, 0)])
-            add([], drop=2)
+            add([], drop=3)
 
         # build menu with weapon stats:  "3 Cannon 60  7.0 4.0 0.6"
-        add([("  weapon  $  dmg rng  /s", dim, 0)], drop=1)
+        add([("  weapon  $  dmg rng  /s", dim, 0)], drop=2)
         sc = r.mods["struct_cost"]
         ok = r.gold >= sc and r.free(cur)
         add([("B struct", 0 if ok else dim, 0), (str(sc).rjust(2), gold_c if ok else dim, 9)])
@@ -2159,18 +2217,14 @@ class App:
             attr = self.color(b["color"]) | bold if ok else 0
             add([(line, attr, 0), (str(b["cost"]).rjust(2), gold_c if ok else dim, 9),
                  (effects[kind], 0 if ok else dim, 12)])
-        # upgrade + sell on one row
-        if t and t.kind and t.level < MAX_LEVEL:
-            uc = r.upgrade_cost(t)
-            up = [("U up", 0 if r.gold >= uc else dim, 0), (f"{uc}g", gold_c if r.gold >= uc else dim, 5)]
-        else:
-            up = [("U up -", dim, 0)]
-        refund = t.invested // 2 if t else (BUILDINGS[trap]["cost"] // 2 if trap else 0)
-        add(up + [("X sell", 0 if refund else dim, 11), (f"+{refund}g" if refund else "-", dim, 18)])
-        add([], drop=4)
-        for line in ("N wave F speed P pause", "K cash out    Q quit",
-                     "move: arrows/wasd/mouse", "Shift+WASD = 5 tiles"):
-            add([(line, dim, 0)], drop=5)
+        # buttons: upgrade/sell the selected tile, next wave/speed/pause, cash out/quit. On short terminals the
+        # gaps between them go first and the cash out/quit row late; the first two rows always stay.
+        specs = self.button_specs()
+        for i, keys in enumerate(BUTTON_ROWS):
+            add([], drop=5 if i == 0 else 6)
+            add(self.button_row(keys, specs), drop=1 if i == 2 else None)
+        for line in ("move: arrows/wasd/mouse", "Shift+WASD = 5 tiles"):
+            add([(line, dim, 0)], drop=7)
 
         available = bottom - py + 1
         while len(rows) > available:
@@ -2179,8 +2233,63 @@ class App:
                 break
             rows.pop(max(droppable, key=lambda i: (rows[i][1], i)))
         for i, (items, _) in enumerate(rows[:available]):
-            for text, attr, dx in items:
+            for text, attr, dx, *zone in items:
                 self.put(py + i, px + dx, text, attr)
+                if zone:                                    # (action, width): a clickable button
+                    self.zones.append((py + i, px + dx, px + dx + zone[1], zone[0]))
+
+    def button_specs(self):
+        """Label and enabled state of each panel button, from the run's state and the tile under the cursor."""
+        r = self.run
+        st = r.state
+        live = st in ("build", "wave")
+        cur = tuple(r.cursor)
+        t = r.towers.get(cur)
+        trap = r.traps.get(cur)
+        can_up = bool(t and t.kind and t.level < MAX_LEVEL)
+        uc = r.upgrade_cost(t) if can_up else 0
+        refund = t.invested // 2 if t else (BUILDINGS[trap]["cost"] // 2 if trap else 0)
+        return {
+            "u": (f"UP {uc}g" if can_up else ("MAXED" if t and t.kind else "UPGRADE"), live and can_up and r.gold >= uc),
+            "x": (f"SELL {refund}g" if refund else "SELL", live and refund > 0),
+            "n": ("NEXT WAVE", st == "build"),
+            "f": (f"x{r.speed}", live),
+            "p": (">" if st == "paused" else "||", live or st == "paused"),
+            "k": ("CASH OUT", live or st == "levelup"),
+            "q": ("QUIT", live or st == "levelup"),
+        }
+
+    def button_row(self, keys, specs, width=PANEL_W):
+        """One row of buttons filling `width` columns: ' K ' key cap + label, 1 column between buttons.
+        Spare columns widen the labels; if the labels don't fit, the longest ones lose characters."""
+        labels = [specs[k][0] for k in keys]
+        spare = width - sum(3 + len(l) for l in labels) - (len(keys) - 1)
+        while spare < 0:
+            i = max(range(len(labels)), key=lambda j: len(labels[j]))
+            labels[i] = labels[i][:-1]
+            spare += 1
+        items, x = [], 0
+        for i, k in enumerate(keys):
+            label = labels[i].center(len(labels[i]) + spare // len(keys) + (i < spare % len(keys)))
+            cap, lab = self.button_attrs(k, specs[k][1], self.anim < self.btn_flash.get(k, -1.0))
+            items.append((f" {k.upper()} ", cap, x, ("key", ord(k)), 3 + len(label)))
+            items.append((label, lab, x + 3))
+            x += 3 + len(label) + 1
+        return items
+
+    def button_attrs(self, key, enabled, lit):
+        """(key cap, label) attributes. Lit = just pressed: the colours flip so the button looks pushed in."""
+        if BTN_ATTRS:
+            if not enabled:
+                return BTN_ATTRS["off"], BTN_ATTRS["off"]
+            if lit:
+                return BTN_ATTRS[key] | curses.A_REVERSE, BTN_ATTRS[key] | curses.A_REVERSE
+            return BTN_ATTRS["cap"], BTN_ATTRS[key]
+        if not enabled:                                   # no colours: reverse video, greyed out = dim text
+            return curses.A_DIM, curses.A_DIM
+        if lit:
+            return curses.A_BOLD, curses.A_BOLD
+        return curses.A_REVERSE | curses.A_BOLD, curses.A_REVERSE
 
     def draw_overlay(self):
         r = self.run
@@ -2215,7 +2324,10 @@ class App:
 
 
 def main(scr, music=None):
-    curses.curs_set(0)
+    try:
+        curses.curs_set(0)                # some terminals (e.g. vt100) can't hide the cursor
+    except curses.error:
+        pass
     scr.nodelay(True)
     scr.keypad(True)
     try:
@@ -2240,6 +2352,7 @@ def main(scr, music=None):
         for pid, col in pairs.items():
             curses.init_pair(pid, col, bg)
         init_art_colors(bg)
+        init_button_colors(bg)
 
     h, w = scr.getmaxyx()
     if h < MIN_H or w < MIN_W:

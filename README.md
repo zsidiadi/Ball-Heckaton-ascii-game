@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.14.1-orange)
+![Version](https://img.shields.io/badge/version-0.15.0-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
@@ -17,38 +17,12 @@ keep your **gems** and spend them on permanent upgrades for the next run.
 
 ![Main menu of cool tower defense game.exe: a pixel-art castle on a green hill next to the title](docs/menu.png)
 
-**In a run:** level 1's boss, the Goblin King, summoning goblins. Towers `A` `G` `C` `S` `P` `F` `L` `Z`, a
-gold mine `$1`, a mine `**` and tar `~~` are on the map, and the side panel shows the boss bar and every
-weapon's stats.
+**In a run:** level 1's boss, the Goblin King, has just arrived. All 8 weapons, a gold mine `$1`, a mine `**`
+and tar `~~` are on the map. The side panel shows the boss bar, every weapon's stats and the buttons: click them
+or press the letter on the key cap. A greyed-out button can't be used right now (here: NEXT WAVE, because a
+wave is running).
 
-```
- cool tower defense game.exe   level 1   wave 5/5   kills 15   gem bank 0
-+------------------------------------------------------------------------+ LEVEL 1  wave 5/5
-|    .      '   .    .      '   .    .      '   .    .      '   .    .   | WAVE ACTIVE - 4 left
-|     '   .    .      '   .    .      '   .    .      '   .    .      '  | CASTLE #######- 73/80
-|   .    .      '   .    .      '   .    .      '   .    .      '   .    | GOLD 193    GEMS 0
-|  .      '   .    .      '   .    .      '   .    .      '   .    .     | GOBLIN KING
-|   '   .    .      '   .    .      '   .    .      '   .    .      '   .| BOSS   ###----- 122
-| .    .      '   .    .      '   .    .      '   .    .      '   .    . | Lightning lv 1 4x 75%
-|.      '   .    .      '   .    .      '   .    .      '   .    .   /^^\| dmg 4.0 rng 3.5 1.0/s
-| '   .    .      '   .    .     ::::::::::::::::::::::::::::::::::::|[]||   weapon  $  dmg rng  /s
-|    .      '   .    .      '   .::  .      '   .    .      '   .    |__|| B struct 10
-|     '   .    .      '   .    . **   '   .    .      '   .    .      '  | 1 Bow    25  3.0 3.5 1.4
-|   .    .      '   .    .      ':: .    .      '   .    .      '   .    | 2 Gun    40  1.0 3.0 5.6
-|  .      '   .    .      '   .  ::.      '   .    .      '   .    .     | 3 Cannon 60  7.0 4.0 0.6
-|   '   .    .      '   .    .   :: '   .    .      '   .    .      '   .| 4 Frost  45  0.6 3.0 2.0
-| .    .      '   .    .      '  ::    .      '   .    .      '   .    . | 5 Flamer 50  0.9 2.0 4.0
-|.      '   .    .      '   .    ::     '   .    .      '   .    .      '| 6 Poison 50  0.5 3.5 1.1
-| '   .    .      '   .    .     ::   .    .      '   .    .      '   .  | 7 Sniper 70 22.0 7.0 0.4
-|$1  A1     'G1 .    .      '   .::::::::::::::::::::::::~~:::: .    .   | 8 Lightn 65  4.0 3.5 1.0
-|>>::::::::::::::     '   .    .      '   .    .      '   .  ::.      '  | G GoldMn 60 +12/wave
-|   .    .    .:: . .    .      '   .    .      '   .    .   :: '   .    | M Mine   25 dmg 59
-|  .      ' . .:: . .  C1 '   .S1  .   P\^^/  .F1  .   L1 '  ::    .     | T Tar    30 slow 50%
-|   '   . . . .:::::::::::::::::::::::::(oo):::o:::o ::::::::::     '   .| U up 48g   X sell +37g
-| .    .  . . .Z1 . . ..      '   .    .      '   .    .      '   .    . |
-+------------------------------------------------------------------------+ N wave F speed P pause
- GOBLIN KING summons goblins!
-```
+![In a run: the map with towers and the Goblin King on the left, the side panel with coloured buttons on the right](docs/game.png)
 
 ## Table of contents
 
@@ -84,6 +58,9 @@ weapon's stats.
   announcer each have their own volume slider.
 - **Full-screen layout.** The map takes every column of your terminal except a slim 24-column side panel.
   You can play with the keyboard or the mouse.
+- **Real buttons.** The side panel has coloured buttons for upgrade, sell, next wave, speed, pause, cash out
+  and quit. Each shows its key on a white key cap; click it or press the key. It lights up when pressed and
+  is greyed out when it can't be used.
 - **Retro menu.** A window-style main menu with START GAME, UPGRADES, PREMIUM, VOLUME and QUIT buttons, and a
   pixel-art castle on a hill next to the title, built from terminal block characters.
 - **Premium store (preview).** A real-money shop for a Nuke, gem packs and more. Payments aren't connected yet,
@@ -162,19 +139,19 @@ python3 "cool tower defense game.exe.py" --mute   # no music or sound effects
 | --- | --- |
 | Arrow keys / `w` `a` `s` `d` | Move cursor |
 | `W` `A` `S` `D` (Shift) | Move cursor 5 tiles |
-| Mouse click | Move cursor to the clicked tile |
+| Mouse click | Move cursor to the clicked tile, or press a side-panel button |
 | `B` | Build structure |
 | `1`–`8` | Mount Bow / Gun / Cannon / Frost / Flamer / Poison / Sniper / Lightning |
 | `G` | Place a Gold Mine (grass) |
 | `M` | Place a Mine (enemy path) |
 | `T` | Place Tar (enemy path) |
-| `U` | Upgrade weapon or Gold Mine |
-| `X` | Sell (50% refund); also removes Mines and Tar |
-| `N` | Start next wave |
-| `F` | Game speed x1 / x2 / x3 |
-| `P` | Pause |
-| `K` | Destroy your own castle (cash out) |
-| `Q` | Quit run (gems lost) |
+| `U` | Upgrade weapon or Gold Mine (button **UP**, shows the price) |
+| `X` | Sell (50% refund); also removes Mines and Tar (button **SELL**, shows the refund) |
+| `N` | Start next wave (button **NEXT WAVE**) |
+| `F` | Game speed x1 / x2 / x3 (button shows the current speed) |
+| `P` | Pause / resume (button `\|\|`, `>` while paused) |
+| `K` | Destroy your own castle (button **CASH OUT**) |
+| `Q` | Quit run, gems lost (button **QUIT**) |
 | `Enter` | Continue (level complete, game over) |
 
 ## Game reference
@@ -440,6 +417,7 @@ All balance numbers live at the top of `cool tower defense game.exe.py`:
 | `VOLUME_SLIDERS`, `volume_gain()` | the sliders on the Volume screen and how a slider level turns into loudness |
 | `LEVEL_COMPLETE_SOUNDS`, `SPECIAL_THANKS`, `SPECIAL_THANKS_LEVEL` | the Level Complete voice lines; the creator's thanks and the level that triggers it |
 | `GAME_NAME`, `VERSION` | the name and version shown in the menu and title bar |
+| `PANEL_BUTTONS`, `BUTTON_ROWS`, `BTN_FLASH` | the side-panel buttons: colour of each, how they're grouped into rows, how long one lights up when pressed |
 | `MENU_CASTLE`, `ART_COLORS`, `ART_SHIFT` | the castle beside the menu title: pixel rows (one letter per pixel), the colour of each letter, and how far left of centre the castle + title sit |
 | `MIN_W`, `MIN_H`, `PANEL_W` | minimum terminal size and width of the side panel (24) |
 | `MAX_MAP_W`, `MAX_MAP_H` | largest map size in tiles (default 150×70) |
@@ -457,7 +435,8 @@ All balance numbers live at the top of `cool tower defense game.exe.py`:
 │   ├── special/                   # special_thanks_from_the_creator.wav
 │   └── source/                    # originals: music .ogg files and all .m4a voice recordings
 ├── docs/
-│   └── menu.png                   # main menu screenshot used in this README
+│   ├── menu.png                   # main menu screenshot used in this README
+│   └── game.png                   # in-game screenshot used in this README
 ├── tools/
 │   ├── make_loops.py              # rebuilds the music loops from the originals (numpy + ffmpeg)
 │   └── make_sfx.py                # makes the death sounds and voice lines from the recordings (numpy + ffmpeg)
@@ -510,6 +489,14 @@ weapons (they can be upgraded and sold) and pay out in `wave_cleared()`. Mines a
 map of path tiles. Each frame, enemies standing on Tar get slowed, and any Mine with an enemy on its tile
 calls `explode()`.
 
+**Side-panel buttons** (`PANEL_BUTTONS`, `App.button_specs`, `button_row`, `button_attrs`, `run_key`): each
+frame, `button_specs` works out every button's label and whether it can be used right now (from the run's
+state and the tile under the cursor). `button_row` lays a row out across the panel's 24 columns, as a
+` K ` key cap followed by the coloured label. Each button is also registered as a clickable zone. A click
+goes through `run_key`, exactly like pressing the key, and lights the button up for `BTN_FLASH` seconds.
+On short terminals the panel drops rows in a fixed order (see `draw_panel`): hints first, then the gaps
+between buttons. The upgrade/sell and next wave/speed/pause rows never drop.
+
 **Menu art** (`MENU_CASTLE`, `art_cells`, `init_art_colors`, `App.draw_art`): the castle beside the title is
 pixel art stored as rows of letters, one letter per pixel. `art_cells` packs two pixel rows into one terminal
 row with the half blocks `▀` `▄` and the full block `█`. A cell whose two pixels differ uses the background
@@ -544,7 +531,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.13.0](CHANGELOG.md#0130---2026-10-13) | 2026-10-13 | `80fc4ec` | Game file renamed from `keep.py` to `cool tower defense game.exe` | 2150 lines |
 | [0.13.1](CHANGELOG.md#0131---2026-10-13) | 2026-10-13 | `26f9e2f` | Game file is `cool tower defense game.exe.py`: the game's name, still a `.py` file | 2149 lines |
 | [0.14.0](CHANGELOG.md#0140---2026-10-13) | 2026-10-13 | `a773bc8` | Pixel-art castle on a hill next to the title on the main menu | 2277 lines |
-| [0.14.1](CHANGELOG.md#0141---2026-10-13) | 2026-10-13 | tag `v0.14.1` | Castle and title moved a bit to the left | 2279 lines |
+| [0.14.1](CHANGELOG.md#0141---2026-10-13) | 2026-10-13 | `ab53c85` | Castle and title moved a bit to the left | 2279 lines |
+| [0.15.0](CHANGELOG.md#0150---2026-10-13) | 2026-10-13 | tag `v0.15.0` | Coloured, clickable buttons in the side panel | 2392 lines |
 
 ## Contributing
 

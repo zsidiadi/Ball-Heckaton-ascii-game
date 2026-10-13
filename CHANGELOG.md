@@ -8,9 +8,39 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-13
+
+`cool tower defense game.exe.py`: 2392 lines
+
+### Added
+- **Real buttons in the side panel during a run.** Upgrade, sell, next wave, speed, pause, cash out and quit are
+  now coloured buttons, each with a white key cap showing its key: `U` UP (with the price), `X` SELL (with the
+  refund), `N` NEXT WAVE, `F` speed (`x1`/`x2`/`x3`), `P` pause (`||`, `>` while paused), `K` CASH OUT and
+  `Q` QUIT. Weapons and buildings stay in the list above them.
+- **Click them with the mouse.** A click does the same as pressing the key. Clicking the map still moves the
+  cursor.
+- A button lights up for a moment when it's pressed, by key or by click. It's greyed out when it can't be
+  used right now: nothing to upgrade or sell under the cursor, not enough gold, a wave already running, or
+  the game paused (only pause works then).
+- `docs/game.png`: an in-game screenshot, used in the README.
+
+### Changed
+- The side panel's bottom rows (`U up` / `X sell`, `N wave F speed P pause`, `K cash out Q quit`) became the
+  three rows of buttons. With room to spare there's a blank line between button rows. On short terminals
+  those gaps go first. The upgrade/sell and next wave/speed/pause rows always stay, even at the minimum
+  70x22 during a boss fight. Before, the next-wave hint was the first thing to disappear.
+- Buttons work on 256-, 16- and 8-colour terminals, and as reverse video on terminals with no colour. Black
+  button text is never bold, because many terminals show bold black as grey.
+- README: the in-game screenshot is now an image, so the button colours show. The controls table names each
+  button, and there are notes on the new constants and on how the buttons work.
+
+### Fixed
+- The game no longer crashes at start-up on terminals that can't hide the cursor (for example `vt100`).
+
 ## [0.14.1] - 2026-10-13
 
-`cool tower defense game.exe.py`: 2279 lines
+Commit [`ab53c85`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/ab53c85027fb382a902437763957c5855ef5a807)
+· `cool tower defense game.exe.py`: 2279 lines
 
 ### Changed
 - **The castle and the title sit a bit further left on the main menu.** They still move as one group, centred
@@ -457,7 +487,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.1...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.1...v0.15.0
 [0.14.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.0...v0.13.1
