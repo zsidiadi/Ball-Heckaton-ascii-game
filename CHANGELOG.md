@@ -8,9 +8,20 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-10-13
+
+`cool tower defense game.exe.py`: 2279 lines
+
+### Changed
+- **The castle and the title sit a bit further left on the main menu.** They still move as one group, centred
+  and then shifted 5 columns left (`ART_SHIFT`), so the title lines up better over the menu buttons. They never
+  get closer than 2 columns to the window edge.
+- `docs/menu.png` shows the new position.
+
 ## [0.14.0] - 2026-10-13
 
-`cool tower defense game.exe.py`: 2277 lines
+Commit [`a773bc8`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/a773bc827dceb3284b0a9438f0f0d44b692cfd60)
+· `cool tower defense game.exe.py`: 2277 lines
 
 ### Added
 - **A castle on a hill next to the title on the main menu.** It's pixel art drawn with terminal block
@@ -446,7 +457,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.1...HEAD
+[0.14.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.12.0...v0.13.0

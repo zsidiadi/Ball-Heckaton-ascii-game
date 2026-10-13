@@ -36,7 +36,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.14.0"
+VERSION = "0.14.1"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens
@@ -228,6 +228,7 @@ ART_COLORS = {                           # letter -> (curses colour, bright?)
     "g": (curses.COLOR_GREEN, False),    # hill in shadow
 }
 ART_GAP = 3                              # columns between the castle and the title
+ART_SHIFT = 5                            # castle + title sit this many columns left of centre
 ART_PAIR_BASE = 32                       # colour pairs for the art start here (the game's own use 1-13)
 ART_ATTRS = {}                           # (char, top, bottom) -> (char to draw, attribute); see init_art_colors
 
@@ -1768,12 +1769,13 @@ class App:
         step = 2 if roomy else 1
         total = sum(len(b) + 1 for b in TITLE) + (2 if roomy else 0) + 2 + len(MENU_ITEMS) * step + 2
         y = max(1, 1 + (h - 2 - total) // 2)
-        # the castle on its hill goes left of the title when it fits; the two are centred as one group
+        # the castle on its hill goes left of the title when it fits; the two move as one group, centred
+        # and then nudged ART_SHIFT columns to the left (never closer than 2 columns to the window edge)
         art = MENU_CASTLE_CELLS
         aw = len(art[0])
         tw = max(len(l) for b in TITLE for l in b)
         show_art = self.art_ok and w >= aw + ART_GAP + tw + 4
-        tx = (w - (aw + ART_GAP + tw)) // 2 + aw + ART_GAP if show_art else 0
+        tx = max(2, (w - (aw + ART_GAP + tw)) // 2 - ART_SHIFT) + aw + ART_GAP if show_art else 0
         if show_art:
             title_h = sum(len(b) + 1 for b in TITLE) - 1
             self.draw_art(y + title_h - len(art), tx - ART_GAP - aw, art)
