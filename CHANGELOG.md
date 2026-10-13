@@ -8,9 +8,23 @@ Every version links to its Git tag, so you can see exactly how the code changed 
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-10-13
+
+`cool tower defense game.exe.py`: 2149 lines
+
+### Fixed
+- **The game file is `cool tower defense game.exe.py`.** It has the game's name and keeps the `.py` format. 0.13.0
+  had misread the request and turned it into a fake `.exe`. Python launches it like `keep.py` before it:
+  `python3 "cool tower defense game.exe.py"`, `py "cool tower defense game.exe.py"`, or double-click on Windows
+  when Python is installed.
+- Removed the `.gitattributes` from 0.13.0. A `.py` file is recognised as Python by GitHub on its own.
+- Docstring and README (run commands, tuning, project tree, code overview, contributing) use the new file name.
+  The game's title, *cool tower defense game.exe*, is unchanged. The save file is still `keep_save.json`.
+
 ## [0.13.0] - 2026-10-13
 
-`cool tower defense game.exe` (was `keep.py`): 2150 lines
+Commit [`80fc4ec`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/80fc4ec226c2f21c667ed6ff3b91d2f03d8b2c59)
+· `cool tower defense game.exe` (was `keep.py`): 2150 lines
 
 ### Changed
 - **The game file is now called `cool tower defense game.exe`** (renamed from `keep.py` with `git mv`, so its
@@ -411,7 +425,8 @@ Commit [`f9ef6a2`](https://github.com/zsidiadi/Ball-Heckaton-ascii-game/commit/f
 ### Added
 - Repository created for the B.A.L.L.S hackathon, with a README stub.
 
-[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.1...HEAD
+[0.13.1]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/zsidiadi/Ball-Heckaton-ascii-game/compare/v0.10.0...v0.11.0

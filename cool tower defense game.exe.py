@@ -13,9 +13,8 @@ When the castle falls you KEEP the gems you earned. You can also blow up
 your own castle (K) to cash out early: leftover gold turns into bonus gems.
 Spend gems in the UPGRADES menu on permanent upgrades and new weapons.
 
-Run:  python3 "cool tower defense game.exe"          (Windows: py "cool tower defense game.exe",
-      python3 "cool tower defense game.exe" --mute    after pip install windows-curses)
-It is a Python script despite the .exe name: start it with Python, don't double-click it on Windows.
+Run:  python3 "cool tower defense game.exe.py"          (Windows: py "cool tower defense game.exe.py"
+      python3 "cool tower defense game.exe.py" --mute    or double-click, after pip install windows-curses)
 """
 
 import array
@@ -36,7 +35,7 @@ SAVE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keep_save.
 FPS = 30
 DT = 1.0 / FPS
 GAME_NAME = "cool tower defense game.exe"
-VERSION = "0.13.0"
+VERSION = "0.13.1"
 MUSIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 MENU_TRACK = "menu_loop.wav"
 MENU_STATES = ("menu", "upgrades", "premium", "volume")   # the menu music plays only on these screens

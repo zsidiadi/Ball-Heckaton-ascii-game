@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-![Version](https://img.shields.io/badge/version-0.13.0-orange)
+![Version](https://img.shields.io/badge/version-0.13.1-orange)
 
 Enemies march down randomly generated paths toward your castle. Build structures, mount one of 8 weapons
 on them, lay traps, and survive as long as you can. Every level is 5 waves and ends with one of
@@ -130,14 +130,14 @@ weapon's stats.
 ```bash
 git clone https://github.com/zsidiadi/Ball-Heckaton-ascii-game.git
 cd Ball-Heckaton-ascii-game
-python3 "cool tower defense game.exe"            # macOS / Linux (or: ./"cool tower defense game.exe")
-py "cool tower defense game.exe"                 # Windows
-python3 "cool tower defense game.exe" --mute     # no music or sound effects
+python3 "cool tower defense game.exe.py"          # macOS / Linux (or: ./"cool tower defense game.exe.py")
+py "cool tower defense game.exe.py"               # Windows (or double-click the file)
+python3 "cool tower defense game.exe.py" --mute   # no music or sound effects
 ```
 
-> **It's a Python script, not a real Windows program.** The `.exe` is part of the game's name, so start it
-> with Python as shown above. Double-clicking it on Windows won't work, because Windows would try to run it
-> as a native program. Keep the quotes around the name, since it has spaces.
+> The file is a normal Python script: `cool tower defense game.exe` is the game's name and `.py` is its format.
+> Keep the quotes around the name in the terminal, since it has spaces. On Windows you can also double-click it
+> if Python is installed.
 
 > **Tip:** maximise or full-screen the terminal **before** starting a run. The map size is fixed
 > when the run begins.
@@ -442,7 +442,7 @@ If none of these exist, the game just stays silent. For a perfect loop on macOS,
 
 ## Tuning the game
 
-All balance numbers live at the top of `cool tower defense game.exe`:
+All balance numbers live at the top of `cool tower defense game.exe.py`:
 
 | Constant | What it controls |
 | --- | --- |
@@ -469,7 +469,7 @@ All balance numbers live at the top of `cool tower defense game.exe`:
 
 ```
 .
-├── cool tower defense game.exe    # the whole game: one Python file, standard library only
+├── cool tower defense game.exe.py # the whole game: one Python file, standard library only
 ├── assets/
 │   ├── menu_loop.wav              # seamless music loops (made by tools/make_loops.py)
 │   ├── level1_loop.wav … level5_loop.wav
@@ -483,13 +483,12 @@ All balance numbers live at the top of `cool tower defense game.exe`:
 ├── README.md                      # this file
 ├── CHANGELOG.md                   # version history: what changed and when
 ├── .gitignore                     # ignores __pycache__ and the save file
-├── .gitattributes                 # tells GitHub the .exe is Python (highlighting, language bar)
 └── keep_save.json                 # created on first run (git-ignored)
 ```
 
 ## How the code works
 
-`cool tower defense game.exe` (a Python script) is organised top to bottom as follows:
+`cool tower defense game.exe.py` is organised top to bottom as follows:
 
 | Section | Responsibility |
 | --- | --- |
@@ -554,7 +553,8 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 | [0.10.0](CHANGELOG.md#0100---2026-10-13) | 2026-10-13 | `45fc505` | Death sounds for grunts, runners and brutes | 1920 lines |
 | [0.11.0](CHANGELOG.md#0110---2026-10-13) | 2026-10-13 | `f23ef8f` | Level complete voice lines (1-5), special thanks at level 6 | 1980 lines |
 | [0.12.0](CHANGELOG.md#0120---2026-10-13) | 2026-10-13 | `8d963d9` | VOLUME screen: separate sliders for music, death sounds and announcer; README refresh | 2148 lines |
-| [0.13.0](CHANGELOG.md#0130---2026-10-13) | 2026-10-13 | tag `v0.13.0` | Game file renamed from `keep.py` to `cool tower defense game.exe` | 2150 lines |
+| [0.13.0](CHANGELOG.md#0130---2026-10-13) | 2026-10-13 | `80fc4ec` | Game file renamed from `keep.py` to `cool tower defense game.exe` | 2150 lines |
+| [0.13.1](CHANGELOG.md#0131---2026-10-13) | 2026-10-13 | tag `v0.13.1` | Game file is `cool tower defense game.exe.py`: the game's name, still a `.py` file | 2149 lines |
 
 ## Contributing
 
@@ -563,7 +563,7 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 - **Changelog:** every change that players or developers would notice gets a line under
   `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md), grouped as *Added*, *Changed*, *Fixed* or *Removed*.
 - **Releases:** when you release, rename `Unreleased` to the new version and date, bump `VERSION` in
-  `cool tower defense game.exe` and the version badge in this README, and tag the commit:
+  `cool tower defense game.exe.py` and the version badge in this README, and tag the commit:
   ```bash
   git tag -a v0.12.0 -m "v0.12.0"
   git push origin v0.12.0
@@ -573,7 +573,7 @@ Full details are in [CHANGELOG.md](CHANGELOG.md). Each version is tagged in Git,
 - **Audio:** put new recordings in `assets/source/`, add them to the table in `tools/make_loops.py` (music) or
   `tools/make_sfx.py` (effects and voice), and run the script. Both need `numpy` and `ffmpeg`.
 - **Commits:** use short imperative summaries, e.g. `Add flying enemies` or `Fix cursor on small terminals`.
-- **Before pushing:** run `python3 -m py_compile "cool tower defense game.exe"`, then play at least one wave.
+- **Before pushing:** run `python3 -m py_compile "cool tower defense game.exe.py"`, then play at least one wave.
 
 ## Roadmap
 
