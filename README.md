@@ -585,7 +585,7 @@ are the authors' local dates (UTC+3).
 | [0.18.0](CHANGELOG.md#0180---2026-10-13) | 2026-10-13 | `e67d9ac` | Frost renamed to Ice; towers show their weapon's first letter on the map | 2409 lines |
 | [0.19.0](CHANGELOG.md#0190---2026-10-13) | 2026-10-13 | `f3675b5` | New blessings: Haggler (a random weapon costs half) and Royal Gift (next one is free) | 2455 lines |
 | [0.20.0](CHANGELOG.md#0200---2026-10-14) | 2026-10-14 | `6aacb0a` | Boss death sounds for all 5 bosses | 2487 lines |
-| [1.0.0](CHANGELOG.md#100---2026-10-14) | 2026-10-14 | — | **First stable release.** Test suite + CI, CONTRIBUTING guide, README checked against the code | 2487 lines |
+| [1.0.0](CHANGELOG.md#100---2026-10-14) | 2026-10-14 | `10cdf76` | **First stable release.** Test suite + CI, CONTRIBUTING guide, README checked against the code | 2487 lines |
 
 ## Contributing
 
